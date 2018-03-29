@@ -15,12 +15,18 @@ try:
 except ImportError:
         from urllib import urlopen, urlretrieve
 import argparse
-version = """ stringMLST v0.5.1.1 (updated : January 5, 2018) """
+import math
+from collections import defaultdict
+import sys
+version = """ abil-genecaller v1 (updated : March 29, 2018) """
 """
+abil-genecaller free for academic users and requires permission before any 
+commercial or government usage use for any version of this code/algorithm. 
+If you are a commercial or governmental user, please contact abil@ihrc.com 
+for permissions.
 
-stringMLST free for academic users and requires permission before any commercial 
-use for any version of this code/algorithm. If you are a commercial user, please 
-contact king.jordan@biology.gatech.edu for permissions
+For additional terms and conditions for government employees, see
+"For Government Employees" section
 
 LICENSE TERMS FOR stringMLST
 Adopted from: https://creativecommons.org/licenses/by-nc-sa/4.0/
@@ -242,6 +248,58 @@ that apply to the Licensor or You, including from the legal processes of any
 jurisdiction or authority.
 
 
+For Government Employees
+
+Definitions
+
+"Applied Bioformatics Laboratory" and "ABiL" refer to the Applied
+Bioinformatics Laboratory, a public-private partnership between IHRC Inc. and
+Georgia Institute of Technology, 950 Atlantic Drive / Engineered Biosystems
+Building, Room 2200 /Atlanta, GA 30332.  "You" or "Your" refers to the 
+state, federal or other governmental institutions and their respective
+employees or contractors using this program.
+"Employees" refers to persons employed directly by You. "Contractors" refers to
+persons hired under contract from a thirdparty for the expressed purpose of
+performing research for You. "Program" refers to abil-genecaller, and the
+source code and algorithms contained within this file.  "Research" generally
+refers to normal work duties that may require the use of this Program.
+"License" refers to this text and the grants given and limitation imposed on You
+for the usage of this Program.  "Python" refers to the Python programming
+language (www.python.org), and is under separate terms and conditions.
+
+Additional License Rights and Restrictions 
+
+ABiL grants You nonexclusive rights for the use of this Program, subject to the
+restrictions within this License.  This Program is provided as-is with no
+warranty or assumption of responsibility from ABiL. You use this Program at Your
+risk and this Program is not suitable for medical diagnosis or other healthcare
+application.  ABiL grants You the right to utilize this Program (a) internally
+for the expressed purpose of conducting Research and related duties; (b) to make
+copies of and distribute this Program internally for the expressed purpose of 
+conducting Research. You may allow your Contractors to utilize this program given
+(a) You agree to enforce this License; (b) Contractors are under contract in 
+such a way that ABIL's intellectual property rights are protected; and (c) any 
+redistribution is to computer systems owned and operated by You and utilized 
+by Contractors for the sole, expressed purpose of conducting Research for You.
+
+You may not: 
+
+1)  remove or otherwise obfuscate this License or other marks and
+    attribution to ABiL contained within this Program; 
+2)  redistribute or otherwise transfer this Program to systems or persons not 
+    employed or contracted by You;
+3)  make use of the source code, algorithms, or other intellectual property
+    contained within this Program for any purpose other than running this Program; 
+4)  cause or allow the unauthorized usage, reproduction or transfer of this 
+    Program. 
+
+ABiL reserves all rights not expressly granted within this License.  If You wish
+to use this Program for any purpose other than those expressly granted under this
+License, You must obtain additional grants from ABiL.  Additional grants may
+require additional contractual agreements, fees and licenses.  ABiL claims no
+copyright or other license over the Python modules utilized by this Program.
+Please refer to the license terms for each module for additional information.
+
 
 The program has 3 basic modes :
     mainTool: for single sample (both single and paired end)
@@ -256,54 +314,6 @@ predict part starts here
 # Description: Gets the URLs from pubMLST for the required
 #              files (alleles, profile)
 #############################################################
-def get_links(speciesName,schemes):
-    global loci
-    loci = {}
-    URL="http://pubmlst.org/data/dbases.xml"
-    xml = urlopen(URL)
-    tree = ET.parse(xml)
-    root = tree.getroot()
-    for species in root:
-        if re.search(schemes[speciesName], species.text,re.IGNORECASE):
-            for mlst in species:
-                for database in mlst:
-                    for child in database:
-                        if child.tag == "profiles":
-                            profileURL = child[1].text
-                        if child.tag == "loci":
-                            for locus in child:
-                                loci[locus.text.rstrip()] = locus[0].text
- 
-    return profileURL
-#############################################################
-# Function   : get_files
-# Input      : URLs from get_links
-# Output     : Downloads files and builds database
-#############################################################
-def get_files(profileURL,species):
-    with open(config, "w") as configFile:
-        configFile.write("[loci]\n")
-        for file in loci:
-            localFile = filePrefix + "_" + file + ".tfa"
-            try:
-                localFfile, headers = urlretrieve(loci[file],localFile)
-            except:
-                print( '\033[91m' + "There was an error downloading " + file + '\033[0m')
-                pass 
-            configFile.write(file + "\t" + filePrefix + "_" + file + ".tfa\n")
-        localFile = filePrefix + "_profile.txt"
-        localFile, headers = urlretrieve(profileURL,localFile)
-        configFile.write("[profile]\n")
-        configFile.write("profile\t" + filePrefix + "_profile.txt\n")
-        configFile.close()
-        try:
-            makeCustomDB(config,k,filePrefix)
-        except:
-            print( '\033[91m' + "Failed to create database " + schemes[species] + '\033[0m' )
-            pass
-        else:
-            print("\t" + '\033[92m' + "Database ready for " + schemes[species] + '\033[0m')
-            print( "\t" + filePrefix)
 ############################################################
 # Function   : batchTool
 # Input      : Directory name, paired or single, k value
@@ -558,8 +568,6 @@ def getMaxCount(alleleCount, fileName):
     maxSupport = {}
     secondSupport = {}
     finalProfileCount = {}
-    for locus in alleleNames:
-        finalProfileCount[locus] = {}
     num = ''
     for loc in alleleCount:
         n = 0
@@ -569,43 +577,32 @@ def getMaxCount(alleleCount, fileName):
                 m = n
                 n = alleleCount[loc][num]
         if n-m < fuzzy:
-            try:
-                alleleCount[loc][num]
-            except:
-                pass
-            else:
-                alleleCount[loc][num] = str(alleleCount[loc][num])+'*'
-                max_n[loc] = str(n)+'*'
+            alleleCount[loc][num] = str(alleleCount[loc][num])+'*'
+            max_n[loc] = str(n)+'*'
         else:
             max_n[loc] = n
         secondMax[loc] = m
     for loc in alleleCount:
+        maxSupport[loc] = {}
+        secondSupport[loc] = {}
+        num_max = []
+        num_max2 = []
+        compare = float(re.sub("\*$", "", str(max_n[loc])))
+        for num in alleleCount[loc]:
+            if  alleleCount[loc][num] == compare:
+                if "\*" in str(max_n[loc]):
+                    insert = num + '*'
+                    num_max.append(insert)
+                else:
+                    num_max.append(num)
+                maxSupport[loc][num] = max_n[loc]
+            if  alleleCount[loc][num] == secondMax[loc]:
+                num_max2.append(num)
+                secondSupport[loc][num] = secondMax[loc]
         try:
-            max_n[loc]
-        except:
-            pass
-        else:
-            maxSupport[loc] = {}
-            secondSupport[loc] = {}
-            num_max = []
-            num_max2 = []
-            compare = float(re.sub("\*$", "", str(max_n[loc])))
-            for num in alleleCount[loc]:
-                if  float(re.sub("\*$", "", str(alleleCount[loc][num]))) == compare:
-                    if "\*" in str(max_n[loc]):
-                        insert = num + '*'
-                        num_max.append(insert)
-                    else:
-                        num_max.append(num)
-                    maxSupport[loc][num] = max_n[loc]
-
-                if  alleleCount[loc][num] == secondMax[loc]:
-                    num_max2.append(num)
-                    secondSupport[loc][num] = secondMax[loc]
-            try:
-                finalProfileCount[loc] = num_max[0]
-            except LookupError:
-                finalProfileCount[loc] = 'NA'
+            finalProfileCount[loc] = num_max[0]
+        except LookupError:
+            finalProfileCount[loc] = '0'
     msgs = "Max Support :" + fileName + " : " + str(maxSupport)
     logging.debug(msgs)
     msgs = "Second Max Support :" + fileName + " : " + str(secondSupport)
@@ -643,8 +640,7 @@ def findST(finalProfile, stProfile):
             exit(0)
     transformedFinalProfile = {}
     for gene, allele in finalProfile.items():
-        if allele:
-            allele = re.sub("\*", "", allele)
+        allele = re.sub("\*", "", allele)
         transformedFinalProfile[finalGeneToSTGene[gene]] = allele
         # Check to see if the dictionary is empty, if so then means no allele were found at all
         if bool(transformedFinalProfile) is False:
@@ -712,13 +708,10 @@ def loadKmerDict(dbFile):
     kmerTableDict = {}
     with open(dbFile, 'r') as kmerTableFile:
         lines = kmerTableFile.readlines()
-        global alleleNames
-        alleleNames = set()
         for line in lines:
             array = line.rstrip().rsplit('\t')
             kmerTableDict[array[0]] = {}
             kmerTableDict[array[0]][array[1]] = array[2][1:-1].rsplit(',')
-            alleleNames.add(array[1])
     return kmerTableDict
 #############################################################
 # Function   : loadWeightDict
@@ -777,36 +770,165 @@ def loadConfig(config):
 # Output     : Updates results to include coverage info
 #############################################################
 def getCoverage(results):
+    global resCov
+    resCov = {}
     tmpdir = tempfile.mkdtemp()
+    genelen = {}
     for sample in results:
-        file = tmpdir +'/'+ sample + '.fasta'
-        bed = tmpdir +'/'+ sample + '.bed'
-        sortedFile = tmpdir +'/'+ sample + '.sorted'
-        covOut = tmpdir +'/'+ sample + '.out'
-        with open(file, 'w') as tmpFasta:
-            with open(bed, 'w') as bedFile:
-                for gene in configDict['loci']:
-                    genes = Fasta(configDict['loci'][gene])
-                    allele = gene+'_'+re.sub("*", "", str(results[sample][gene]))
-                    tmpFasta.write('>'+gene+'\n')
-                    bedFile.write(gene+'\t0\t'+str(len(genes[allele]))+'\n')
-                    for line in genes[allele]:
-                        tmpFasta.write(str(line)+'\n')
-        cmdIndex = "bwa index %s 2>/dev/null"%(file)
-        os.system(cmdIndex)
-        readBWA = sample+'_reads.fq'
-        cmdBwaMem = "bwa mem %s %s 2>/dev/null| samtools view -uS - | samtools sort - -o %s"%(file, readBWA, sortedFile)
-        os.system(cmdBwaMem)
-        cmdCov = "bedtools coverage -a %s -b %s > %s"%(bed, sortedFile, covOut)
-        os.system(cmdCov)
-        with open(covOut, 'r') as cov:
-            for line in cov.readlines():
-                records = line.rstrip().rsplit('\t')
-                gene = records[0]
-                geneCov = float(records[6]) * 100
-                results[sample][gene] = results[sample][gene] + " (" + str("%.2f" % geneCov) + ")"
+        resCov[sample] = {}
+        spadesCmd = "spades.py --only-assembler -s " + sample + "_reads.fq " + "-k 53 -o " + sample + " > /dev/null"
+        spadesLog = "Assembling alleles for sample:\t" + sample 
+        logging.debug(spadesLog)
+        sys.stderr.write(spadesLog + '\n')
+        try:
+            os.system(spadesCmd)
+        except:
+            spadesErr = "Building assemly failed"
+            logging.error(spadesErr)
+            sys.stderr.write(spadesErr + "\n")
+            if not batch:
+                exit()
+            else:
+                continue
+        src = "./" + sample + "/scaffolds.fasta"
+        dest = "./" + sample + ".fasta"
+        try:
+            shutil.copyfile(src,dest)
+        except IOError, e:
+            cpErr = "Could not copy " + sample + "/scaffolds.fasta\nPlease check the spades.log in " + sample + "/\nThe most likely cause of this error is no assembly could be produced\nbecause not enough reads were selected\n"
+            logging.error(cpErr)
+            sys.stderr.write(cpErr)
+            if not batch:
+                exit()
+            else:
+                continue
+        else:
+            shutil.rmtree(sample, ignore_errors=True)
+            file = tmpdir +'/'+ sample + '.fasta'
+            bed = tmpdir +'/'+ sample + '.bed'
+            sortedFile = tmpdir +'/'+ sample + '.sorted'
+            covOut = tmpdir +'/'+ sample + '.out'
+            bgOut = tmpdir +'/'+ sample + '.bg'
+            with open(file, 'w') as tmpFasta:
+                with open(bed, 'w') as bedFile:
+                    for gene in configDict['loci']:
+                        if gene in results[sample]:
+                            genes = Fasta(configDict['loci'][gene])
+                            allele = gene+'-'+ str(results[sample][gene])
+                            tmpFasta.write('>'+gene+'\n')
+                            bedFile.write(gene+'\t0\t'+str(len(genes[allele]))+'\n')
+                            genelen[gene] = len(genes[allele])
+                            for line in genes[allele]:
+                                tmpFasta.write(str(line)+'\n')
+                        else:
+                            logging.errror(gene + " not found in sample")
+                            sys.stderr.write(gene + " not found in sample")
+                            results[sample][gene] = "NotFound"
+            cmdIndex = "bwa index %s 2>/dev/null"%(file)
+            os.system(cmdIndex)
+            readBWA = sample+'_reads.fq'
+            cmdBwaMem = "bwa mem %s %s 2>/dev/null| samtools view -uS - | samtools sort - -o %s"%(file, readBWA, sortedFile)
+            os.system(cmdBwaMem)    
+            cmdCov = "bedtools coverage -a %s -b %s > %s"%(bed, sortedFile, covOut)
+            os.system(cmdCov)
+            with open(covOut, 'r') as cov:
+                for line in cov.readlines():
+                    records = line.rstrip().rsplit('\t')
+                    gene = records[0]
+                    geneCov = float(records[6]) * 100
+                    results[sample][gene] = results[sample][gene] + " (" + str("%.2f" % geneCov) + ")"
+            aln = {}
+            cmdBg = "bedtools genomecov -d -ibam %s > %s"%(sortedFile, bgOut)
+            os.system(cmdBg)
+            # lastline = open(bgOut, "r").readlines()[-1]
+            all_content = defaultdict(list)
+            with open(bgOut, 'r') as bedgraph:
+                for line in bedgraph:
+                    line = line.rstrip()
+                    line_content = line.split("\t")
+                    gene_name = line_content[0]
+                    all_content[gene_name].append([line_content[1], line_content[2]])
+    
+            for gene in all_content:
+                all_depths = list()
+                for line in all_content[gene]:
+                    all_depths.append(line[1])
+                mean_value = mean(all_depths)
+                sd = stdev(all_depths, mean_value)
+                # threshold_upper = mean_value + 2*sd
+                threshold_lower = mean_value - 3*sd
+                counter = 0
+                # Uncomment the next line to see gene, mean_value, and thresholds
+                # print "{}\t{}\t{}\t{}".format(gene, mean_value, threshold_upper, threshold_lower)
+                covLog = sample + ".log"
+                with open(covLog, 'w') as logfile:
+                    for line in all_content[gene]:
+                        if (int(line[1]) <= threshold_lower):
+                            if counter == 0:
+                                logfile.write("The outliers for {} are:\nPosition\tDepth\n".format(gene))
+                                counter += 1
+                            logfile.write("{}\t{}\n".format(line[0], line[1]))
+                    logfile.close()
+            mkdbCmd = "makeblastdb -dbtype nucl -in " + file + " -out " + tmpdir + "/blastdb > /dev/null"
+            try:
+                os.system(mkdbCmd)
+            except:
+                sys.stderr.write("Could not build blastdb. Continuing but results may be wrong\n")
+                pass
+            blastCmd = "blastn -db " + tmpdir + "/blastdb -query " + sample + ".fasta -outfmt '6 qseqid sseqid bitscore pident sseq sstrand qcovshsp length slen qstart qend qlen' | sort -k 3 -g > " + tmpdir + "/blast.out 2> /dev/null"
+            try:
+                os.system(blastCmd)
+            except:
+                sys.stderr.write("blastn failed. Continuing, but gene names will be wrong\n")
+                pass
+            blastOut = tmpdir + "/blast.out"
+            outfile = open(sample + '.fasta','w')
+            with open(blastOut, 'r') as blastres:
+                for line in blastres.readlines():
+                    cols = line.split()
+                    if len(cols) < 11:
+                        print("BLAST output does not have the 11 columns expected")
+                        exit()
+                    if cols[5] == "minus":
+                        out = reverseComplement(cols[4])
+                    else:
+                        out = cols[4]
+                    perCov = 100.00 * (float(cols[6])/float(cols[7]))
+                    if perCov > 100:
+                        perCov = 100.00
+                    
+                    resCov[sample][cols[1]] = cols[3]
+                    outfile.write(">%s|%s|PercentID=%.2f|Coverage=%.2f\n%s\n"%(cols[1],cols[0],float(cols[3]),perCov,out))
+            outfile.close()
+
     shutil.rmtree(tmpdir)
-"""Prints the results in the format asked by the user."""
+
+#############################################################
+# Function   : mean
+# Input      : List of numbers
+# Output     : Returns the mean of the data.
+# Description:     Function for calculating the mean of an input list.
+#############################################################
+def mean(number_list):
+    n = len(number_list)
+    if n < 1:
+        raise ValueError('mean requires at least one data point')
+    total = 0
+    for i in number_list:
+        total += int(i)
+    return total/n
+#############################################################
+# Function   : stdev
+# Input      : List of numbers, mean
+# Output     : Returns the standard deviation of the data.
+# Description: Function for calculating the standard deviation of an input list.
+#############################################################
+def stdev(number_list, x_bar):
+    mean_diff = 0
+    for number in number_list:
+        mean_diff += (int(number) - x_bar)**2
+    return math.sqrt(mean_diff/(len(number_list) - 1))
+
 #############################################################
 # Function   : printResults
 # Input      : results, output file, overwrite?
@@ -820,31 +942,27 @@ def printResults(results, output_filename, overwrite, timeDisp):
         else:
             outfile = open(output_filename, "w")
     heading = "Sample"
-    for head in sorted(results[list(results.keys())[0]]):
-        if head == 'ST' or head == 't':
-            continue
+    for head in sorted(configDict['loci']):
         heading += '\t' + head
-    heading += '\tST'
-    if timeDisp is True:
-        heading += '\tTime'
     if output_filename != None:
         outfile.write(heading)
         outfile.write('\n')
     else:
         print(heading)
     for s in results:
-        sample = s.split("_")[0]
-        for l in sorted(results[s]):
+        sample = s
+#        for l in sorted(results[s]):
+        for l in sorted( configDict['loci']):
             if l == 'ST' or l == 't':
                 continue
-            if results[s][l]:
-                sample += '\t'+results[s][l]
+            elif l in resCov[s]:
+                sample += "\t" + resCov[s][l]
             else:
-                sample += '\tNA'
-        if timeDisp is True:
-            sample += '\t' + str(results[s]['ST']) + '\t%.2f ' %results[s]['t']
-        else:
-            sample += '\t' + str(results[s]['ST'])
+                sample += "\tNotFound"
+        # if results[s]['ST'] == 1:
+        #     sample += results[s][l] + "WT"
+        # else:
+        #     sample += results[s][l] = "Resistant"
         if output_filename != None:
             outfile.write(sample)
             outfile.write('\n')
@@ -882,7 +1000,7 @@ def getFastaDict(fullLocusFile):
 #############################################################
 # Function   : formKmerDB
 # Input      : configuration file, k value, output prefix
-# Output     : stringMLST DB
+# Output     : abil-genecaller DB
 # Description: Constructs the k-mer DB in both strand orientation
 #############################################################
 def formKmerDB(configDict, k, output_filename):
@@ -936,7 +1054,7 @@ def formKmerDB(configDict, k, output_filename):
     with open(dbFileName, 'w') as kfile:
         for key in kmerDict:
             for key1 in kmerDict[key]:
-                string = key+'\t'+key1+'\t'+str(kmerDict[key][key1]).replace(" ", "")+'\n'
+                string = str(key)+'\t'+str(key1)+'\t'+str(kmerDict[key][key1]).replace(" ", "")+'\n'
                 kfile.write(string)
     with open(weightFileName, 'w') as wfile:
         for locus in configDict['loci']:
@@ -996,18 +1114,14 @@ def checkParams(buildDB, predict, config, k, listMode, list, batch, dir, fastq1,
         print(helpTextSmall)
         print("Select either predict or buildDB module")
         exit(0)
-    if predict is False and buildDB is False and downloadDB is False:
+    if predict is False and buildDB is False:
         print(helpTextSmall)
         print("Select either predict or buildDB module")
         exit(0)
     if predict is True:
-        if config != None and coverage is False:
+        if config is None and coverage is True:
             print(helpTextSmall)
-            print("Config parameter is not required for predict mode.")
-            exit(0)
-        elif config is None and coverage is True:
-            print(helpTextSmall)
-            print("Config parameter is required to for coverage prediction")
+            print("Config parameter is required.")
             exit(0)
         if not os.path.isfile(dbPrefix+'_'+str(k)+'.txt'):
             print(helpTextSmall)
@@ -1056,10 +1170,10 @@ def checkParams(buildDB, predict, config, k, listMode, list, batch, dir, fastq1,
             print("Error: Specify Configuration file")
             exit(0)
 helpText = """
-Readme for stringMLST
+Readme for abil-genecaller
 =============================================================================================
 Usage
-./stringMLST.py
+./abil-genecaller
 [--buildDB]
 [--predict]
 [-1 filename_fastq1][--fastq1 filename_fastq1]
@@ -1081,12 +1195,12 @@ Usage
 [-v]
 [-h][--help]
 ==============================================================================================
-There are two steps to predicting ST using stringMLST.
-1. Create DB : stringMLST.py --buildDB
-2. Predict : stringMLST --predict
-1. stringMLST.py --buildDB
+There are two steps to predicting ST using abil-genecaller.
+1. Create DB : abil-genecaller --buildDB
+2. Predict : abil-genecaller --predict
+1. abil-genecaller --buildDB
 Synopsis:
-stringMLST.py --buildDB -c <config file> -k <kmer length(optional)> -P <DB prefix(optional)>
+abil-genecaller --buildDB -c <config file> -k <kmer length(optional)> -P <DB prefix(optional)>
     config file : is a tab delimited file which has the information for typing scheme ie loci, its multifasta file and profile definition file.
         Format :
             [loci]
@@ -1116,28 +1230,28 @@ Optional arguments
 -h,--help
   Prints the help manual for this application
  --------------------------------------------------------------------------------------------
-2. stringMLST.py --predict
-stringMLST --predict : can run in three modes
+2. abil-genecaller --predict
+abil-genecaller --predict : can run in three modes
   1) single sample (default mode)
-  2) batch mode : run stringMLST for all the samples in a folder (for a particular specie)
-  3) list mode : run stringMLST on samples specified in a file
-stringMLST can process both single and paired end files. By default program expects paired end files.
+  2) batch mode : run abil-genecaller for all the samples in a folder (for a particular specie)
+  3) list mode : run abil-genecaller on samples specified in a file
+abil-genecaller can process both single and paired end files. By default program expects paired end files.
 Synopsis
-stringMLST.py --predict -1 <fastq file> -2 <fastq file> -d <directory location> -l <list file> -p -s -P <DB prefix(optional)> -k <kmer length(optional)> -o <output file> -x
+abil-genecaller --predict -1 <fastq file> -2 <fastq file> -d <directory location> -l <list file> -p -s -P <DB prefix(optional)> -k <kmer length(optional)> -o <output file> -x
 Required arguments
 --predict
-    Identifier for predict module
+    Identifier for predict miodule
 Optional arguments
 -1,--fastq1 = <fastq1_filename>
   Path to first fastq file for paired end sample and path to the fastq file for single end file.
-  Should have extension fastq or fq.
+  Should have extention fastq or fq.
 -2,--fastq2 = <fastq2_filename>
   Path to second fastq file for paired end sample.
-  Should have extension fastq or fq.
+  Should have extention fastq or fq.
 -d,--dir,--directory = <directory>
   BATCH MODE : Location of all the samples for batch mode.
 -C,--coverage
-    Calculate sequence coverage for each allele. Turns on read generation (-r) and turns off fuzzy (-z 1)
+    Calculate seqence coverage for each allele. Turns on read generation (-r) and turns off fuzzy (-z 1)
     Requires bwa, bamtools and samtools be in your path
 -k = <kmer_length>
   Kmer length for which the db was created(Default k = 35). Could be verified by looking at the name of the db file.
@@ -1147,14 +1261,14 @@ Optional arguments
   list file should have full file paths for all the samples/files.
   Each sample takes one line. For paired end samples the 2 files should be tab separated on single line.
 -o,--output = <output_filename>
-  Prints the output to a file instead of stdout.
+  Prints the output to a file instead of stdio.
 -p,--paired
   Flag for specifying paired end files. Default option so would work the same if you do not specify for all modes.
   For batch mode the paired end samples should be differentiated by 1/2.fastq or 1/2.fq
 -P,--prefix = <prefix>
     Prefix using which the db was created(Defaults = kmer). The location of the db could also be provided.
 -r
-  A separate reads file is created which has all the reads covering all the locus.
+  A seperate reads file is created which has all the reads covering all the locus.
 -s,--single
   Flag for specifying single end files.
 -t
@@ -1162,7 +1276,7 @@ Optional arguments
 -v
   Prints the version of the software.
 -x,--overwrite
-  By default stringMLST appends the results to the output_filename if same name is used.
+  By default abil-genecaller appends the results to the output_filename if same name is used.
   This argument overwrites the previously specified output file.
 -z,--fuzzy = <fuzzy threshold int>
     Threshold for reporting a fuzzy match (Default=300). For higher coverage reads this threshold should be set higher to avoid
@@ -1170,51 +1284,25 @@ Optional arguments
 -h,--help
   Prints the help manual for this application
 =============================================================================================
-3. stringMLST.py --getMLST
-Synopsis:
-stringMLST.py --getMLST --species= <species> [-k kmer length] [-P DB prefix]
-Required arguments
---getMLST
-    Identifier for getMLST module
---species= <species name>
-    Species name from the pubMLST schemes (use --schemes to get list of available schemes)
-    "all" will download and build all 
-Optional arguments
--k = <kmer length>
-    Kmer size for which the db has to be formed(Default k = 35). Note the tool works best with kmer length in between 35 and 66
-    for read lengths of 55 to 150 bp. Kmer size can be increased accordingly. It is advised to keep lower kmer sizes
-    if the quality of reads is not very good.
--P,--prefix = <prefix>
-    Prefix for db and log files to be created(Default = kmer). Also you can specify folder where you want the db to be created.
-    We recommend that prefix and config point to the same folder for cleanliness but this is not required
---schemes
-    Display the list of available schemes
--h,--help
-  Prints the help manual for this application
-=============================================================================================
 Example usage:
-./stringMLST.py --buildDB
+./abil-genecaller --buildDB
 1) Build DB
- ./stringMLST.py --buildDB --config config.txt -k 35 -P NM
+ ./abil-genecaller --buildDB --config config.txt -k 35 -P NM
  --------------------------------------------------------------------------------------------
-./stringMLST.py --predict
+./abil-genecaller --predict
 1) Single sample, paired end
- ./stringMLST.py --predict -1 data/Neisseria/ERR017001_1.fastq -2 data/Neisseria/ERR017001_2.fastq -p --prefix NM -k 35 -o output.txt
+ ./abil-genecaller --predict -1 data/Neisseria/ERR017001_1.fastq -2 data/Neisseria/ERR017001_2.fastq -p --prefix NM -k 35 -o output.txt
 2) Single sample, single end, overwrite output
-  ./stringMLST.py --predict -1 data/Neisseria/ERR017001_1.fastq -s --prefix NM -k 35 -o output.txt -x
+  ./abil-genecaller --predict -1 data/Neisseria/ERR017001_1.fastq -s --prefix NM -k 35 -o output.txt -x
 3) Multiple sample batch mode, paired end
-   ./stringMLST.py --predict -d data/Neisseria/ -p --prefix NM -k 35 -o output.txt -x
+   ./abil-genecaller --predict -d data/Neisseria/ -p --prefix NM -k 35 -o output.txt -x
 4) Multiple samples list mode, paired end
-   ./stringMLST.py --predict -l data/listFile.txt -p --prefix NM -k 35 -o output.txt -x
+   ./abil-genecaller --predict -l data/listFile.txt -p --prefix NM -k 35 -o output.txt -x
 5) Single, high coverage sample, paired end
- ./stringMLST.py --predict -1 data/Neisseria/ERR017001_1.fastq -2 data/Neisseria/ERR017001_2.fastq -p --prefix NM -k 35 -z 1000 -o output.txt
+ ./abil-genecaller --predict -1 data/Neisseria/ERR017001_1.fastq -2 data/Neisseria/ERR017001_2.fastq -p --prefix NM -k 35 -z 1000 -o output.txt
 --------------------------------------------------------------------------------------------
-./stringMLST.py --getMLST
-1) List available schemes
- ./stringMLST.py --getMLST --schemes
-2) Download the Neisseria spp. pubMLST scheme
-  ./stringMLST.py --getMLST --species=neisseria -P datasets/nmb
 """
+
 helpTextSmall = """
 Usage
 [--buildDB]
@@ -1238,12 +1326,9 @@ Usage
 [-v]
 [-h][--help]
 ==============================================================================================
-There are two steps to predicting ST using stringMLST.
-1. Create DB : stringMLST.py --buildDB
-2. Predict : stringMLST --predict
-1. stringMLST.py --buildDB
+buildDB
 Synopsis:
-stringMLST.py --buildDB -c <config file> -k <kmer length(optional)> -P <DB prefix(optional)>
+abil-genecaller --buildDB -c <config file> -k <kmer length(optional)> -P <DB prefix(optional)>
 Required arguments
 --buildDB
     Identifier for build db module
@@ -1256,27 +1341,27 @@ Optional arguments
     for read lengths of 55 to 150 bp. Kmer size can be increased accordingly. It is advised to keep lower kmer sizes
     if the quality of reads is not very good.
 -P,--prefix = <prefix>
-    Prefix for db and log files to be created(Default = kmer). Also you can specify folder where you want the db to be created.
+    Prefix for db and log files to be created(Default = kmer). Also you can specify folder where you want the dbb to be created.
 -h,--help
   Prints the help manual for this application
 ==============================================================================================
-2. stringMLST.py --predict
+2. abil-genecaller --predict
 Synopsis
-stringMLST.py --predict -1 <fastq file> -2 <fastq file> -d <directory location> -l <list file> -p -s -P <DB prefix(optional)> -k <kmer length(optional)> -o <output file> -x
+abil-genecaller --predict -1 <fastq file> -2 <fastq file> -d <directory location> -l <list file> -p -s -P <DB prefix(optional)> -k <kmer length(optional)> -o <output file> -x
 Required arguments
 --predict
-    Identifier for predict module
+    Identifier for predict miodule
 Optional arguments
 -1,--fastq1 = <fastq1_filename>
   Path to first fastq file for paired end sample and path to the fastq file for single end file.
-  Should have extension fastq or fq.
+  Should have extention fastq or fq.
 -2,--fastq2 = <fastq2_filename>
   Path to second fastq file for paired end sample.
-  Should have extension fastq or fq.
+  Should have extention fastq or fq.
 -d,--dir,--directory = <directory>
   BATCH MODE : Location of all the samples for batch mode.
 -C,--coverage
-    Calculate sequence coverage for each allele. Turns on read generation (-r) and turns off fuzzy (-z 1)
+    Calculate seqence coverage for each allele. Turns on read generation (-r) and turns off fuzzy (-z 1)
     Requires bwa, bamtools and samtools be in your path
 -k = <kmer_length>
   Kmer length for which the db was created(Default k = 35). Could be verified by looking at the name of the db file.
@@ -1286,14 +1371,14 @@ Optional arguments
   list file should have full file paths for all the samples/files.
   Each sample takes one line. For paired end samples the 2 files should be tab separated on single line.
 -o,--output = <output_filename>
-  Prints the output to a file instead of stdout.
+  Prints the output to a file instead of stdio.
 -p,--paired
   Flag for specifying paired end files. Default option so would work the same if you do not specify for all modes.
   For batch mode the paired end samples should be differentiated by 1/2.fastq or 1/2.fq
 -P,--prefix = <prefix>
     Prefix using which the db was created(Defaults = kmer). The location of the db could also be provided.
 -r
-  A separate reads file is created which has all the reads covering all the locus.
+  A seperate reads file is created which has all the reads covering all the locus.
 -s,--single
   Flag for specifying single end files.
 -t
@@ -1301,7 +1386,7 @@ Optional arguments
 -v
   Prints the version of the software.
 -x,--overwrite
-  By default stringMLST appends the results to the output_filename if same name is used.
+  By default abil-genecaller appends the results to the output_filename if same name is used.
   This argument overwrites the previously specified output file.
 -z,--fuzzy = <fuzzy threshold int>
     Threshold for reporting a fuzzy match (Default=300). For higher coverage reads this threshold should be set higher to avoid
@@ -1309,162 +1394,13 @@ Optional arguments
 -h,--help
   Prints the help manual for this application
 =============================================================================================
-3. stringMLST.py --getMLST
-Synopsis:
-stringMLST.py --getMLST --species= <species> [-k kmer length] [-P DB prefix]
-Required arguments
---getMLST
-    Identifier for getMLST module
---species= <species name>
-    Species name from the pubMLST schemes (use --schemes to get list of available schemes)
-    "all" will download and build all 
-Optional arguments
--k = <kmer length>
-    Kmer size for which the db has to be formed(Default k = 35). Note the tool works best with kmer length in between 35 and 66
-    for read lengths of 55 to 150 bp. Kmer size can be increased accordingly. It is advised to keep lower kmer sizes
-    if the quality of reads is not very good.
--P,--prefix = <prefix>
-    Prefix for db and log files to be created(Default = kmer). Also you can specify folder where you want the db to be created.
-    We recommend that prefix and config point to the same folder for cleanliness but this is not required
---schemes
-    Display the list of available schemes
--h,--help
-  Prints the help manual for this application
-=============================================================================================
+
 
 """
-schemes = {"achromobacter" : "Achromobacter spp.",
-"baumannii1" : "Acinetobacter baumannii#1",
-"baumannii2" : "Acinetobacter baumannii#2",
-"aeromonas" : "Aeromonas spp.",
-"anaplasma-phagocytophilum" : "Anaplasma phagocytophilum",
-"arcobacter" : "Arcobacter spp.",
-"aspergillus-fumigatus" : "Aspergillus fumigatus",
-"bacillus-cereus" : "Bacillus cereus",
-"bacillus-licheniformis" : "Bacillus licheniformis",
-"bacillus-subtilis" : "Bacillus subtilis",
-"bartonella-henselae" : "Bartonella henselae",
-"bordetella" : "Bordetella spp.",
-"borrelia" : "Borrelia spp.",
-"brachyspira-hampsonii" : "Brachyspira hampsonii",
-"brachyspira-hyodysenteriae" : "Brachyspira hyodysenteriae",
-"brachyspira-intermedia" : "Brachyspira intermedia",
-"brachyspira-pilosicoli" : "Brachyspira pilosicoli",
-"brachyspira" : "Brachyspira spp.",
-"brucella" : "Brucella spp.",
-"burkholderia-cepacia-complex" : "Burkholderia cepacia complex",
-"burkholderia-pseudomallei" : "Burkholderia pseudomallei",
-"campylobacter-concisus-curvus" : "Campylobacter concisus/curvus",
-"campylobacter-fetus" : "Campylobacter fetus",
-"campylobacter-helveticus" : "Campylobacter helveticus",
-"campylobacter-hyointestinalis" : "Campylobacter hyointestinalis",
-"campylobacter-insulaenigrae" : "Campylobacter insulaenigrae",
-"campylobacter-jejuni" : "Campylobacter jejuni",
-"campylobacter-lanienae" : "Campylobacter lanienae",
-"campylobacter-lari" : "Campylobacter lari",
-"campylobacter-sputorum" : "Campylobacter sputorum",
-"campylobacter-upsaliensis" : "Campylobacter upsaliensis",
-"candida-albicans" : "Candida albicans",
-"candida-glabrata" : "Candida glabrata",
-"candida-krusei" : "Candida krusei",
-"candida-tropicalis" : "Candida tropicalis",
-"carnobacterium-maltaromaticum" : "Carnobacterium maltaromaticum",
-"chlamydiales" : "Chlamydiales spp.",
-"citrobacter-freundii" : "Citrobacter freundii",
-"clonorchis-sinensis" : "Clonorchis sinensis",
-"clostridium-botulinum" : "Clostridium botulinum",
-"clostridium-difficile" : "Clostridium difficile",
-"clostridium-septicum" : "Clostridium septicum",
-"corynebacterium-diphtheriae" : "Corynebacterium diphtheriae",
-"cronobacter" : "Cronobacter spp.",
-"enterobacter-cloacae" : "enterobacter cloacae",
-"enterococcus-faecalis" : "enterococcus faecalis",
-"enterococcus-faecium" : "enterococcus faecium",
-"ecoli1" : "escherichia coli#1",
-"ecoli2" : "escherichia coli#2",
-"flavobacterium-psychrophilum" : "Flavobacterium psychrophilum",
-"haemophilus-influenzae" : "Haemophilus influenzae",
-"haemophilus-parasuis" : "Haemophilus parasuis",
-"helicobacter-cinaedi" : "Helicobacter cinaedi",
-"helicobacter-pylori" : "Helicobacter pylori",
-"helicobacter-suis" : "Helicobacter suis",
-"kingella-kingae" : "Kingella kingae",
-"klebsiella-oxytoca" : "Klebsiella oxytoca",
-"klebsiella-pneumoniae" : "Klebsiella pneumoniae",
-"kudoa-septempunctata" : "Kudoa septempunctata",
-"lactobacillus-salivarius" : "Lactobacillus salivarius",
-"leptospira" : "Leptospira spp.",
-"leptospira2" : "Leptospira spp.#2",
-"leptospira3" : "Leptospira spp.#3",
-"listeria" : "Listeria monocytogenes",
-"macrococcus-canis" : "Macrococcus canis",
-"macrococcus-caseolyticus" : "Macrococcus caseolyticus",
-"mannheimia-haemolytica" : "Mannheimia haemolytica",
-"melissococcus-plutonius" : "Melissococcus plutonius",
-"moraxella" : "Moraxella catarrhalis",
-"mycobacterium-abscessus" : "Mycobacterium abscessus",
-"mycobacterium-massiliense" : "Mycobacterium massiliense",
-"mycoplasma-agalactiae" : "Mycoplasma agalactiae",
-"mycoplasma-bovis" : "Mycoplasma bovis",
-"mycoplasma-hyopneumoniae" : "Mycoplasma hyopneumoniae",
-"mycoplasma-hyorhinis" : "Mycoplasma hyorhinis",
-"mycoplasma-iowae" : "Mycoplasma iowae",
-"mycoplasma-pneumoniae" : "Mycoplasma pneumoniae",
-"mycoplasma-synoviae" : "Mycoplasma synoviae",
-"neisseria" : "Neisseria spp.",
-"orientia-tsutsugamushi" : "Orientia tsutsugamushi",
-"ornithobacterium-rhinotracheale" : "Ornithobacterium rhinotracheale",
-"paenibacillus-larvae" : "Paenibacillus larvae",
-"pasteurella-multocida1" : "Pasteurella multocida#1",
-"pasteurella-multocida2" : "Pasteurella multocida#2",
-"pediococcus-pentosaceus" : "Pediococcus pentosaceus",
-"photobacterium-damselae" : "Photobacterium damselae",
-"porphyromonas-gingivalis" : "Porphyromonas gingivalis",
-"propionibacterium-acnes" : "Propionibacterium acnes",
-"pseudomonas-aeruginosa" : "Pseudomonas aeruginosa",
-"pseudomonas-fluorescens" : "Pseudomonas fluorescens",
-"riemerella-anatipestifer" : "Riemerella anatipestifer",
-"salmonella-enterica" : "Salmonella enterica",
-"sinorhizobium" : "Sinorhizobium spp.",
-"s.aureus" : "Staphylococcus aureus",
-"s.epidermidis" : "Staphylococcus epidermidis",
-"s.haemolyticus" : "Staphylococcus haemolyticus",
-"s.lugdunensis" : "Staphylococcus lugdunensis",
-"s.pseudintermedius" : "Staphylococcus pseudintermedius",
-"stapylococcus-hominis" : "Stapylococcus hominis",
-"stenotrophomonas-maltophilia" : "Stenotrophomonas maltophilia",
-"s.agalactiae" : "Streptococcus agalactiae",
-"s.canis" : "Streptococcus canis",
-"s.dysgalactiae-equisimilis" : "Streptococcus dysgalactiae equisimilis",
-"s.gallolyticus" : "Streptococcus gallolyticus",
-"s.oralis" : "Streptococcus oralis",
-"s.pneumoniae" : "Streptococcus pneumoniae",
-"s.pyogenes" : "Streptococcus pyogenes",
-"s.suis" : "Streptococcus suis",
-"s.thermophilus" : "Streptococcus thermophilus",
-"s.thermophilus2" : "Streptococcus thermophilus#2",
-"s.uberis" : "Streptococcus uberis",
-"s.zooepidemicus" : "Streptococcus zooepidemicus",
-"streptomyces-spp" : "Streptomyces spp",
-"taylorella" : "Taylorella spp.",
-"tenacibaculum" : "Tenacibaculum spp.",
-"trichomonas-vaginalis" : "Trichomonas vaginalis",
-"vibrio-cholerae" : "Vibrio cholerae",
-"vibrio-parahaemolyticus" : "Vibrio parahaemolyticus",
-"vibrio" : "Vibrio spp.",
-"vibrio-tapetis" : "Vibrio tapetis",
-"vibrio-vulnificus" : "Vibrio vulnificus",
-"wolbachia" : "Wolbachia",
-"xylella-fastidiosa" : "Xylella fastidiosa",
-"yersinia-pseudotuberculosis" : "Yersinia pseudotuberculosis",
-"yersinia-ruckeri" : "Yersinia ruckeri",
-"yersinia" : "Yersinia spp."}
 
 """The Program Starts Execution Here"""
 """Default Params"""
-downloadDB = False
-species = None
-printSchemes = False
+
 buildDB = False
 predict = False
 output_filename = None
@@ -1477,16 +1413,15 @@ fastq2 = None
 user_k = False
 config = None
 timeDisp = False
-reads = False
+reads = True
 dbPrefix = 'kmer'
 log = ''
 k = 35
-fuzzy = 300
-coverage = False
-#print 'ARGV      :', sys.argv[1:]
-#exit(0)
+fuzzy = 5
+coverage = True
+
 """Input arguments"""
-options, remainder = getopt.getopt(sys.argv[1:], 'o:x1:2:k:l:bd:pshP:c:trva:z:C', [
+options, remainder = getopt.getopt(sys.argv[1:], 'o:x1:2:k:l:bd:pshP:c:trva:', [
     'buildDB',
     'predict',
     'output=',
@@ -1502,11 +1437,7 @@ options, remainder = getopt.getopt(sys.argv[1:], 'o:x1:2:k:l:bd:pshP:c:trva:z:C'
     'paired',
     'single',
     'help',
-    'fuzzy=',
-    'coverage',
-    'getMLST',
-    'schemes',
-    'species='])
+    'fuzzy='])
 for opt, arg in options:
     if opt in ('-o', '--output'):
         output_filename = arg
@@ -1553,10 +1484,6 @@ for opt, arg in options:
     elif opt in '-v':
         print(version)
         exit(0)
-    elif opt in ('-C', '--coverage'):
-        coverage = True
-        reads = True
-        fuzzy = 1
     elif opt in ('-z', '--fuzzy'):
         try:
             fuzzy = int(arg)
@@ -1566,10 +1493,6 @@ for opt, arg in options:
     elif opt in '--schemes':
         print (", ".join(sorted(schemes.keys())))
         exit(0)
-    elif opt in '--getMLST':
-        downloadDB = True
-    elif opt in '--species':
-        species = arg
     elif opt in ('-h', '--help'):
         print(helpText)
         exit(0)
@@ -1612,54 +1535,10 @@ elif predict is True:
         loadConfig(config)
         getCoverage(results)
     printResults(results, output_filename, overwrite, timeDisp)
-elif downloadDB is True:
-    global filePrefix
-    if species is None:
-        print ("Please refer to --help to more information")
-        print()
-        print ("Expected command format:")
-        print("stringMLST.py --getMLST --species= <species> [-k kmer length] [-P DB prefix]")
-        print ()
-        print("Available MLST Schemes:")
-        print (", ".join(sorted(schemes.keys())))
-        exit(0)
-    elif species == "all":
-        print("Using a kmer size of " + str(k) + " for all databases.")
-        for key in sorted(schemes.keys()):
-            filePrefix = str(dbPrefix.rsplit("/",1)[0]) + "/" + key
-            print ('\033[1m' + "Preparing: " + schemes[key] + '\033[0m') 
-            # Move the rest of this informational message into the download handler 
-            # + " ( " + filePrefix + "/" + key + "_" +str(k) + " )")
-            try:
-                os.makedirs(filePrefix)
-            except OSError:
-               pass
-            filePrefix = filePrefix + "/" + key
-            config = filePrefix + "_config.txt" 
-            profileURL = get_links(key,schemes)
-            get_files(profileURL,key)
-    else:
-        try:
-            os.makedirs(dbPrefix.rsplit("/",1)[0])
-        except OSError:
-            pass
-        if len(re.findall("/", dbPrefix)) == 0:
-            filePrefix = dbPrefix + "/" + species
-        elif len(re.findall("/", dbPrefix)) == 1 and len(dbPrefix.rsplit("/",1)[1]) > 0:
-            filePrefix = dbPrefix
-        elif len(re.findall("/", dbPrefix)) == 1 and len(dbPrefix.rsplit("/",1)[1]) == 0:
-            filePrefix = dbPrefix + species
-        elif len(re.findall("/", dbPrefix)) > 1:
-            if dbPrefix.endswith('/'):
-                filePrefix = dbPrefix + species
-            else:
-                filePrefix = dbPrefix
-        config = filePrefix + "_config.txt"
-        profileURL = get_links(species,schemes)
-        get_files(profileURL,species)
-
 else:
     print(helpTextSmall)
     print("Error: Please select the mode: buildDB (for database building) or predict (for ST discovery) module")
 logging.debug('Command :' + str(sys.argv))
+
+blastScript = ""
 
