@@ -794,7 +794,7 @@ def getCoverage(results):
         dest = "./" + sample + ".fasta"
         try:
             shutil.copyfile(src,dest)
-        except IOError, e:
+        except IOError as e:
             cpErr = "Could not copy " + sample + "/scaffolds.fasta\nPlease check the spades.log in " + sample + "/\nThe most likely cause of this error is no assembly could be produced\nbecause not enough reads were selected\n"
             logging.error(cpErr)
             sys.stderr.write(cpErr)
