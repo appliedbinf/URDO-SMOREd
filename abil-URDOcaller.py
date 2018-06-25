@@ -406,6 +406,8 @@ def singleSampleTool(fastq1, fastq2, paired, k, results):
     logging.debug(msg)
     global alleleCount
     alleleCount = {}
+    global kCount
+    kCount = {}
     t1 = time.time()
     if paired is True:
         logging.debug("singleSampleTool : paired True")
@@ -449,7 +451,7 @@ def singleSampleTool(fastq1, fastq2, paired, k, results):
     # finalProfile['ST'] = st
     # finalProfile['t'] = t3-t1
     # results[fileName] = finalProfile
-    return results
+    return kCount
 #############################################################
 # Function   : singleFileTool
 # Input      : fastq file, k value
@@ -471,12 +473,16 @@ def singleFileTool(fastq, k):
         logging.error("singleFileTool : msg")
         print(msg)
 def fileExplorer(file, k, non_overlapping_window):
+    sName = os.path.splitext(file)[0].split('_')[0]
+    if sName not in kCount:
+        kCount[sName] = {}
     if file.endswith('.gz'):
         f = gzip.open(file, 'rt')
     else:
         f = open(file)
     msg = "fileExplorer : " + file
     logging.debug(msg)
+
     for lines in iter(lambda: tuple(islice(f, 4)), ()):
         if len(lines) < 4:
             dbg = "Input file (" + file + ") is truncated.  Please verify the input FASTQ files are correct"
@@ -497,18 +503,16 @@ def fileExplorer(file, k, non_overlapping_window):
         s1 = str(lines[1][start:k+start])
         if s1 in kmerDict[k]:
             # print(s1)
-            countKmers(lines[1], k, non_overlapping_window)
+            countKmers(lines[1], k, non_overlapping_window, sName)
             readFile.write('\n'.join('{}'.format(l) for l in lines))
-    print(kCount)
+    # print(kCount)
 #############################################################
 # Function   : goodReads
 # Input      : sequence read, k, step size
 # Output     : Edits the count of global variable alleleCount
 # Description: Increment the count for each k-mer match
 #############################################################
-global kCount
-kCount = {}
-def countKmers(read, k, non_overlapping_window):
+def countKmers(read, k, non_overlapping_window, sName):
     alleleCount = {}
     n = 0
     line = read.rstrip()
@@ -531,10 +535,11 @@ def countKmers(read, k, non_overlapping_window):
     # print()
     alleleNumber = max(alleleCount['allele'].items(), key=operator.itemgetter(1))[0]
     alleleKcount = alleleCount['allele'][max(alleleCount['allele'].items(), key=operator.itemgetter(1))[0]]
-    if alleleNumber in kCount:
-        kCount[alleleNumber] += alleleKcount
+    if alleleNumber in kCount[sName]:
+        # kCount[sName][alleleNumber] += alleleKcount
+        kCount[sName][alleleNumber] += 1
     else:
-        kCount[alleleNumber] = alleleKcount
+        kCount[sName][alleleNumber] = 1
 #############################################################
 # Function   : weightedProf
 # Input      : allele count global var, weight factors
@@ -668,31 +673,6 @@ def loadConfig(config):
                 print("ERROR: %s file does not exist at %s" % (element, configDict[head][element]))
                 exit(0)
     return configDict
-#############################################################
-# Function   : mean
-# Input      : List of numbers
-# Output     : Returns the mean of the data.
-# Description:     Function for calculating the mean of an input list.
-#############################################################
-def mean(number_list):
-    n = len(number_list)
-    if n < 1:
-        raise ValueError('mean requires at least one data point')
-    total = 0
-    for i in number_list:
-        total += int(i)
-    return total/n
-#############################################################
-# Function   : stdev
-# Input      : List of numbers, mean
-# Output     : Returns the standard deviation of the data.
-# Description: Function for calculating the standard deviation of an input list.
-#############################################################
-def stdev(number_list, x_bar):
-    mean_diff = 0
-    for number in number_list:
-        mean_diff += (int(number) - x_bar)**2
-    return math.sqrt(mean_diff/(len(number_list) - 1))
 
 #############################################################
 # Function   : printResults
@@ -707,27 +687,24 @@ def printResults(results, output_filename, overwrite, timeDisp):
         else:
             outfile = open(output_filename, "w")
     heading = "Sample"
-    for head in sorted(configDict['loci']):
-        heading += '\t' + head
+    for gene in sorted(stProfile):
+        heading += '\t' + gene
     if output_filename != None:
         outfile.write(heading)
         outfile.write('\n')
     else:
         print(heading)
+    # print(results)
     for s in results:
         sample = s
-#        for l in sorted(results[s]):
-        for l in sorted( configDict['loci']):
-            if l == 'ST' or l == 't':
-                continue
-            elif l in resCov[s]:
-                sample += "\t" + resCov[s][l]
+        for gene in sorted(stProfile):
+            # print(gene)
+            # print(str(stProfile[gene]['allele']))
+            if stProfile[gene]['allele'] in results[s]:
+                sample += "\t" + str(results[s][stProfile[gene]['allele']])
             else:
-                sample += "\tNotFound"
-        # if results[s]['ST'] == 1:
-        #     sample += results[s][l] + "WT"
-        # else:
-        #     sample += results[s][l] = "Resistant"
+                sample += "\t0" 
+        
         if output_filename != None:
             outfile.write(sample)
             outfile.write('\n')
