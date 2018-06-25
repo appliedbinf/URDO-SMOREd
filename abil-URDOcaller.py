@@ -17,6 +17,8 @@ except ImportError:
 import argparse
 import math
 from collections import defaultdict
+from itertools import islice
+import operator
 import sys
 version = """ abil-genecaller v1 (updated : March 29, 2018) """
 """
@@ -321,6 +323,8 @@ predict part starts here
 # Description: Processes all FASTQ files present in the input
 #              directory
 #############################################################
+helpTextSmall="help"
+helpText="HELP"
 def batchTool(fdir, paired, k):
     fileList = []
     if not dir.endswith('/'):
@@ -431,19 +435,20 @@ def singleSampleTool(fastq1, fastq2, paired, k, results):
     weightedProfile = weightedProf(profileCount, weightDict)
     logging.debug("singleSampleTool : weightedProfile finished")
     logging.debug("singleSampleTool : getMaxCount start")
-    finalProfile = getMaxCount(weightedProfile, fileName)
+    # finalProfile = getMaxCount(weightedProfile, fileName)
+    # print(weightedProfile)
     logging.debug("singleSampleTool : getMaxCount end")
     st = 0
     if profileFile != '':
         logging.debug("singleSampleTool : findST start")
-        st = findST(finalProfile, stProfile)
+        # st = findST(finalProfile, stProfile)
         logging.debug("singleSampleTool : findST end")
     if reads is True:
         readFile.close()
-    t3 = time.time()
-    finalProfile['ST'] = st
-    finalProfile['t'] = t3-t1
-    results[fileName] = finalProfile
+    # t3 = time.time()
+    # finalProfile['ST'] = st
+    # finalProfile['t'] = t3-t1
+    # results[fileName] = finalProfile
     return results
 #############################################################
 # Function   : singleFileTool
@@ -467,58 +472,44 @@ def singleFileTool(fastq, k):
         print(msg)
 def fileExplorer(file, k, non_overlapping_window):
     if file.endswith('.gz'):
-        if sys.version_info[0] == 3:
-            f = gzip.open(file, 'rt')
-        else:
-            f = gzip.open(file, 'rb')
+        f = gzip.open(file, 'rt')
     else:
         f = open(file)
-    msg = "fileExplorer :" + file
+    msg = "fileExplorer : " + file
     logging.debug(msg)
-    lines = f.readlines()
-    i = 1
-    n_reads = 0
-    try:
-        if len(lines[1]) < k:
-            m1 = "Read length " + len(lines[1])+" for file " + file + " smaller than " + k
-            print(m1)
-            print("Skipping to next file.")
-            logging.debug(m1)
+    for lines in iter(lambda: tuple(islice(f, 4)), ()):
+        if len(lines) < 4:
+            dbg = "Input file (" + file + ") is truncated.  Please verify the input FASTQ files are correct"
+            logging.debug(dbg)
+        try:
+            if len(lines[1]) < k:
+                m1 = "Read ID :" + lines[0][1:] + "is  length " + len(lines[1])+" in " + file + " smaller than " + k
+                print(m1)
+                logging.debug(m1)
+                return 0
+        except Exception:
+            m2 = "Check fastq file " + file
+            print(m2)
+            logging.debug(m2)
             return 0
-    except Exception:
-        m2 = "Check fastq file " + file
-        print(m2)
-        logging.debug(m2)
-        return 0
-    start = int((len(lines[1])-k)//2)
-    end = int((len(lines[1])-k)//2)
-    yesRead = False
-    for line in lines:
-        if i % 4 == 0 and yesRead:
-            readFile.write(line)
-        if i % 4 != 3:
-            yesRead = False
-        if i%4 == 1:
-            head = line
-        if i%4 == 2:
-            s1 = str(line[start:k+start])
-            sn_1 = str(line[-k-end:-end]).rstrip()
-            if s1 in kmerDict[k]:
-                n_reads += 1
-                goodReads(line, k, non_overlapping_window)
-                if reads is True:
-                    readFile.write(head)
-                    readFile.write(line)
-                    readFile.write('+\n')
-                    yesRead = True
-        i += 1
+        start = int((len(lines[1])-k)//2)
+        end = int((len(lines[1])-k)//2)
+        s1 = str(lines[1][start:k+start])
+        if s1 in kmerDict[k]:
+            # print(s1)
+            countKmers(lines[1], k, non_overlapping_window)
+            readFile.write('\n'.join('{}'.format(l) for l in lines))
+    print(kCount)
 #############################################################
 # Function   : goodReads
 # Input      : sequence read, k, step size
 # Output     : Edits the count of global variable alleleCount
 # Description: Increment the count for each k-mer match
 #############################################################
-def goodReads(read, k, non_overlapping_window):
+global kCount
+kCount = {}
+def countKmers(read, k, non_overlapping_window):
+    alleleCount = {}
     n = 0
     line = read.rstrip()
     while n+k <= len(line):
@@ -535,6 +526,15 @@ def goodReads(read, k, non_overlapping_window):
                     else:
                         alleleCount[probLoc][allele] = 1
         n += non_overlapping_window
+    # print(max(alleleCount['allele'].items(), key=operator.itemgetter(1))[0])
+    # print(alleleCount['allele'][max(alleleCount['allele'].items(), key=operator.itemgetter(1))[0]])
+    # print()
+    alleleNumber = max(alleleCount['allele'].items(), key=operator.itemgetter(1))[0]
+    alleleKcount = alleleCount['allele'][max(alleleCount['allele'].items(), key=operator.itemgetter(1))[0]]
+    if alleleNumber in kCount:
+        kCount[alleleNumber] += alleleKcount
+    else:
+        kCount[alleleNumber] = alleleKcount
 #############################################################
 # Function   : weightedProf
 # Input      : allele count global var, weight factors
@@ -554,104 +554,7 @@ def weightedProf(alleleCount, weightDict):
             else:
                 weightedDict[loc][allele] = alleleCount[loc][allele]
     return weightedDict
-#############################################################
-# Function   : getMaxCount
-# Input      : allele counts
-# Output     : allelic profile and ST
-# Description: Finds the alleles with maximum counts and
-#              generates the allelic profile and ST
-#############################################################
-def getMaxCount(alleleCount, fileName):
-    logging.debug("getMaxCount")
-    max_n = {}
-    secondMax = {}
-    maxSupport = {}
-    secondSupport = {}
-    finalProfileCount = {}
-    num = ''
-    for loc in alleleCount:
-        n = 0
-        m = 0
-        for num in alleleCount[loc]:
-            if alleleCount[loc][num] >= n:
-                m = n
-                n = alleleCount[loc][num]
-        if n-m < fuzzy:
-            alleleCount[loc][num] = str(alleleCount[loc][num])+'*'
-            max_n[loc] = str(n)+'*'
-        else:
-            max_n[loc] = n
-        secondMax[loc] = m
-    for loc in alleleCount:
-        maxSupport[loc] = {}
-        secondSupport[loc] = {}
-        num_max = []
-        num_max2 = []
-        compare = float(re.sub("\*$", "", str(max_n[loc])))
-        for num in alleleCount[loc]:
-            if  alleleCount[loc][num] == compare:
-                if "\*" in str(max_n[loc]):
-                    insert = num + '*'
-                    num_max.append(insert)
-                else:
-                    num_max.append(num)
-                maxSupport[loc][num] = max_n[loc]
-            if  alleleCount[loc][num] == secondMax[loc]:
-                num_max2.append(num)
-                secondSupport[loc][num] = secondMax[loc]
-        try:
-            finalProfileCount[loc] = num_max[0]
-        except LookupError:
-            finalProfileCount[loc] = '0'
-    msgs = "Max Support :" + fileName + " : " + str(maxSupport)
-    logging.debug(msgs)
-    msgs = "Second Max Support :" + fileName + " : " + str(secondSupport)
-    logging.debug(msgs)
-    return finalProfileCount
-#############################################################
-# Function   : findST
-# Input      : allelic profile for one sample and profiles for all STs
-# Output     : ST number, or 0 if no ST match was found
-# Description: Finds the ST number which best matches the given sample profile.
-#############################################################
-def findST(finalProfile, stProfile):
-    if not stProfile:
-        return 0
-    oneProfile = next(iter(stProfile.values()))
-    # The gene names in finalProfile may not exactly match those in stProfile. To deal with this,
-    # each finalProfile gene is associated with the best matching gene in the ST profiles.
-    finalGeneToSTGene = {}
-    profileGenes = list(oneProfile.keys())
-    for finalGene in list(finalProfile.keys()):
-        if finalGene in profileGenes:  # exact match is preferable
-            finalGeneToSTGene[finalGene] = finalGene
-        else:  # failing an exact match, look for a case-sensitive containment
-            for profileGene in profileGenes:
-                if finalGene in profileGene:
-                    finalGeneToSTGene[finalGene] = profileGene
-                    break
-        if finalGene not in finalGeneToSTGene:  # if there's still no match, try a case-insensitive containment
-            for profileGene in profileGenes:
-                if finalGene.lower() in profileGene.lower():
-                    finalGeneToSTGene[finalGene] = profileGene
-                    break
-        if finalGene not in finalGeneToSTGene:
-            print("ERROR: gene names in config file do not match gene names in profile file")
-            exit(0)
-    transformedFinalProfile = {}
-    for gene, allele in finalProfile.items():
-        allele = re.sub("\*", "", allele)
-        transformedFinalProfile[finalGeneToSTGene[gene]] = allele
-        # Check to see if the dictionary is empty, if so then means no allele were found at all
-        if bool(transformedFinalProfile) is False:
-            return 0
-    # Find the best matching ST, considering only the genes in the sample's profile. This is to
-    # allow for superfluous columns in the ST profile.
-    logging.debug("findST")
-    for stNum, profile in stProfile.items():
-        if all(x in list(profile.items()) for x in list(transformedFinalProfile.items())):
-            return stNum
-    return 0
+
 #############################################################
 # Function   : loadModule
 # Input      : k value and prefix of the DB file
@@ -673,6 +576,7 @@ def loadModule(k, dbPrefix):
     weightDict = loadWeightDict(weightFile)
     global stProfile
     stProfile = loadSTfromFile(profileFile)
+    loadConfig(config)
 #############################################################
 # Function   : loadSTfromFile
 # Input      : profile definition file
@@ -764,145 +668,6 @@ def loadConfig(config):
                 print("ERROR: %s file does not exist at %s" % (element, configDict[head][element]))
                 exit(0)
     return configDict
-#############################################################
-# Function   : getCoverage
-# Input      : results dictionary
-# Output     : Updates results to include coverage info
-#############################################################
-def getCoverage(results):
-    global resCov
-    resCov = {}
-    tmpdir = tempfile.mkdtemp()
-    genelen = {}
-    for sample in results:
-        resCov[sample] = {}
-        spadesCmd = "spades.py --only-assembler -s " + sample + "_reads.fq " + "-k 53 -o " + sample + " > /dev/null"
-        spadesLog = "Assembling alleles for sample:\t" + sample 
-        logging.debug(spadesLog)
-        sys.stderr.write(spadesLog + '\n')
-        try:
-            os.system(spadesCmd)
-        except:
-            spadesErr = "Building assemly failed"
-            logging.error(spadesErr)
-            sys.stderr.write(spadesErr + "\n")
-            if not batch:
-                exit()
-            else:
-                continue
-        src = "./" + sample + "/scaffolds.fasta"
-        dest = "./" + sample + ".fasta"
-        try:
-            shutil.copyfile(src,dest)
-        except IOError as e:
-            cpErr = "Could not copy " + sample + "/scaffolds.fasta\nPlease check the spades.log in " + sample + "/\nThe most likely cause of this error is no assembly could be produced\nbecause not enough reads were selected\n"
-            logging.error(cpErr)
-            sys.stderr.write(cpErr)
-            if not batch:
-                exit()
-            else:
-                continue
-        else:
-            shutil.rmtree(sample, ignore_errors=True)
-            file = tmpdir +'/'+ sample + '.fasta'
-            bed = tmpdir +'/'+ sample + '.bed'
-            sortedFile = tmpdir +'/'+ sample + '.sorted'
-            covOut = tmpdir +'/'+ sample + '.out'
-            bgOut = tmpdir +'/'+ sample + '.bg'
-            with open(file, 'w') as tmpFasta:
-                with open(bed, 'w') as bedFile:
-                    for gene in configDict['loci']:
-                        if gene in results[sample]:
-                            genes = Fasta(configDict['loci'][gene])
-                            allele = gene+'-'+ str(results[sample][gene])
-                            tmpFasta.write('>'+gene+'\n')
-                            bedFile.write(gene+'\t0\t'+str(len(genes[allele]))+'\n')
-                            genelen[gene] = len(genes[allele])
-                            for line in genes[allele]:
-                                tmpFasta.write(str(line)+'\n')
-                        else:
-                            logging.errror(gene + " not found in sample")
-                            sys.stderr.write(gene + " not found in sample")
-                            results[sample][gene] = "NotFound"
-            cmdIndex = "bwa index %s 2>/dev/null"%(file)
-            os.system(cmdIndex)
-            readBWA = sample+'_reads.fq'
-            cmdBwaMem = "bwa mem %s %s 2>/dev/null| samtools view -uS - | samtools sort - -o %s"%(file, readBWA, sortedFile)
-            os.system(cmdBwaMem)    
-            cmdCov = "bedtools coverage -a %s -b %s > %s"%(bed, sortedFile, covOut)
-            os.system(cmdCov)
-            with open(covOut, 'r') as cov:
-                for line in cov.readlines():
-                    records = line.rstrip().rsplit('\t')
-                    gene = records[0]
-                    geneCov = float(records[6]) * 100
-                    results[sample][gene] = results[sample][gene] + " (" + str("%.2f" % geneCov) + ")"
-            aln = {}
-            cmdBg = "bedtools genomecov -d -ibam %s > %s"%(sortedFile, bgOut)
-            os.system(cmdBg)
-            # lastline = open(bgOut, "r").readlines()[-1]
-            all_content = defaultdict(list)
-            with open(bgOut, 'r') as bedgraph:
-                for line in bedgraph:
-                    line = line.rstrip()
-                    line_content = line.split("\t")
-                    gene_name = line_content[0]
-                    all_content[gene_name].append([line_content[1], line_content[2]])
-    
-            for gene in all_content:
-                all_depths = list()
-                for line in all_content[gene]:
-                    all_depths.append(line[1])
-                mean_value = mean(all_depths)
-                sd = stdev(all_depths, mean_value)
-                # threshold_upper = mean_value + 2*sd
-                threshold_lower = mean_value - 3*sd
-                counter = 0
-                # Uncomment the next line to see gene, mean_value, and thresholds
-                # print "{}\t{}\t{}\t{}".format(gene, mean_value, threshold_upper, threshold_lower)
-                covLog = sample + ".log"
-                with open(covLog, 'w') as logfile:
-                    for line in all_content[gene]:
-                        if (int(line[1]) <= threshold_lower):
-                            if counter == 0:
-                                logfile.write("The outliers for {} are:\nPosition\tDepth\n".format(gene))
-                                counter += 1
-                            logfile.write("{}\t{}\n".format(line[0], line[1]))
-                    logfile.close()
-            mkdbCmd = "makeblastdb -dbtype nucl -in " + file + " -out " + tmpdir + "/blastdb > /dev/null"
-            try:
-                os.system(mkdbCmd)
-            except:
-                sys.stderr.write("Could not build blastdb. Continuing but results may be wrong\n")
-                pass
-            blastCmd = "blastn -db " + tmpdir + "/blastdb -query " + sample + ".fasta -outfmt '6 qseqid sseqid bitscore pident sseq sstrand qcovshsp length slen qstart qend qlen' | sort -k 3 -g > " + tmpdir + "/blast.out 2> /dev/null"
-            try:
-                os.system(blastCmd)
-            except:
-                sys.stderr.write("blastn failed. Continuing, but gene names will be wrong\n")
-                pass
-            blastOut = tmpdir + "/blast.out"
-            outfile = open(sample + '.fasta','w')
-            with open(blastOut, 'r') as blastres:
-                for line in blastres.readlines():
-                    cols = line.split()
-                    if len(cols) < 11:
-                        print("BLAST output does not have the 11 columns expected")
-                        exit()
-                    if cols[5] == "minus":
-                        out = reverseComplement(cols[4])
-                    else:
-                        out = cols[4]
-                    perCov = 100.00 * (float(cols[6])/float(cols[7]))
-                    if perCov > 100:
-                        perCov = 100.00
-                    
-                    resCov[sample][cols[1]] = cols[3]
-                    outfile.write(">%s|%s|PercentID=%.2f|Coverage=%.2f\n%s\n"%(cols[1],cols[0],float(cols[3]),perCov,out))
-            outfile.close()
-
-    shutil.rmtree(tmpdir)
-
 #############################################################
 # Function   : mean
 # Input      : List of numbers
@@ -1098,6 +863,7 @@ def makeCustomDB(config, k, output_filename):
                 head = 'profile'
                 configDict[head] = {}
             else:
+                print(line.strip().split())
                 arr = line.strip().split()
                 configDict[head][arr[0]] = arr[1]
     for head in configDict:
@@ -1169,234 +935,6 @@ def checkParams(buildDB, predict, config, k, listMode, list, batch, dir, fastq1,
             print(helpTextSmall)
             print("Error: Specify Configuration file")
             exit(0)
-helpText = """
-Readme for abil-genecaller
-=============================================================================================
-Usage
-./abil-genecaller
-[--buildDB]
-[--predict]
-[-1 filename_fastq1][--fastq1 filename_fastq1]
-[-2 filename_fastq2][--fastq2 filename_fastq2]
-[-d directory][--dir directory][--directory directory]
-[-l list_file][--list list_file]
-[-p][--paired]
-[-s][--single]
-[-c][--config]
-[-P][--prefix]
-[-z][--fuzzy]
-[-a]
-[-C][--coverage]
-[-k]
-[-o output_filename][--output output_filename]
-[-x][--overwrite]
-[-t]
-[-r]
-[-v]
-[-h][--help]
-==============================================================================================
-There are two steps to predicting ST using abil-genecaller.
-1. Create DB : abil-genecaller --buildDB
-2. Predict : abil-genecaller --predict
-1. abil-genecaller --buildDB
-Synopsis:
-abil-genecaller --buildDB -c <config file> -k <kmer length(optional)> -P <DB prefix(optional)>
-    config file : is a tab delimited file which has the information for typing scheme ie loci, its multifasta file and profile definition file.
-        Format :
-            [loci]
-            locus1      locusFile1
-            locus2      locusFile2
-            [profile]
-            profile     profileFile
-    kmer length : is the kmer length for the db. Note, while processing this should be smaller than the read length.
-        We suggest kmer lengths of 35, 66 depending on the read length.
-    DB prefix(optional) : holds the information for DB files to be created and their location. This module creates 3 files with this prefix.
-        You can use a folder structure with prefix to store your db at particular location.
-Required arguments
---buildDB
-    Identifier for build db module
--c,--config = <configuration file>
-    Config file in the format described above.
-    All the files follow the structure followed by pubmlst. Refer extended document for details.
-Optional arguments
--k = <kmer length>
-    Kmer size for which the db has to be formed(Default k = 35). Note the tool works best with kmer length in between 35 and 66
-    for read lengths of 55 to 150 bp. Kmer size can be increased accordingly. It is advised to keep lower kmer sizes
-    if the quality of reads is not very good.
--P,--prefix = <prefix>
-    Prefix for db and log files to be created(Default = kmer). Also you can specify folder where you want the dbb to be created.
--a
-        File location to write build log
--h,--help
-  Prints the help manual for this application
- --------------------------------------------------------------------------------------------
-2. abil-genecaller --predict
-abil-genecaller --predict : can run in three modes
-  1) single sample (default mode)
-  2) batch mode : run abil-genecaller for all the samples in a folder (for a particular specie)
-  3) list mode : run abil-genecaller on samples specified in a file
-abil-genecaller can process both single and paired end files. By default program expects paired end files.
-Synopsis
-abil-genecaller --predict -1 <fastq file> -2 <fastq file> -d <directory location> -l <list file> -p -s -P <DB prefix(optional)> -k <kmer length(optional)> -o <output file> -x
-Required arguments
---predict
-    Identifier for predict miodule
-Optional arguments
--1,--fastq1 = <fastq1_filename>
-  Path to first fastq file for paired end sample and path to the fastq file for single end file.
-  Should have extention fastq or fq.
--2,--fastq2 = <fastq2_filename>
-  Path to second fastq file for paired end sample.
-  Should have extention fastq or fq.
--d,--dir,--directory = <directory>
-  BATCH MODE : Location of all the samples for batch mode.
--C,--coverage
-    Calculate seqence coverage for each allele. Turns on read generation (-r) and turns off fuzzy (-z 1)
-    Requires bwa, bamtools and samtools be in your path
--k = <kmer_length>
-  Kmer length for which the db was created(Default k = 35). Could be verified by looking at the name of the db file.
-  Could be used if the reads are of very bad quality or have a lot of N's.
--l,--list = <list_file>
-  LIST MODE : Location of list file and flag for list mode.
-  list file should have full file paths for all the samples/files.
-  Each sample takes one line. For paired end samples the 2 files should be tab separated on single line.
--o,--output = <output_filename>
-  Prints the output to a file instead of stdio.
--p,--paired
-  Flag for specifying paired end files. Default option so would work the same if you do not specify for all modes.
-  For batch mode the paired end samples should be differentiated by 1/2.fastq or 1/2.fq
--P,--prefix = <prefix>
-    Prefix using which the db was created(Defaults = kmer). The location of the db could also be provided.
--r
-  A seperate reads file is created which has all the reads covering all the locus.
--s,--single
-  Flag for specifying single end files.
--t
-  Time for each analysis will also be reported.
--v
-  Prints the version of the software.
--x,--overwrite
-  By default abil-genecaller appends the results to the output_filename if same name is used.
-  This argument overwrites the previously specified output file.
--z,--fuzzy = <fuzzy threshold int>
-    Threshold for reporting a fuzzy match (Default=300). For higher coverage reads this threshold should be set higher to avoid
-    indicating fuzzy match when exact match was more likely. For lower coverage reads, threshold of <100 is recommended
--h,--help
-  Prints the help manual for this application
-=============================================================================================
-Example usage:
-./abil-genecaller --buildDB
-1) Build DB
- ./abil-genecaller --buildDB --config config.txt -k 35 -P NM
- --------------------------------------------------------------------------------------------
-./abil-genecaller --predict
-1) Single sample, paired end
- ./abil-genecaller --predict -1 data/Neisseria/ERR017001_1.fastq -2 data/Neisseria/ERR017001_2.fastq -p --prefix NM -k 35 -o output.txt
-2) Single sample, single end, overwrite output
-  ./abil-genecaller --predict -1 data/Neisseria/ERR017001_1.fastq -s --prefix NM -k 35 -o output.txt -x
-3) Multiple sample batch mode, paired end
-   ./abil-genecaller --predict -d data/Neisseria/ -p --prefix NM -k 35 -o output.txt -x
-4) Multiple samples list mode, paired end
-   ./abil-genecaller --predict -l data/listFile.txt -p --prefix NM -k 35 -o output.txt -x
-5) Single, high coverage sample, paired end
- ./abil-genecaller --predict -1 data/Neisseria/ERR017001_1.fastq -2 data/Neisseria/ERR017001_2.fastq -p --prefix NM -k 35 -z 1000 -o output.txt
---------------------------------------------------------------------------------------------
-"""
-
-helpTextSmall = """
-Usage
-[--buildDB]
-[--predict]
-[-1 filename_fastq1][--fastq1 filename_fastq1]
-[-2 filename_fastq2][--fastq2 filename_fastq2]
-[-d directory][--dir directory][--directory directory]
-[-l list_file][--list list_file]
-[-p][--paired]
-[-s][--single]
-[-c][--config]
-[-P][--prefix]
-[-z][--fuzzy]
-[-a]
-[-C][--coverage]
-[-k]
-[-o output_filename][--output output_filename]
-[-x][--overwrite]
-[-t]
-[-r]
-[-v]
-[-h][--help]
-==============================================================================================
-buildDB
-Synopsis:
-abil-genecaller --buildDB -c <config file> -k <kmer length(optional)> -P <DB prefix(optional)>
-Required arguments
---buildDB
-    Identifier for build db module
--c,--config = <configuration file>
-    Config file in the format described above.
-    All the files follow the structure followed by pubmlst. Refer extended document for details.
-Optional arguments
--k = <kmer length>
-    Kmer size for which the db has to be formed(Default k = 35). Note the tool works best with kmer length in between 35 and 66
-    for read lengths of 55 to 150 bp. Kmer size can be increased accordingly. It is advised to keep lower kmer sizes
-    if the quality of reads is not very good.
--P,--prefix = <prefix>
-    Prefix for db and log files to be created(Default = kmer). Also you can specify folder where you want the dbb to be created.
--h,--help
-  Prints the help manual for this application
-==============================================================================================
-2. abil-genecaller --predict
-Synopsis
-abil-genecaller --predict -1 <fastq file> -2 <fastq file> -d <directory location> -l <list file> -p -s -P <DB prefix(optional)> -k <kmer length(optional)> -o <output file> -x
-Required arguments
---predict
-    Identifier for predict miodule
-Optional arguments
--1,--fastq1 = <fastq1_filename>
-  Path to first fastq file for paired end sample and path to the fastq file for single end file.
-  Should have extention fastq or fq.
--2,--fastq2 = <fastq2_filename>
-  Path to second fastq file for paired end sample.
-  Should have extention fastq or fq.
--d,--dir,--directory = <directory>
-  BATCH MODE : Location of all the samples for batch mode.
--C,--coverage
-    Calculate seqence coverage for each allele. Turns on read generation (-r) and turns off fuzzy (-z 1)
-    Requires bwa, bamtools and samtools be in your path
--k = <kmer_length>
-  Kmer length for which the db was created(Default k = 35). Could be verified by looking at the name of the db file.
-  Could be used if the reads are of very bad quality or have a lot of N's.
--l,--list = <list_file>
-  LIST MODE : Location of list file and flag for list mode.
-  list file should have full file paths for all the samples/files.
-  Each sample takes one line. For paired end samples the 2 files should be tab separated on single line.
--o,--output = <output_filename>
-  Prints the output to a file instead of stdio.
--p,--paired
-  Flag for specifying paired end files. Default option so would work the same if you do not specify for all modes.
-  For batch mode the paired end samples should be differentiated by 1/2.fastq or 1/2.fq
--P,--prefix = <prefix>
-    Prefix using which the db was created(Defaults = kmer). The location of the db could also be provided.
--r
-  A seperate reads file is created which has all the reads covering all the locus.
--s,--single
-  Flag for specifying single end files.
--t
-  Time for each analysis will also be reported.
--v
-  Prints the version of the software.
--x,--overwrite
-  By default abil-genecaller appends the results to the output_filename if same name is used.
-  This argument overwrites the previously specified output file.
--z,--fuzzy = <fuzzy threshold int>
-    Threshold for reporting a fuzzy match (Default=300). For higher coverage reads this threshold should be set higher to avoid
-    indicating fuzzy match when exact match was more likely. For lower coverage reads, threshold of <100 is recommended
--h,--help
-  Prints the help manual for this application
-=============================================================================================
-
-
-"""
 
 """The Program Starts Execution Here"""
 """Default Params"""
@@ -1407,7 +945,7 @@ output_filename = None
 batch = False
 listMode = False
 overwrite = False
-paired = True
+paired = False
 fastq1 = None
 fastq2 = None
 user_k = False
@@ -1526,14 +1064,6 @@ elif predict is True:
     else:
         results = {}
         results = singleSampleTool(fastq1, fastq2, paired, k, results)
-    if coverage is True:
-        try:
-            from pyfaidx import Fasta
-        except ImportError:
-            print("pyfaidx is required for coverage calculation\npip install pyfaidx")
-            exit(0)
-        loadConfig(config)
-        getCoverage(results)
     printResults(results, output_filename, overwrite, timeDisp)
 else:
     print(helpTextSmall)
