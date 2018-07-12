@@ -305,20 +305,20 @@ predict part starts here
 """
 
 ############################################################
-# Function   : batchTool
-# Input      : Directory name, paired or single, k value
-# Output     : STs and allelic profiles for each FASTQ file
-# Description: Processes all FASTQ files present in the input
-#              directory
-#############################################################
 helpTextSmall = "help"
 helpText = "HELP"
 def batchTool(fdir, paired, k):
+    """
+    Function   : batchTool
+    Input      : Directory name, paired or single, k value
+    Output     : STs and allelic profiles for each FASTQ file
+    Description: Processes all FASTQ files present in the input directory
+    """
     fileList = []
-    if not dir.endswith('/'):
+    if not directory.endswith('/'):
         fdir += '/'
     for inputFile in os.listdir(fdir):
-        if paired is True:
+        if paired:
             if \
                 inputFile.endswith('1.fastq') or \
                 inputFile.endswith('1.fq') or \
@@ -340,14 +340,14 @@ def batchTool(fdir, paired, k):
 
     results = multiSampleTool(fileList, paired, k)
     return results
-#############################################################
-# Function   : singleSampleTool
-# Input      : fastq file 1 and 2, paired or single, k value, output dictionary
-# Output     : STs and allelic profiles for each FASTQ file
-# Description: Processes both FASTQ files passed to the function
-#############################################################
 def singleSampleTool(fastq1, fastq2, paired, k, results):
-    if reads is True:
+    """
+    Function   : singleSampleTool
+    Input      : fastq file 1 and 2, paired or single, k value, output dictionary
+    Output     : STs and allelic profiles for each FASTQ file
+    Description: Processes both FASTQ files passed to the function
+    """
+    if reads:
         readFileName = fastq1.split('/')[-1].split('.')[0][:-1] + '_reads.fq'
         global readFile
         readFile = open(readFileName, 'w+')
@@ -363,9 +363,9 @@ def singleSampleTool(fastq1, fastq2, paired, k, results):
     logging.debug(f"Temporary directory: {tmpdir}")
     logging.debug(f"Preprocessing: Merging {fastq1} and {fastq2}")
     vsearch_cmd = f"vsearch --fastq_mergepairs {fastq1} --reverse {fastq2} --fastqout {tmpdir}/reads.fq 2> {fastq1.split('/')[-1].split('.')[0][:-1]}.merge.log 1>/dev/null"
-    logging.debug("Preprocessing: VSEARCH command\n\t{}".format(vsearch_cmd))
+    logging.debug(f"Preprocessing: VSEARCH command\n\t{vsearch_cmd}")
     os.system(vsearch_cmd)
-    singleFileTool(tmpdir, k, sName)
+    readProcessor(tmpdir, k, sName)
     shutil.rmtree(tmpdir)
     if kCount == {}:
         string = f"No k-mer matches were found for the sample {fastq1} and {fastq2}"
@@ -374,28 +374,26 @@ def singleSampleTool(fastq1, fastq2, paired, k, results):
         print(string)
 #           exit(0)
     profileCount = alleleCount
-    logging.debug("singleSampleTool : weightedProfile start")
+    logging.debug("Post-processing: Adjusting counts based on marker size")
     weightedProfile = weightedProf(profileCount, weightDict)
-    logging.debug("singleSampleTool : weightedProfile finished")
-    logging.debug("singleSampleTool : getMaxCount start")
+    # logging.debug("Analysis: getMaxCount start")
     # finalProfile = getMaxCount(weightedProfile, fileName)
     # print(weightedProfile)
-    logging.debug("singleSampleTool : getMaxCount end")
+    # logging.debug("Analysis: getMaxCount end")
     st = 0
     if profileFile != '':
-        logging.debug("singleSampleTool : findST start")
+        logging.debug("Post-processing: Finding most likely phenotypes and markers")
         # st = findST(finalProfile, stProfile)
-        logging.debug("singleSampleTool : findST end")
-    if reads is True:
-        readFile.close()
+        # logging.debug("singleSampleTool : findST end")
+    if reads: readFile.close()
     return kCount
-#############################################################
-# Function   : singleFileTool
-# Input      : fastq file, k value
-# Output     : Edits a global dictionary - results
-# Description: Processes the single fastq file
-#######################################q######################
-def singleFileTool(fastq, k, sName):
+def readProcessor(fastq, k, sName):
+    """
+    Function   : readProcessor
+    Input      : fastq file, k value
+    Output     : Edits a global dictionary - results
+    Description: Processes the single fastq file
+    """
     fastq = "/".join([fastq, "reads.fq"])
     msg = f"Analysis: Begin processing merged reads ({fastq})"
     logging.debug(msg)
@@ -433,13 +431,13 @@ def singleFileTool(fastq, k, sName):
             t3 = time.time()
     else:
         logging.error(f"ERROR: File does not exist: {fastq}")
-#############################################################
-# Function   : goodReads
-# Input      : sequence read, k, step size
-# Output     : Edits the count of global variable alleleCount
-# Description: Increment the count for each k-mer match
-#############################################################
 def countKmers(read, k, sName):
+    """
+    Function   : goodReads
+    Input      : sequence read, k, step size
+    Output     : Edits the count of global variable alleleCount
+    Description: Increment the count for each k-mer match
+    """
     alleleCount = {}
     n = 0
     line = read.rstrip()
@@ -467,13 +465,13 @@ def countKmers(read, k, sName):
         kCount[sName][alleleNumber] += 1
     else:
         kCount[sName][alleleNumber] = 1
-#############################################################
-# Function   : weightedProf
-# Input      : allele count global var, weight factors
-# Output/Desc: Normalizes alleleCount by weight factor
-#############################################################
 def weightedProf(alleleCount, weightDict):
-    logging.debug("weightedProf")
+    """
+    Function   : weightedProf
+    Input      : allele count global var, weight factors
+    Output/Desc: Normalizes alleleCount by weight factor
+    """
+    # logging.debug("weightedProf")
     weightedDict = {}
     for loc in alleleCount:
         weightedDict[loc] = {}
@@ -487,14 +485,13 @@ def weightedProf(alleleCount, weightDict):
                 weightedDict[loc][allele] = alleleCount[loc][allele]
     return weightedDict
 
-#############################################################
-# Function   : loadModule
-# Input      : k value and prefix of the DB file
-# Output     : Updates the DB dictionary variables
-# Description: Used in loading the DB as set of variables
-#              by calling other functions
-#############################################################
 def loadModule(k, dbPrefix):
+    """
+    Function   : loadModule
+    Input      : k value and prefix of the DB file
+    Output     : Updates the DB dictionary variables
+    Description: Used in loading the DB as set of variables by calling other functions
+    """
     global dbFile
     dbFile = dbPrefix+'_'+str(k)+'.txt'
     global weightFile
@@ -509,13 +506,13 @@ def loadModule(k, dbPrefix):
     global stProfile
     stProfile = loadSTfromFile(profileFile)
     loadConfig(config)
-#############################################################
-# Function   : loadSTfromFile
-# Input      : profile definition file
-# Output     : Updates the DB dictionary variables
-# Description: Used in loading the DB as set of variables
-#############################################################
 def loadSTfromFile(profileF):
+    """
+    Function   : loadSTfromFile
+    Input      : profile definition file
+    Output     : Updates the DB dictionary variables
+    Description: Used in loading the DB as set of variables
+    """
     with open(profileF, 'r') as definitionFile:
         st = {}
         index = {}
@@ -531,16 +528,15 @@ def loadSTfromFile(profileF):
                     l[locus] = pro[index[locus]]
                 except LookupError:
                     logging.debug("ERROR while loading ST")
-                    pass
             st[pro[0]] = l
     return st
-#############################################################
-# Function   : loadKmerDict
-# Input      : DB prefix
-# Output     : Updates the DB dictionary variables
-# Description: Used in loading the DB as set of variables
-#############################################################
 def loadKmerDict(dbFile):
+    """
+    Function   : loadKmerDict
+    Input      : DB prefix
+    Output     : Updates the DB dictionary variables
+    Description: Used in loading the DB as set of variables
+    """
     kmerTableDict = {}
     with open(dbFile, 'r') as kmerTableFile:
         lines = kmerTableFile.readlines()
@@ -549,13 +545,13 @@ def loadKmerDict(dbFile):
             kmerTableDict[array[0]] = {}
             kmerTableDict[array[0]][array[1]] = array[2][1:-1].rsplit(',')
     return kmerTableDict
-#############################################################
-# Function   : loadWeightDict
-# Input      : Weight file prefix
-# Output     : Updates the DB dictionary variables
-# Description: Used in loading the DB as set of variables
-#############################################################
 def loadWeightDict(weightFile):
+    """
+    Function   : loadWeightDict
+    Input      : Weight file prefix
+    Output     : Updates the DB dictionary variables
+    Description: Used in loading the DB as set of variables
+    """
     weightDict = {}
     with open(weightFile, 'r') as weightTableFile:
         lines = weightTableFile.readlines()
@@ -570,13 +566,13 @@ def loadWeightDict(weightFile):
                 weightDict[loc] = {}
             weightDict[loc][allele] = float(array[1])
     return weightDict
-#############################################################
-# Function   : loadConfig
-# Input      : config file path from getopts
-# Output     : Updates configDict
-# Description: Used to find allele fasta files for getCoverage
-#############################################################
+
 def loadConfig(config):
+    """
+    Function   : loadConfig Input      : config file path from getopts
+    Output     : Updates configDict
+    Description: Used to find allele fasta files for getCoverage
+    """
     global configDict
     configDict = {}
     with open(config) as configFile:
@@ -601,13 +597,13 @@ def loadConfig(config):
                 exit(0)
     return configDict
 
-#############################################################
-# Function   : printResults
-# Input      : results, output file, overwrite?
-# Output     : Prints on the screen or in a file
-# Description: Prints the results in the format asked by the user
-#############################################################
 def printResults(results, output_filename, overwrite, timeDisp):
+    """
+    Function   : printResults
+    Input      : results, output file, overwrite?
+    Output     : Prints on the screen or in a file
+    Description: Prints the results in the format asked by the user
+    """
     if output_filename != None:
         if overwrite is False:
             outfile = open(output_filename, "a")
@@ -633,14 +629,17 @@ def printResults(results, output_filename, overwrite, timeDisp):
                 sample += "\t0"
 
         if output_filename != None:
-            outfile.write(sample)
-            outfile.write('\n')
+            outfile.write(f"{sample}\n")
         else:
             print(sample)
-"""Predict part ends here"""
-"""Build DB part starts"""
-"""Returns the reverse complement of the sequence"""
+################################################################################
+# Predict part ends here
+################################################################################
 def reverseComplement(seq):
+    """
+    Build DB part starts
+    Returns the reverse complement of the sequence
+    """
     seqU = seq.upper()
     seq_dict = {'A':'T', 'T':'A',
                 'G':'C', 'C':'G', 'Y':'R',
@@ -651,14 +650,14 @@ def reverseComplement(seq):
     except Exception:
         strn = "Reverse Complement Error:" + seqU
         logging.debug(strn)
-        pass
-#############################################################
-# Function   : getFastaDict
-# Input      : locus file name
-# Output     : dictionary with all the allele sequences
-# Description: Stores each allele sequence in a dictionary
-#############################################################
+
 def getFastaDict(fullLocusFile):
+    """
+    Function   : getFastaDict
+    Input      : locus file name
+    Output     : dictionary with all the allele sequences
+    Description: Stores each allele sequence in a dictionary
+    """
     logging.debug("Create Fasta Dict")
     logging.debug(fullLocusFile)
     fastaFile = open(fullLocusFile, 'r').read()
@@ -669,13 +668,14 @@ def getFastaDict(fullLocusFile):
         sequence = ''.join(entry.split('\n')[1:]).rstrip()
         fastaDict[key] = {'sequence':sequence}
     return fastaDict
-#############################################################
-# Function   : formKmerDB
-# Input      : configuration file, k value, output prefix
-# Output     : abil-genecaller DB
-# Description: Constructs the k-mer DB in both strand orientation
-#############################################################
+
 def formKmerDB(configDict, k, output_filename):
+    """
+    Function   : formKmerDB
+    Input      : configuration file, k value, output prefix
+    Output     : abil-genecaller DB
+    Description: Constructs the k-mer DB in both strand orientation
+    """
     dbFileName = output_filename+'_'+str(k)+'.txt'
     weightFileName = output_filename+'_weight.txt'
     kmerDict = {}
@@ -739,21 +739,27 @@ def formKmerDB(configDict, k, output_filename):
                 s = allele  + '\t' + str(fac) + '\n'
                 if fac > 1.05 or fac < 0.95:
                     wfile.write(s)
-"""Copies the profile definition file as a new file"""
+
 def copyProfileFile(profileDict, output_filename):
+    """
+    Function   : copyProfileFile
+    Input      : profileDict
+    Output     : None
+    Description: Duplicated profile file for db
+    """
     profileFileName = output_filename+'_profile.txt'
     with open(profileDict['profile']) as f:
         lines = f.readlines()
         with open(profileFileName, "w") as f1:
             f1.writelines(lines)
-#############################################################
-# Function   : makeCustomDB
-# Input      : configuration file, k value, output prefix
-# Output     : None
-# Description: Processes the config file and calls the relevant
-#              function
-#############################################################
+
 def makeCustomDB(config, k, output_filename):
+    """
+    Function   : makeCustomDB
+    Input      : configuration file, k value, output prefix
+    Output     : None
+    Description: Processes the config file and calls the relevant function
+    """
     configDict = {}
     if output_filename == None:
         output_filename = 'kmerDB'
@@ -780,19 +786,24 @@ def makeCustomDB(config, k, output_filename):
                 exit(0)
     formKmerDB(configDict, k, output_filename)
     copyProfileFile(configDict['profile'], output_filename)
-"""Build DB part ends"""
-"""Check Parameters"""
-def checkParams(buildDB, predict, config, k, batch, dir, fastq1, fastq2, dbPrefix):
-    if predict is True and buildDB is True:
+
+################################################################################
+# Build DB part ends
+# Check Parameters
+################################################################################
+
+
+def checkParams(buildDB, predict, config, k, batch, directory, fastq1, fastq2, dbPrefix):
+    if predict and buildDB:
         print(helpTextSmall)
         print("Select either predict or buildDB module")
         exit(0)
-    if predict is False and buildDB is False:
+    if not predict and not buildDB:
         print(helpTextSmall)
         print("Select either predict or buildDB module")
         exit(0)
-    if predict is True:
-        if config is None and coverage is True:
+    if predict:
+        if config is None and coverage:
             print(helpTextSmall)
             print("Config parameter is required.")
             exit(0)
@@ -808,17 +819,17 @@ def checkParams(buildDB, predict, config, k, batch, dir, fastq1, fastq2, dbPrefi
             print(helpTextSmall)
             print("DB file does not exist : ", dbPrefix, '_profile.txt or change DB prefix.')
             exit(0)
-        if listMode is True:
+        if listMode:
             if not os.path.isfile(fList):
                 print(helpTextSmall)
                 print("Error: List file ("+fList+") does not exist!")
                 exit(0)
-        elif batch is True:
-            if not os.path.isdir(dir):
+        elif batch:
+            if not os.path.isdir(directory):
                 print(helpTextSmall)
-                print("Error: Directory ("+dir+") does not exist!")
+                print("Error: Directory ("+directory+") does not exist!")
                 exit(0)
-        elif paired is True:
+        elif paired:
             if not os.path.isfile(fastq1):
                 print(helpTextSmall)
                 print("Error: FASTQ file ("+fastq1+") does not exist!")
@@ -827,12 +838,12 @@ def checkParams(buildDB, predict, config, k, batch, dir, fastq1, fastq2, dbPrefi
                 print(helpTextSmall)
                 print("Error: FASTQ file ("+fastq2+") does not exist!")
                 exit(0)
-        elif paired is False:
+        elif not paired:
             if not os.path.isfile(fastq1):
                 print(helpTextSmall)
                 print("Error: FASTQ file ("+fastq1+") does not exist!")
                 exit(0)
-    if buildDB is True:
+    if buildDB:
         try:
             if not os.path.isfile(config):
                 print(helpTextSmall)
@@ -843,8 +854,10 @@ def checkParams(buildDB, predict, config, k, batch, dir, fastq1, fastq2, dbPrefi
             print("Error: Specify Configuration file")
             exit(0)
 
-"""The Program Starts Execution Here"""
-"""Default Params"""
+################################################################################
+# The Program Starts Execution Here
+# Default Params
+################################################################################
 
 buildDB = False
 predict = False
@@ -864,6 +877,7 @@ log = ''
 k = 35
 fuzzy = 5
 coverage = True
+directory = None
 
 """Input arguments"""
 options, remainder = getopt.getopt(sys.argv[1:], 'o:x1:2:kbd:phP:c:trva:', [
@@ -908,7 +922,7 @@ for opt, arg in options:
     elif opt in ('-2', '--fastq2'):
         fastq2 = arg
     elif opt in ('-d', '--dir', '--directory'):
-        dir = arg
+        directory = arg
         batch = True
     elif opt in '-t':
         timeDisp = True
@@ -922,8 +936,8 @@ for opt, arg in options:
     elif opt in ('-h', '--help'):
         print(helpText)
         exit(0)
-checkParams(buildDB, predict, config, k, batch, dir, fastq1, fastq2, dbPrefix)
-if buildDB is True:
+checkParams(buildDB, predict, config, k, batch, directory, fastq1, fastq2, dbPrefix)
+if buildDB:
     try:
         if not log:
             log = dbPrefix+'.log'
@@ -938,7 +952,7 @@ if buildDB is True:
         makeCustomDB(config, k, dbPrefix)
     else:
         print("Error: The input config file "+config +" does not exist.")
-elif predict is True:
+elif predict:
     try:
         if not log:
             log = dbPrefix+'.log'
@@ -946,12 +960,12 @@ elif predict is True:
         log = 'kmer.log'
     logging.basicConfig(filename=log, level=logging.DEBUG,
                         format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-    logging.debug("================================================================================")
-    logging.debug("Command: {}".format(" ".join(sys.argv)))
+    logging.debug("==============================================================================")
+    logging.debug(f"Command: {' '.join(sys.argv)}")
     logging.debug("Starting Marker Prediction")
     loadModule(k, dbPrefix)
-    if batch is True:
-        results = batchTool(dir, paired, k)
+    if batch:
+        results = batchTool(directory, paired, k)
     else:
         results = {}
         results = singleSampleTool(fastq1, fastq2, paired, k, results)
@@ -959,4 +973,3 @@ elif predict is True:
 else:
     print("Error: Please select the mode")
     print("--buildDB (for database building) or --predict (for marker discovery)")
-    
