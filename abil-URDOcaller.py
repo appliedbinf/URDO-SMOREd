@@ -9,22 +9,15 @@ import gzip
 import re
 import tempfile
 import shutil
-import xml.etree.ElementTree as ET
-try:
-    from urllib.request import urlopen, urlretrieve
-except ImportError:
-        from urllib import urlopen, urlretrieve
 import argparse
-import math
-from collections import defaultdict
 from itertools import islice
 import operator
 import sys
 version = """ abil-genecaller v1 (updated : March 29, 2018) """
 """
-abil-genecaller free for academic users and requires permission before any 
-commercial or government usage use for any version of this code/algorithm. 
-If you are a commercial or governmental user, please contact abil@ihrc.com 
+abil-genecaller free for academic users and requires permission before any
+commercial or government usage use for any version of this code/algorithm.
+If you are a commercial or governmental user, please contact abil@ihrc.com
 for permissions.
 
 For additional terms and conditions for government employees, see
@@ -257,7 +250,7 @@ Definitions
 "Applied Bioformatics Laboratory" and "ABiL" refer to the Applied
 Bioinformatics Laboratory, a public-private partnership between IHRC Inc. and
 Georgia Institute of Technology, 950 Atlantic Drive / Engineered Biosystems
-Building, Room 2200 /Atlanta, GA 30332.  "You" or "Your" refers to the 
+Building, Room 2200 /Atlanta, GA 30332.  "You" or "Your" refers to the
 state, federal or other governmental institutions and their respective
 employees or contractors using this program.
 "Employees" refers to persons employed directly by You. "Contractors" refers to
@@ -269,7 +262,7 @@ refers to normal work duties that may require the use of this Program.
 for the usage of this Program.  "Python" refers to the Python programming
 language (www.python.org), and is under separate terms and conditions.
 
-Additional License Rights and Restrictions 
+Additional License Rights and Restrictions
 
 ABiL grants You nonexclusive rights for the use of this Program, subject to the
 restrictions within this License.  This Program is provided as-is with no
@@ -277,23 +270,23 @@ warranty or assumption of responsibility from ABiL. You use this Program at Your
 risk and this Program is not suitable for medical diagnosis or other healthcare
 application.  ABiL grants You the right to utilize this Program (a) internally
 for the expressed purpose of conducting Research and related duties; (b) to make
-copies of and distribute this Program internally for the expressed purpose of 
+copies of and distribute this Program internally for the expressed purpose of
 conducting Research. You may allow your Contractors to utilize this program given
-(a) You agree to enforce this License; (b) Contractors are under contract in 
-such a way that ABIL's intellectual property rights are protected; and (c) any 
-redistribution is to computer systems owned and operated by You and utilized 
+(a) You agree to enforce this License; (b) Contractors are under contract in
+such a way that ABIL's intellectual property rights are protected; and (c) any
+redistribution is to computer systems owned and operated by You and utilized
 by Contractors for the sole, expressed purpose of conducting Research for You.
 
-You may not: 
+You may not:
 
 1)  remove or otherwise obfuscate this License or other marks and
-    attribution to ABiL contained within this Program; 
-2)  redistribute or otherwise transfer this Program to systems or persons not 
+    attribution to ABiL contained within this Program;
+2)  redistribute or otherwise transfer this Program to systems or persons not
     employed or contracted by You;
 3)  make use of the source code, algorithms, or other intellectual property
-    contained within this Program for any purpose other than running this Program; 
-4)  cause or allow the unauthorized usage, reproduction or transfer of this 
-    Program. 
+    contained within this Program for any purpose other than running this Program;
+4)  cause or allow the unauthorized usage, reproduction or transfer of this
+    Program.
 
 ABiL reserves all rights not expressly granted within this License.  If You wish
 to use this Program for any purpose other than those expressly granted under this
@@ -306,7 +299,8 @@ Please refer to the license terms for each module for additional information.
 The program has 3 basic modes :
     mainTool: for single sample (both single and paired end)
     batchTool: for multiple samples stored at a common location (both single and paired end samples)
-    listTool: for multiple samples with location information stored in a list (both single and paired end samples)
+    listTool: for multiple samples with location information stored in a list
+        (both single and paired end samples)
 predict part starts here
 """
 
@@ -317,22 +311,33 @@ predict part starts here
 # Description: Processes all FASTQ files present in the input
 #              directory
 #############################################################
-helpTextSmall="help"
-helpText="HELP"
+helpTextSmall = "help"
+helpText = "HELP"
 def batchTool(fdir, paired, k):
     fileList = []
     if not dir.endswith('/'):
         fdir += '/'
     for inputFile in os.listdir(fdir):
         if paired is True:
-            if inputFile.endswith('1.fastq') or inputFile.endswith('1.fq') or inputFile.endswith('1.fq.gz') or inputFile.endswith('1.fastq.gz'):
+            if \
+                inputFile.endswith('1.fastq') or \
+                inputFile.endswith('1.fq') or \
+                inputFile.endswith('1.fq.gz') or \
+                inputFile.endswith('1.fastq.gz')\
+            :
                 fastq1 = fdir+inputFile
                 fastq2 = fdir+inputFile.replace('1.', '2.')
                 fileList.append((fastq1, fastq2))
         else:
-            if inputFile.endswith('.fastq') or inputFile.endswith('.fq') or inputFile.endswith('.fq.gz') or inputFile.endswith('.fastq.gz'):
+            if \
+                inputFile.endswith('.fastq') or \
+                inputFile.endswith('.fq') or \
+                inputFile.endswith('.fq.gz') or \
+                inputFile.endswith('.fastq.gz')\
+            :
                 fastq1 = fdir + inputFile
                 fileList.append(fastq1)
+
     results = multiSampleTool(fileList, paired, k)
     return results
 #############################################################
@@ -363,7 +368,8 @@ def singleSampleTool(fastq1, fastq2, paired, k, results):
     singleFileTool(tmpdir, k, sName)
     shutil.rmtree(tmpdir)
     if kCount == {}:
-        string = f"No k-mer matches were found for the sample {fastq1} and {fastq2}\n\tProbable cause of the error:  low quality data/too many N's in the data"
+        string = f"No k-mer matches were found for the sample {fastq1} and {fastq2}"
+        string += f"\n\tProbable cause of the error:  low quality data/too many N's in the data"
         logging.error(f"ERROR: {string}")
         print(string)
 #           exit(0)
@@ -390,7 +396,7 @@ def singleSampleTool(fastq1, fastq2, paired, k, results):
 # Description: Processes the single fastq file
 #######################################q######################
 def singleFileTool(fastq, k, sName):
-    fastq = "/".join([fastq,"reads.fq"])
+    fastq = "/".join([fastq, "reads.fq"])
     msg = f"Analysis: Begin processing merged reads ({fastq})"
     logging.debug(msg)
     if os.path.isfile(fastq):
@@ -403,11 +409,11 @@ def singleFileTool(fastq, k, sName):
         f = open(fastq)
         for lines in iter(lambda: tuple(islice(f, 4)), ()):
             if len(lines) < 4:
-                dbg = "ERROR: Input file is truncated.  Please verify the input FASTQ files are correct"
+                dbg = "ERROR: Please verify the input FASTQ files are correct"
                 logging.debug(dbg)
             try:
                 if len(lines[1]) < k:
-                    m1 = f"ERROR: Read ID: {[0][1:]}  is  length {len(lines[1])} in {file} smaller than {k}"
+                    m1 = f"ERROR: Read ID: {[0][1:]} is length {len(lines[1])} and < {k}"
                     print(m1)
                     logging.debug(m1)
                     return 0
@@ -451,9 +457,9 @@ def countKmers(read, k, sName):
                     else:
                         alleleCount[probLoc][allele] = 1
         n += 1
-    # print(max(alleleCount['allele'].items(), key=operator.itemgetter(1))[0])
-    # print(alleleCount['allele'][max(alleleCount['allele'].items(), key=operator.itemgetter(1))[0]])
-    # print()
+# print(max(alleleCount['allele'].items(), key=operator.itemgetter(1))[0])
+# print(alleleCount['allele'][max(alleleCount['allele'].items(), key=operator.itemgetter(1))[0]])
+# print()
     alleleNumber = max(alleleCount['allele'].items(), key=operator.itemgetter(1))[0]
     alleleKcount = alleleCount['allele'][max(alleleCount['allele'].items(), key=operator.itemgetter(1))[0]]
     if alleleNumber in kCount[sName]:
@@ -556,10 +562,10 @@ def loadWeightDict(weightFile):
         for line in lines:
             array = line.rstrip().rsplit('\t')
             try:
-               (loc, allele) =  array[0].replace('-','_').rsplit('_',1)
+                (loc, allele) = array[0].replace('-', '_').rsplit('_', 1)
             except ValueError:
                 print("Error : Allele name in locus file should be seperated by '_' or '-'")
-                exit(0) 
+                exit(0)
             if loc not in weightDict:
                 weightDict[loc] = {}
             weightDict[loc][allele] = float(array[1])
@@ -624,8 +630,8 @@ def printResults(results, output_filename, overwrite, timeDisp):
             if stProfile[gene]['allele'] in results[s]:
                 sample += "\t" + str(results[s][stProfile[gene]['allele']])
             else:
-                sample += "\t0" 
-        
+                sample += "\t0"
+
         if output_filename != None:
             outfile.write(sample)
             outfile.write('\n')
@@ -636,7 +642,10 @@ def printResults(results, output_filename, overwrite, timeDisp):
 """Returns the reverse complement of the sequence"""
 def reverseComplement(seq):
     seqU = seq.upper()
-    seq_dict = {'A':'T', 'T':'A', 'G':'C', 'C':'G', 'Y':'R', 'R':'Y', 'S':'S', 'W':'W', 'K':'M', 'M':'K', 'N':'N'}
+    seq_dict = {'A':'T', 'T':'A',
+                'G':'C', 'C':'G', 'Y':'R',
+                'R':'Y', 'S':'S', 'W':'W',
+                'K':'M', 'M':'K', 'N':'N'}
     try:
         return "".join([seq_dict[base] for base in reversed(seqU)])
     except Exception:
@@ -683,11 +692,11 @@ def formKmerDB(configDict, k, output_filename):
             sum += l
             n += 1
             try:
-                (loc, num) =  allele.replace('-','_').rsplit('_',1)
+                (loc, num) = allele.replace('-', '_').rsplit('_', 1)
             except ValueError:
                 print("Error : Allele name in locus file should be seperated by '_' or '-'")
-                exit(0) 
-            splitId =  allele.replace('-','_').rsplit('_',1)
+                exit(0)
+            splitId = allele.replace('-', '_').rsplit('_', 1)
             i = 0
             while i+k <= l:
                 kmer = seq[i:i+k]
@@ -920,7 +929,8 @@ if buildDB is True:
             log = dbPrefix+'.log'
     except TypeError:
         log = 'kmer.log'
-    logging.basicConfig(filename=log, level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.basicConfig(filename=log, level=logging.DEBUG,
+                        format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
     if os.path.isfile(config):
         print("Info: Making DB for k = ", k)
         print("Info: Making DB with prefix =", dbPrefix)
@@ -934,7 +944,8 @@ elif predict is True:
             log = dbPrefix+'.log'
     except TypeError:
         log = 'kmer.log'
-    logging.basicConfig(filename=log, level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.basicConfig(filename=log, level=logging.DEBUG,
+                        format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
     logging.debug("================================================================================")
     logging.debug("Command: {}".format(" ".join(sys.argv)))
     logging.debug("Starting Marker Prediction")
@@ -946,7 +957,6 @@ elif predict is True:
         results = singleSampleTool(fastq1, fastq2, paired, k, results)
     printResults(results, output_filename, overwrite, timeDisp)
 else:
-    print("Error: Please select the mode: buildDB (for database building) or predict (for marker discovery)")
-
-
-
+    print("Error: Please select the mode")
+    print("--buildDB (for database building) or --predict (for marker discovery)")
+    
