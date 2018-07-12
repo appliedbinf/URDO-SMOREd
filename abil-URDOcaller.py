@@ -309,13 +309,7 @@ The program has 3 basic modes :
     listTool: for multiple samples with location information stored in a list (both single and paired end samples)
 predict part starts here
 """
-#############################################################
-# Function   : get_links
-# Input      : speciesName and schemes dict
-# Output     : Dict containing links to alleles and profile
-# Description: Gets the URLs from pubMLST for the required
-#              files (alleles, profile)
-#############################################################
+
 ############################################################
 # Function   : batchTool
 # Input      : Directory name, paired or single, k value
@@ -342,97 +336,38 @@ def batchTool(fdir, paired, k):
     results = multiSampleTool(fileList, paired, k)
     return results
 #############################################################
-# Function   : listTool
-# Input      : List file, paired or single, k value
-# Output     : STs and allelic profiles for each FASTQ file
-# Description: Processes all FASTQ files present in the input
-#              list file
-#############################################################
-def listTool(fList, paired, k):
-    fileList = []
-    listf = open(fList, 'r')
-    samples = listf.readlines()
-    for sample in samples:
-        if paired is True:
-            s = sample.strip().split()
-            fastq1 = s[0]
-            try:
-                fastq2 = s[1]
-            except IndexError:
-                print("Error: Paired end files should be whitespace/tab seperated")
-                exit(0)
-            fileList.append((fastq1, fastq2))
-        else:
-            fastq1 = sample.rstrip()
-            fileList.append(fastq1)
-    results = multiSampleTool(fileList, paired, k)
-    return results
-#############################################################
-# Function   : multiSampleTool
-# Input      : List of files to process, paired or single, k value
-# Output     : STs and allelic profiles for each FASTQ file
-# Description: Processes all FASTQ files present in the input list
-#############################################################
-def multiSampleTool(fileList, paired, k):
-    results = {}
-    for sample in fileList:
-        if paired is True:
-            fastq1 = sample[0]
-            fastq2 = sample[1]
-        else:
-            fastq1 = sample
-            fastq2 = None
-        results = singleSampleTool(fastq1, fastq2, paired, k, results)
-    return results
-#############################################################
 # Function   : singleSampleTool
 # Input      : fastq file 1 and 2, paired or single, k value, output dictionary
 # Output     : STs and allelic profiles for each FASTQ file
 # Description: Processes both FASTQ files passed to the function
 #############################################################
 def singleSampleTool(fastq1, fastq2, paired, k, results):
-    if paired is True:
-        fileName = fastq1.split('/')[-1].split('.')[0][:-1]
-    else:
-        fileName = fastq1.split('/')[-1].split('.')[0]
     if reads is True:
-        readFileName = fileName + '_reads.fq'
+        readFileName = fastq1.split('/')[-1].split('.')[0][:-1] + '_reads.fq'
         global readFile
         readFile = open(readFileName, 'w+')
-    if paired is True:
-        msg = "singleSampleTool : " + fastq1 + ' and ' + fastq2
-    else:
-        msg = "singleSampleTool : " + fastq1
+    sName = fastq1.split('_')[1]
+    msg = f"Preprocessing: working with {fastq1} and {fastq2}"
     logging.debug(msg)
     global alleleCount
     alleleCount = {}
     global kCount
     kCount = {}
     t1 = time.time()
-    if paired is True:
-        logging.debug("singleSampleTool : paired True")
-        logging.debug("singleSampleTool : fastq1 start")
-        singleFileTool(fastq1, k)
-        logging.debug("singleSampleTool : fastq1 done")
-        logging.debug("singleSampleTool : fastq2 start")
-        singleFileTool(fastq2, k)
-        logging.debug("singleSampleTool : fastq2 done")
-        if alleleCount == {}:
-            string = "No k-mer matches were found for the sample " + fastq1 + " and "+ fastq2 + ".  Probable cause of the error:  low quality data/too many N's in the data"
-            logging.error("singleSampleTool : " + string)
-            print(string)
+    tmpdir = tempfile.mkdtemp()
+    logging.debug(f"Temporary directory: {tmpdir}")
+    logging.debug(f"Preprocessing: Merging {fastq1} and {fastq2}")
+    vsearch_cmd = f"vsearch --fastq_mergepairs {fastq1} --reverse {fastq2} --fastqout {tmpdir}/reads.fq 2> {fastq1.split('/')[-1].split('.')[0][:-1]}.merge.log 1>/dev/null"
+    logging.debug("Preprocessing: VSEARCH command\n\t{}".format(vsearch_cmd))
+    os.system(vsearch_cmd)
+    singleFileTool(tmpdir, k, sName)
+    shutil.rmtree(tmpdir)
+    if kCount == {}:
+        string = f"No k-mer matches were found for the sample {fastq1} and {fastq2}\n\tProbable cause of the error:  low quality data/too many N's in the data"
+        logging.error(f"ERROR: {string}")
+        print(string)
 #           exit(0)
-        profileCount = alleleCount
-    else:
-        logging.debug("singleSampleTool : paired False")
-        logging.debug("singleSampleTool : fastq start")
-        singleFileTool(fastq1, k)
-        profileCount = alleleCount
-        logging.debug("singleSampleTool : fastq done")
-        if alleleCount == 0:
-            string = "No k-mer matches were found for the sample " + fastq1 + ".  Probable cause of the error:  low quality data/too many N's in the data"
-            logging.error("singleSampleTool : " + string)
-            print(string)
+    profileCount = alleleCount
     logging.debug("singleSampleTool : weightedProfile start")
     weightedProfile = weightedProf(profileCount, weightDict)
     logging.debug("singleSampleTool : weightedProfile finished")
@@ -447,76 +382,62 @@ def singleSampleTool(fastq1, fastq2, paired, k, results):
         logging.debug("singleSampleTool : findST end")
     if reads is True:
         readFile.close()
-    # t3 = time.time()
-    # finalProfile['ST'] = st
-    # finalProfile['t'] = t3-t1
-    # results[fileName] = finalProfile
     return kCount
 #############################################################
 # Function   : singleFileTool
 # Input      : fastq file, k value
 # Output     : Edits a global dictionary - results
 # Description: Processes the single fastq file
-#############################################################
-def singleFileTool(fastq, k):
-    msg = "singleFileTool :" + fastq
+#######################################q######################
+def singleFileTool(fastq, k, sName):
+    fastq = "/".join([fastq,"reads.fq"])
+    msg = f"Analysis: Begin processing merged reads ({fastq})"
     logging.debug(msg)
     if os.path.isfile(fastq):
-        logging.debug("singleFileTool : fastq")
-        non_overlapping_window = 1
+        logging.debug(f"Analysis: Kmer counting using k={k}")
         finalProfile = {}
         t1 = time.time()
-        fileExplorer(fastq, k, non_overlapping_window)
-        t3 = time.time()
-    else:
-        msg = "File does not exist: " + fastq
-        logging.error("singleFileTool : msg")
-        print(msg)
-def fileExplorer(file, k, non_overlapping_window):
-    sName = os.path.splitext(file)[0].split('_')[0]
-    if sName not in kCount:
-        kCount[sName] = {}
-    if file.endswith('.gz'):
-        f = gzip.open(file, 'rt')
-    else:
-        f = open(file)
-    msg = "fileExplorer : " + file
-    logging.debug(msg)
-
-    for lines in iter(lambda: tuple(islice(f, 4)), ()):
-        if len(lines) < 4:
-            dbg = "Input file (" + file + ") is truncated.  Please verify the input FASTQ files are correct"
-            logging.debug(dbg)
-        try:
-            if len(lines[1]) < k:
-                m1 = "Read ID :" + lines[0][1:] + "is  length " + len(lines[1])+" in " + file + " smaller than " + k
-                print(m1)
-                logging.debug(m1)
+        # fileExplorer(fastq, k)
+        if sName not in kCount:
+            kCount[sName] = {}
+        f = open(fastq)
+        for lines in iter(lambda: tuple(islice(f, 4)), ()):
+            if len(lines) < 4:
+                dbg = "ERROR: Input file is truncated.  Please verify the input FASTQ files are correct"
+                logging.debug(dbg)
+            try:
+                if len(lines[1]) < k:
+                    m1 = f"ERROR: Read ID: {[0][1:]}  is  length {len(lines[1])} in {file} smaller than {k}"
+                    print(m1)
+                    logging.debug(m1)
+                    return 0
+            except Exception:
+                m2 = f"ERROR: Check fastq file {file}"
+                logging.debug(m2)
                 return 0
-        except Exception:
-            m2 = "Check fastq file " + file
-            print(m2)
-            logging.debug(m2)
-            return 0
-        start = int((len(lines[1])-k)//2)
-        end = int((len(lines[1])-k)//2)
-        s1 = str(lines[1][start:k+start])
-        if s1 in kmerDict[k]:
-            # print(s1)
-            countKmers(lines[1], k, non_overlapping_window, sName)
-            readFile.write('\n'.join('{}'.format(l) for l in lines))
-    # print(kCount)
+            start = int((len(lines[1])-k)//2)
+            firstKmer = str(lines[1][:k])
+            midKmer = str(lines[1][start:k+start])
+            lastKmer = str(lines[1][-35:])
+            # print("{}\t{}\t{}".format(len(firstKmer),len(midKmer),len(lastKmer)))
+            if firstKmer in kmerDict[k] or midKmer in kmerDict[k] or lastKmer in kmerDict[k]:
+                countKmers(lines[1], k, sName)
+                if reads: readFile.write('\n'.join('{}'.format(l) for l in lines))
+        # print(kCount)
+            t3 = time.time()
+    else:
+        logging.error(f"ERROR: File does not exist: {fastq}")
 #############################################################
 # Function   : goodReads
 # Input      : sequence read, k, step size
 # Output     : Edits the count of global variable alleleCount
 # Description: Increment the count for each k-mer match
 #############################################################
-def countKmers(read, k, non_overlapping_window, sName):
+def countKmers(read, k, sName):
     alleleCount = {}
     n = 0
     line = read.rstrip()
-    while n+k <= len(line):
+    for n in range(len(line)-k-1):
         s = str(line[n:n+k])
         if s in kmerDict[k]:
             for probLoc in kmerDict[k][s]:
@@ -529,7 +450,7 @@ def countKmers(read, k, non_overlapping_window, sName):
                         alleleCount[probLoc][allele] += 1
                     else:
                         alleleCount[probLoc][allele] = 1
-        n += non_overlapping_window
+        n += 1
     # print(max(alleleCount['allele'].items(), key=operator.itemgetter(1))[0])
     # print(alleleCount['allele'][max(alleleCount['allele'].items(), key=operator.itemgetter(1))[0]])
     # print()
@@ -852,7 +773,7 @@ def makeCustomDB(config, k, output_filename):
     copyProfileFile(configDict['profile'], output_filename)
 """Build DB part ends"""
 """Check Parameters"""
-def checkParams(buildDB, predict, config, k, listMode, list, batch, dir, fastq1, fastq2, paired, dbPrefix):
+def checkParams(buildDB, predict, config, k, batch, dir, fastq1, fastq2, dbPrefix):
     if predict is True and buildDB is True:
         print(helpTextSmall)
         print("Select either predict or buildDB module")
@@ -928,7 +849,7 @@ fastq2 = None
 user_k = False
 config = None
 timeDisp = False
-reads = True
+reads = False
 dbPrefix = 'kmer'
 log = ''
 k = 35
@@ -936,7 +857,7 @@ fuzzy = 5
 coverage = True
 
 """Input arguments"""
-options, remainder = getopt.getopt(sys.argv[1:], 'o:x1:2:k:l:bd:pshP:c:trva:', [
+options, remainder = getopt.getopt(sys.argv[1:], 'o:x1:2:kbd:phP:c:trva:', [
     'buildDB',
     'predict',
     'output=',
@@ -944,15 +865,11 @@ options, remainder = getopt.getopt(sys.argv[1:], 'o:x1:2:k:l:bd:pshP:c:trva:', [
     'prefix=',
     'overwrite',
     'batch',
-    'list',
     'fastq1=',
     'fastq2=',
     'dir=',
     'directory=',
-    'paired',
-    'single',
-    'help',
-    'fuzzy='])
+    'help'])
 for opt, arg in options:
     if opt in ('-o', '--output'):
         output_filename = arg
@@ -984,12 +901,6 @@ for opt, arg in options:
     elif opt in ('-d', '--dir', '--directory'):
         dir = arg
         batch = True
-    elif opt in ('-p', '--paired'):
-        paired = True
-        single = False
-    elif opt in ('-s', '--single'):
-        single = True
-        paired = False
     elif opt in '-t':
         timeDisp = True
     elif opt in '-a':
@@ -999,19 +910,10 @@ for opt, arg in options:
     elif opt in '-v':
         print(version)
         exit(0)
-    elif opt in ('-z', '--fuzzy'):
-        try:
-            fuzzy = int(arg)
-        except ValueError:
-            print("You provided '" + arg + "' for your fuzziness threshold, which is not an integer value")
-            exit(0)
-    elif opt in '--schemes':
-        print (", ".join(sorted(schemes.keys())))
-        exit(0)
     elif opt in ('-h', '--help'):
         print(helpText)
         exit(0)
-checkParams(buildDB, predict, config, k, listMode, list, batch, dir, fastq1, fastq2, paired, dbPrefix)
+checkParams(buildDB, predict, config, k, batch, dir, fastq1, fastq2, dbPrefix)
 if buildDB is True:
     try:
         if not log:
@@ -1033,19 +935,18 @@ elif predict is True:
     except TypeError:
         log = 'kmer.log'
     logging.basicConfig(filename=log, level=logging.DEBUG, format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+    logging.debug("================================================================================")
+    logging.debug("Command: {}".format(" ".join(sys.argv)))
+    logging.debug("Starting Marker Prediction")
     loadModule(k, dbPrefix)
     if batch is True:
         results = batchTool(dir, paired, k)
-    elif listMode is True:
-        results = listTool(fList, paired, k)
     else:
         results = {}
         results = singleSampleTool(fastq1, fastq2, paired, k, results)
     printResults(results, output_filename, overwrite, timeDisp)
 else:
-    print(helpTextSmall)
-    print("Error: Please select the mode: buildDB (for database building) or predict (for ST discovery) module")
-logging.debug('Command :' + str(sys.argv))
+    print("Error: Please select the mode: buildDB (for database building) or predict (for marker discovery)")
 
-blastScript = ""
+
 
