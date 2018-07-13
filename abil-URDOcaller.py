@@ -13,10 +13,7 @@ import shutil
 import argparse
 from itertools import islice
 import operator
-import sys
-import pprint
-pp = pprint.PrettyPrinter(indent=4)
-version = """ abil-genecaller v1 (updated : March 29, 2018) """
+version = """ abil-URDOcaller ALPHA.1 (updated : July 13, 2018) """
 """
 abil-genecaller free for academic users and requires permission before any
 commercial or government usage use for any version of this code/algorithm.
@@ -336,7 +333,7 @@ def batchTool(fdir, k):
                 combined_file_two = sample_name + "_L999_R2_" + (sample_read_one.split("_")[-1]).split(".")[0] + ".fastq.gz"
 
                 try:
-                    subprocess.call("zcat -f {}/{} | gzip >> {}/{}".format(fdir, sample_read_one, tmpdir, combined_file_one), shell = True, stderr=subprocess.STDOUT)
+                    subprocess.call("zcat -f {}/{} | gzip >> {}/{}".format(fdir, sample_read_one, tmpdir, combined_file_one), shell=True, stderr=subprocess.STDOUT)
                 except subprocess.CalledProcessError as e:
                     logging.error("Preprocessing: [Merging lanes] Could not merge read files for sample {}".format(sample_name))
                     sys.exit("Could not merge read files for sample {}!".format(sample_name))
@@ -346,32 +343,32 @@ def batchTool(fdir, k):
                 sample_read_two = sample_read_one.replace("_R1_", "_R2_")
 
                 try:
-                    subprocess.call("zcat -f {}/{} | gzip >> {}/{}".format(fdir, sample_read_two, tmp, combined_file_two), shell = True, stderr=subprocess.STDOUT)
+                    subprocess.call("zcat -f {}/{} | gzip >> {}/{}".format(fdir, sample_read_two, tmp, combined_file_two), shell=True, stderr=subprocess.STDOUT)
                 except subprocess.CalledProcessError as e:
-                    logging.error("Preprocessing: [Merging lanes] Could not merge read files for sample {}".format(sample_name))
+                    logging.error("Preprocessing: [Merging lanes] Could not merge read files for sample {}\n{}".format(sample_name, e))
                     sys.exit("Could not merge read files for sample {}!".format(sample_name))
                 else:
-                    logging.debug("Preprocessing: [Merging lanes] Merged read files for sample {}".format(sample_name))
+                    logging.debug("Preprocessing: [Merging lanes] Merged read files for sample {}\n{}".format(sample_name, e))
         else:
             full_sample_name = [x for x in all_first_reads if sample_name in x]
             sys_call_string_sample_one = "ln -sL {}/{} {}/{}".format(fdir, full_sample_name[0], tmpdir, full_sample_name[0])
             try:
-                subprocess.call(sys_call_string_sample_one, shell = True, stderr=subprocess.STDOUT)
+                subprocess.call(sys_call_string_sample_one, shell=True, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as e:
-                logging.error("Preprocessing: [Linking reads] Could not link read files for sample {}".format(sample_name))
+                logging.error("Preprocessing: [Linking reads] Could not link read files for sample {}\n{}".format(sample_name, e))
                 sys.exit("Could not link read files for sample {}!".format(sample_name))
             else:
-                logging.debug("Preprocessing: [Linking reads] Linked read files for sample {}".format(sample_name))
+                logging.debug("Preprocessing: [Linking reads] Linked read files for sample {}\n{}".format(sample_name, e))
 
             sample_two = full_sample_name[0].replace("_R1_", "_R2_")
             sys_call_string_sample_two = "ln -sL {}/{} {}/{}".format(fdir, sample_two, tmpdir, sample_two)
             try:
-                subprocess.call(sys_call_string_sample_two, shell = True, stderr=subprocess.STDOUT)
+                subprocess.call(sys_call_string_sample_two, shell=True, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as e:
-                logging.error("Preprocessing: [Linking reads] Could not link read files for sample {}".format(sample_name))
+                logging.error("Preprocessing: [Linking reads] Could not link read files for sample {}\n{}".format(sample_name, e))
                 sys.exit("Could not link read files for sample {}!".format(sample_name))
             else:
-                logging.debug("Preprocessing: [Linking reads] Linked read files for sample {}".format(sample_name))
+                logging.debug("Preprocessing: [Linking reads] Linked read files for sample {}\n{}".format(sample_name, e))
 
 
     fileList = [x for x in os.listdir(tmpdir) if "_R1_" in x]
@@ -403,7 +400,7 @@ def singleSampleTool(fastq1, fastq2, paired, k, results):
     vsearch_cmd = f"vsearch --fastq_mergepairs {fastq1} --reverse {fastq2} --fastqout {tmpdir}/reads.fq 2> {fastq1.split('/')[-1].split('.')[0][:-1]}.merge.log 1>/dev/null"
     logging.debug(f"Preprocessing: [Merging reads] VSEARCH command\n\t{vsearch_cmd}")
     try:
-        subprocess.call(vsearch_cmd, shell = True, stderr=subprocess.STDOUT)
+        subprocess.call(vsearch_cmd, shell=True, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as e:
         logging.error("Preprocessing: [Merging reads] Could not merge read files for sample {}".format(sample_name))
         sys.exit("Could not merge read files for sample {}!".format(sample_name))
@@ -503,7 +500,7 @@ def countKmers(read, k, sName):
         if allele not in maxSupports: maxSupports[allele] = {}
         maxSupports[allele][alleleNumber] = alleleKcount
         if allele not in kCount[sName]:
-            kCount[sName][allele] = {}  
+            kCount[sName][allele] = {}
         if alleleNumber not in kCount[sName][allele]: kCount[sName][allele][alleleNumber] = 1
         else:
             kCount[sName][allele][alleleNumber] += 1
@@ -671,7 +668,7 @@ def printResults(results, output_filename, overwrite, timeDisp):
                     outString += f"\t{output[key][sample]}"
                 else:
                     outString += f"\t0"
-            outString += "\n" 
+            outString += "\n"
     if output_filename != None:
         outfile.write(f"{outString}\n")
     else:
