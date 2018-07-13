@@ -11,13 +11,8 @@ import sys
 import logging
 import os
 import subprocess
-import time
-import ast
-import gzip
-import re
 import tempfile
 import shutil
-import argparse
 from itertools import islice
 import operator
 VERSION = """ abil_URDOcaller ALPHA.1 (updated : July 13, 2018) """
@@ -310,14 +305,15 @@ Please refer to the license terms for each module for additional information.
 HELP_TEXT_SMALL = "help"
 HELP_TEXT = "HELP"
 TMPDIR = tempfile.mkdtemp()
-def batch_tool(fdir, k):
+def batch_tool(fdir, kmer):
     """
     Function   : batch_tool
     Input      : Directory name, paired only, k value
     Output     : STs and allelic profiles for each FASTQ file
     Description: Processes all FASTQ files present in the input directory
     """
-    if not directory.endswith('/'): fdir += '/'
+    if not directory.endswith('/'):
+        fdir += '/'
     freq_dict_samples = {}
     all_first_reads = [x for x in os.listdir(fdir) if "_R1_" in x]
     for first_read_name in all_first_reads:
@@ -331,53 +327,66 @@ def batch_tool(fdir, k):
         if value > 1:
             sample_first_reads = [x for x in all_first_reads if sample_name in x]
             for sample_read_one in sample_first_reads:
-                combined_file_one = sample_name + "_L999_R1_" + (sample_read_one.split("_")[-1]).split(".")[0] + ".fastq.gz"
-                combined_file_two = sample_name + "_L999_R2_" + (sample_read_one.split("_")[-1]).split(".")[0] + ".fastq.gz"
+                combined_file_one = \
+                    sample_name + "_L999_R1_" + \
+                    (sample_read_one.split("_")[-1]).split(".")[0] + \
+                    ".fastq.gz"
+                combined_file_two = \
+                    sample_name + \
+                    "_L999_R2_" + \
+                    (sample_read_one.split("_")[-1]).split(".")[0] + \
+                    ".fastq.gz"
 
                 try:
-                    subprocess.call("zcat -f {}/{} | gzip >> {}/{}".format(fdir, sample_read_one, TMPDIR, combined_file_one), shell=True, stderr=subprocess.STDOUT)
-                except subprocess.CalledProcessError as e:
-                    logging.error("Preprocessing: [Merging lanes] Could not merge read files for sample {}".format(sample_name))
-                    sys.exit("Could not merge read files for sample {}!".format(sample_name))
+                    subprocess.call(f"zcat -f {fdir}/{sample_read_one} | \
+                                    gzip >> {TMPDIR}/{combined_file_one}",
+                                    shell=True, stderr=subprocess.STDOUT)
+                except subprocess.CalledProcessError as subprocess_error:
+                    logging.error(f"Preprocessing: [Merging lanes] Could not merge read files for sample {sample_name}")
+                    sys.exit(f"Could not merge read files for sample {sample_name}!")
                 else:
-                    logging.debug("Preprocessing: [Merging lanes] Merged read files for sample {}".format(sample_name))
-
+                    logging.debug(f"Preprocessing: [Merging lanes] Merged read files for sample {sample_name}")
                 sample_read_two = sample_read_one.replace("_R1_", "_R2_")
 
                 try:
-                    subprocess.call("zcat -f {}/{} | gzip >> {}/{}".format(fdir, sample_read_two, tmp, combined_file_two), shell=True, stderr=subprocess.STDOUT)
-                except subprocess.CalledProcessError as e:
-                    logging.error("Preprocessing: [Merging lanes] Could not merge read files for sample {}\n{}".format(sample_name, e))
-                    sys.exit("Could not merge read files for sample {}!".format(sample_name))
+                    subprocess.call(f"zcat -f {fdir}/{sample_read_two} | \
+                                    gzip >> {TMPDIR}/{combined_file_two}",
+                                    shell=True, stderr=subprocess.STDOUT)
+                except subprocess.CalledProcessError as subprocess_error:
+                    logging.error(f"Preprocessing: [Merging lanes] Could not merge read files for sample {sample_name}\n{subprocess_error}")
+                    sys.exit(f"Could not merge read files for sample {sample_name}!")
                 else:
-                    logging.debug("Preprocessing: [Merging lanes] Merged read files for sample {}\n{}".format(sample_name, e))
+                    logging.debug(f"Preprocessing: [Merging lanes] Merged read files for sample {sample_name}")
         else:
             full_sample_name = [x for x in all_first_reads if sample_name in x]
-            sys_call_string_sample_one = "ln -sL {}/{} {}/{}".format(fdir, full_sample_name[0], TMPDIR, full_sample_name[0])
+            sys_call_string_sample_one = f"ln -sL {fdir}/{full_sample_name[0]} \
+                                            {TMPDIR}/{full_sample_name[0]}"
             try:
-                subprocess.call(sys_call_string_sample_one, shell=True, stderr=subprocess.STDOUT)
-            except subprocess.CalledProcessError as e:
-                logging.error("Preprocessing: [Linking reads] Could not link read files for sample {}\n{}".format(sample_name, e))
-                sys.exit("Could not link read files for sample {}!".format(sample_name))
+                subprocess.call(sys_call_string_sample_one,
+                                shell=True, stderr=subprocess.STDOUT)
+            except subprocess.CalledProcessError as subprocess_error:
+                logging.error(f"Preprocessing: [Linking reads] Could not link read files for sample {sample_name}\n{subprocess_error}")
+                sys.exit(f"Could not link read files for sample {sample_name}!")
             else:
-                logging.debug("Preprocessing: [Linking reads] Linked read files for sample {}\n{}".format(sample_name, e))
+                logging.debug(f"Preprocessing: [Linking reads] Linked read files for sample {sample_name}")
 
             sample_two = full_sample_name[0].replace("_R1_", "_R2_")
-            sys_call_string_sample_two = "ln -sL {}/{} {}/{}".format(fdir, sample_two, TMPDIR, sample_two)
+            sys_call_string_sample_two = f"ln -sL {fdir}/{sample_two} {TMPDIR}/{sample_two}"
             try:
-                subprocess.call(sys_call_string_sample_two, shell=True, stderr=subprocess.STDOUT)
-            except subprocess.CalledProcessError as e:
-                logging.error("Preprocessing: [Linking reads] Could not link read files for sample {}\n{}".format(sample_name, e))
-                sys.exit("Could not link read files for sample {}!".format(sample_name))
+                subprocess.call(sys_call_string_sample_two,
+                                shell=True, stderr=subprocess.STDOUT)
+            except subprocess.CalledProcessError as subprocess_error:
+                logging.error(f"Preprocessing: [Linking reads] Could not link read files for sample {sample_name}\n{subprocess_error}")
+                sys.exit(f"Could not link read files for sample {sample_name}!")
             else:
-                logging.debug("Preprocessing: [Linking reads] Linked read files for sample {}\n{}".format(sample_name, e))
+                logging.debug(f"Preprocessing: [Linking reads] Linked read files for sample {sample_name}")
 
 
-    fileList = [x for x in os.listdir(TMPDIR) if "_R1_" in x]
-    for fastq1 in fileList:
-        fastq1 = "{}/{}".format(TMPDIR, fastq1)
-        fastq2 = fastq1.replace("_R1_", "_R2_")
-        kCount = single_sample_tool(fastq1, fastq2, paired, k, rawCounts)
+    file_list = [x for x in os.listdir(TMPDIR) if "_R1_" in x]
+    for read_one in file_list:
+        fastq1_processed = f"{TMPDIR}/{read_one}"
+        fastq2_processed = fastq1_processed.replace("_R1_", "_R2_")
+        kCount = single_sample_tool(fastq1_processed, fastq2_processed, paired, kmer, rawCounts)
     shutil.rmtree(TMPDIR)
     return kCount
 def single_sample_tool(fastq1, fastq2, paired, k, results):
@@ -389,43 +398,31 @@ def single_sample_tool(fastq1, fastq2, paired, k, results):
     """
     # pp.pprint(kmerDict)
     if reads:
-        readFileName = fastq1.split('/')[-1].split('.')[0][:-1] + '_reads.fq'
-        global readFile
-        readFile = open(readFileName, 'w+')
+        read_file_name = fastq1.split('/')[-1].split('.')[0][:-1] + '_reads.fq'
+        global read_file
+        read_file = open(read_file_name, 'w+')
     sName = fastq1.split('/')[-1].split('_')[0]
     msg = f"Preprocessing: working with {fastq1} and {fastq2}"
     logging.debug(msg)
     global alleleCount
     alleleCount = {}
-    t1 = time.time()
     logging.debug(f"Preprocessing: [Merging reads] Merging {fastq1} and {fastq2}")
-    vsearch_cmd = f"vsearch --fastq_mergepairs {fastq1} --reverse {fastq2} --fastqout {TMPDIR}/reads.fq 2> {fastq1.split('/')[-1].split('.')[0][:-1]}.merge.log 1>/dev/null"
+    vsearch_cmd = f"vsearch --fastq_mergepairs {fastq1} --reverse {fastq2} --fastqout {TMPDIR}/reads.fq 2>/dev/null 1>/dev/null"
     logging.debug(f"Preprocessing: [Merging reads] VSEARCH command\n\t{vsearch_cmd}")
     try:
         subprocess.call(vsearch_cmd, shell=True, stderr=subprocess.STDOUT)
-    except subprocess.CalledProcessError as e:
-        logging.error("Preprocessing: [Merging reads] Could not merge read files for sample {}".format(sample_name))
-        sys.exit("Could not merge read files for sample {}!".format(sample_name))
-    os.system(vsearch_cmd)
+    except subprocess.CalledProcessError as subprocess_error:
+        logging.error(f"Preprocessing: [Merging reads] Could not merge read files for sample {sample_name}")
+        sys.exit(f"Could not merge read files for sample {sample_name}!")
     read_processor(TMPDIR, k, sName)
     if kCount == {}:
         string = f"No k-mer matches were found for the sample {fastq1} and {fastq2}"
         string += f"\n\tProbable cause of the error:  low quality data/too many N's in the data"
         logging.error(f"ERROR: {string}")
         print(string)
-#           exit(0)
-    # logging.debug("Analysis: getMaxCount start")
-    # finalProfile = getMaxCount(weightedProfile, fileName)
-    # print(weightedProfile)
-    # logging.debug("Analysis: getMaxCount end")
-    st = 0
-    if profileFile != '':
-        logging.debug("Post-processing: Finding most likely phenotypes and markers")
-        # st = findST(finalProfile, stProfile)
-        # logging.debug("singleSampleTool : findST end")
-    if reads: readFile.close()
-    # pp.pprint(kCount)
-    # pp.pprint(weightedProfile)
+        exit()
+    if reads:
+        read_file.close()
     return kCount
 def read_processor(fastq, k, sName):
     """
@@ -440,8 +437,6 @@ def read_processor(fastq, k, sName):
     if os.path.isfile(fastq):
         logging.debug(f"Analysis: Kmer counting using k={k}")
         finalProfile = {}
-        t1 = time.time()
-        # fileExplorer(fastq, k)
         if sName not in kCount:
             kCount[sName] = {}
         f = open(fastq)
@@ -463,12 +458,9 @@ def read_processor(fastq, k, sName):
             firstKmer = str(lines[1][:k])
             midKmer = str(lines[1][start:k+start])
             lastKmer = str(lines[1][-35:])
-            # print("{}\t{}\t{}".format(len(firstKmer),len(midKmer),len(lastKmer)))
             if firstKmer in kmerDict[k] or midKmer in kmerDict[k] or lastKmer in kmerDict[k]:
                 count_kmers(lines[1], k, sName)
-                if reads: readFile.write('\n'.join('{}'.format(l) for l in lines))
-        # print(kCount)
-            t3 = time.time()
+                if reads: read_file.write('\n'.join('{}'.format(l) for l in lines))
     else:
         logging.error(f"ERROR: File does not exist: {fastq}")
 def count_kmers(read, k, sName):
@@ -499,11 +491,13 @@ def count_kmers(read, k, sName):
     for allele in alleleCount:
         alleleNumber = max(alleleCount[allele].items(), key=operator.itemgetter(1))[0]
         alleleKcount = alleleCount[allele][max(alleleCount[allele].items(), key=operator.itemgetter(1))[0]]
-        if allele not in maxSupports: maxSupports[allele] = {}
+        if allele not in maxSupports:
+            maxSupports[allele] = {}
         maxSupports[allele][alleleNumber] = alleleKcount
         if allele not in kCount[sName]:
             kCount[sName][allele] = {}
-        if alleleNumber not in kCount[sName][allele]: kCount[sName][allele][alleleNumber] = 1
+        if alleleNumber not in kCount[sName][allele]:
+            kCount[sName][allele][alleleNumber] = 1
         else:
             kCount[sName][allele][alleleNumber] += 1
 def weight_profile(alleleCount, weightDict):
@@ -545,11 +539,11 @@ def load_module(k, dbPrefix):
     global weightDict
     weightDict = load_weight_dict(weightFile)
     global stProfile
-    stProfile = load_ST_from_file(profileFile)
+    stProfile = load_st_from_file(profileFile)
     load_config(config)
-def load_ST_from_file(profileF):
+def load_st_from_file(profileF):
     """
-    Function   : load_ST_from_file
+    Function   : load_st_from_file
     Input      : profile definition file
     Output     : Updates the DB dictionary variables
     Description: Used in loading the DB as set of variables
@@ -559,7 +553,8 @@ def load_ST_from_file(profileF):
         for line in definitionFile:
             if not line.startswith("marker"):
                 cols = line.rstrip().rsplit('\t')
-                if cols[0] not in st: st[cols[0]] = {}
+                if cols[0] not in st:
+                    st[cols[0]] = {}
                 st[cols[0]][cols[1]] = cols[2]
     return st
 def load_kmer_dict(dbFile):
@@ -654,16 +649,20 @@ def print_results(results, output_filename, overwrite, timeDisp):
         for loc in results[s]:
             if loc == "genericmarkers":
                 for mID in results[s][loc]:
-                    if stProfile[loc][mID] not in output: output[stProfile[loc][mID]] = {}
+                    if stProfile[loc][mID] not in output:
+                        output[stProfile[loc][mID]] = {}
                     output[stProfile[loc][mID]][s] = results[s][loc][mID]
             else:
                 max_mID = max(results[s][loc].items(), key=operator.itemgetter(1))[0]
-                if stProfile[loc][max_mID] not in output: output[stProfile[loc][max_mID]] = {}
+                if stProfile[loc][max_mID] not in output:
+                    output[stProfile[loc][max_mID]] = {}
                 output[stProfile[loc][max_mID]][s] = results[s][loc][max_mID]
-    for sample in output["sample"]:
+    sorted_samples = sorted(output["sample"])
+    for sample in sorted_samples:
         outString += (f"\t{sample}")
     outString += "\n"
-    for key in output:
+    sorted_output_keys = sorted(output)
+    for key in sorted_output_keys:
         if key != "sample":
             outString += f"{key}"
             for sample in output["sample"]:
@@ -728,13 +727,13 @@ def form_kmer_db(configDict, k, output_filename):
         msgs = "formKmerDB :" +locus
         logging.debug(msgs)
         fastaDict = get_fasta_dict(configDict['loci'][locus])
-        sum = 0
-        n = 0
+        total_kmer_length = 0
+        seq_location = 0
         for allele in list(fastaDict.keys()):
             seq = fastaDict[allele]['sequence'].strip()
-            l = len(seq)
-            sum += l
-            n += 1
+            seq_len = len(seq)
+            total_kmer_length += seq_len
+            seq_location += 1
             try:
                 (loc, num) = allele.replace('-', '_').rsplit('_', 1)
             except ValueError:
@@ -742,7 +741,7 @@ def form_kmer_db(configDict, k, output_filename):
                 exit(0)
             splitId = allele.replace('-', '_').rsplit('_', 1)
             i = 0
-            while i+k <= l:
+            while i+k <= seq_len:
                 kmer = seq[i:i+k]
                 revCompKmer = reverse_complement(kmer)
                 if kmer not in kmerDict:
@@ -766,7 +765,7 @@ def form_kmer_db(configDict, k, output_filename):
                     else:
                         kmerDict[revCompKmer][splitId[0]].append(int(splitId[1]))
                 i += 1
-        mean[locus] = sum/n*1.0
+        mean[locus] = total_kmer_length/seq_location*1.0
     with open(dbFileName, 'w') as kfile:
         for key in kmerDict:
             for key1 in kmerDict[key]:
@@ -838,6 +837,9 @@ def make_custom_db(config, k, output_filename):
 
 
 def check_params(buildDB, predict, config, k, batch, directory, fastq1, fastq2, dbPrefix):
+    """
+    Check input parameters
+    """
     if predict and buildDB:
         print(HELP_TEXT_SMALL)
         print("Select either predict or buildDB module")
