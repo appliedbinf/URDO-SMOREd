@@ -1,4 +1,11 @@
 #!/usr/bin/env python
+"""
+The program has 3 basic modes:
+    buildDB: for building the required databases
+    predict, single sample: Predict markers and phenotypes from raw reads
+    predict, multisample: Like above, but for multiple samples stored
+        at a common location (paired end samples)
+"""
 import getopt
 import sys
 import logging
@@ -13,9 +20,9 @@ import shutil
 import argparse
 from itertools import islice
 import operator
-version = """ abil-URDOcaller ALPHA.1 (updated : July 13, 2018) """
+VERSION = """ abil_URDOcaller ALPHA.1 (updated : July 13, 2018) """
 """
-abil-genecaller free for academic users and requires permission before any
+abil_URDOcaller free for academic users and requires permission before any
 commercial or government usage use for any version of this code/algorithm.
 If you are a commercial or governmental user, please contact abil@ihrc.com
 for permissions.
@@ -255,7 +262,7 @@ state, federal or other governmental institutions and their respective
 employees or contractors using this program.
 "Employees" refers to persons employed directly by You. "Contractors" refers to
 persons hired under contract from a thirdparty for the expressed purpose of
-performing research for You. "Program" refers to abil-genecaller, and the
+performing research for You. "Program" refers to abil_URDOcaller, and the
 source code and algorithms contained within this file.  "Research" generally
 refers to normal work duties that may require the use of this Program.
 "License" refers to this text and the grants given and limitation imposed on You
@@ -296,21 +303,16 @@ copyright or other license over the Python modules utilized by this Program.
 Please refer to the license terms for each module for additional information.
 
 
-The program has 3 basic modes :
-    mainTool: for single sample (both single and paired end)
-    batchTool: for multiple samples stored at a common location (both single and paired end samples)
-    listTool: for multiple samples with location information stored in a list
-        (both single and paired end samples)
-predict part starts here
 """
 
+#predict part starts here
 ############################################################
-helpTextSmall = "help"
-helpText = "HELP"
-tmpdir = tempfile.mkdtemp()
-def batchTool(fdir, k):
+HELP_TEXT_SMALL = "help"
+HELP_TEXT = "HELP"
+TMPDIR = tempfile.mkdtemp()
+def batch_tool(fdir, k):
     """
-    Function   : batchTool
+    Function   : batch_tool
     Input      : Directory name, paired only, k value
     Output     : STs and allelic profiles for each FASTQ file
     Description: Processes all FASTQ files present in the input directory
@@ -333,7 +335,7 @@ def batchTool(fdir, k):
                 combined_file_two = sample_name + "_L999_R2_" + (sample_read_one.split("_")[-1]).split(".")[0] + ".fastq.gz"
 
                 try:
-                    subprocess.call("zcat -f {}/{} | gzip >> {}/{}".format(fdir, sample_read_one, tmpdir, combined_file_one), shell=True, stderr=subprocess.STDOUT)
+                    subprocess.call("zcat -f {}/{} | gzip >> {}/{}".format(fdir, sample_read_one, TMPDIR, combined_file_one), shell=True, stderr=subprocess.STDOUT)
                 except subprocess.CalledProcessError as e:
                     logging.error("Preprocessing: [Merging lanes] Could not merge read files for sample {}".format(sample_name))
                     sys.exit("Could not merge read files for sample {}!".format(sample_name))
@@ -351,7 +353,7 @@ def batchTool(fdir, k):
                     logging.debug("Preprocessing: [Merging lanes] Merged read files for sample {}\n{}".format(sample_name, e))
         else:
             full_sample_name = [x for x in all_first_reads if sample_name in x]
-            sys_call_string_sample_one = "ln -sL {}/{} {}/{}".format(fdir, full_sample_name[0], tmpdir, full_sample_name[0])
+            sys_call_string_sample_one = "ln -sL {}/{} {}/{}".format(fdir, full_sample_name[0], TMPDIR, full_sample_name[0])
             try:
                 subprocess.call(sys_call_string_sample_one, shell=True, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as e:
@@ -361,7 +363,7 @@ def batchTool(fdir, k):
                 logging.debug("Preprocessing: [Linking reads] Linked read files for sample {}\n{}".format(sample_name, e))
 
             sample_two = full_sample_name[0].replace("_R1_", "_R2_")
-            sys_call_string_sample_two = "ln -sL {}/{} {}/{}".format(fdir, sample_two, tmpdir, sample_two)
+            sys_call_string_sample_two = "ln -sL {}/{} {}/{}".format(fdir, sample_two, TMPDIR, sample_two)
             try:
                 subprocess.call(sys_call_string_sample_two, shell=True, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as e:
@@ -371,16 +373,16 @@ def batchTool(fdir, k):
                 logging.debug("Preprocessing: [Linking reads] Linked read files for sample {}\n{}".format(sample_name, e))
 
 
-    fileList = [x for x in os.listdir(tmpdir) if "_R1_" in x]
+    fileList = [x for x in os.listdir(TMPDIR) if "_R1_" in x]
     for fastq1 in fileList:
-        fastq1 = "{}/{}".format(tmpdir, fastq1)
+        fastq1 = "{}/{}".format(TMPDIR, fastq1)
         fastq2 = fastq1.replace("_R1_", "_R2_")
-        kCount = singleSampleTool(fastq1, fastq2, paired, k, rawCounts)
-    shutil.rmtree(tmpdir)
+        kCount = single_sample_tool(fastq1, fastq2, paired, k, rawCounts)
+    shutil.rmtree(TMPDIR)
     return kCount
-def singleSampleTool(fastq1, fastq2, paired, k, results):
+def single_sample_tool(fastq1, fastq2, paired, k, results):
     """
-    Function   : singleSampleTool
+    Function   : single_sample_tool
     Input      : fastq file 1 and 2, paired or single, k value, output dictionary
     Output     : STs and allelic profiles for each FASTQ file
     Description: Processes both FASTQ files passed to the function
@@ -397,7 +399,7 @@ def singleSampleTool(fastq1, fastq2, paired, k, results):
     alleleCount = {}
     t1 = time.time()
     logging.debug(f"Preprocessing: [Merging reads] Merging {fastq1} and {fastq2}")
-    vsearch_cmd = f"vsearch --fastq_mergepairs {fastq1} --reverse {fastq2} --fastqout {tmpdir}/reads.fq 2> {fastq1.split('/')[-1].split('.')[0][:-1]}.merge.log 1>/dev/null"
+    vsearch_cmd = f"vsearch --fastq_mergepairs {fastq1} --reverse {fastq2} --fastqout {TMPDIR}/reads.fq 2> {fastq1.split('/')[-1].split('.')[0][:-1]}.merge.log 1>/dev/null"
     logging.debug(f"Preprocessing: [Merging reads] VSEARCH command\n\t{vsearch_cmd}")
     try:
         subprocess.call(vsearch_cmd, shell=True, stderr=subprocess.STDOUT)
@@ -405,7 +407,7 @@ def singleSampleTool(fastq1, fastq2, paired, k, results):
         logging.error("Preprocessing: [Merging reads] Could not merge read files for sample {}".format(sample_name))
         sys.exit("Could not merge read files for sample {}!".format(sample_name))
     os.system(vsearch_cmd)
-    readProcessor(tmpdir, k, sName)
+    read_processor(TMPDIR, k, sName)
     if kCount == {}:
         string = f"No k-mer matches were found for the sample {fastq1} and {fastq2}"
         string += f"\n\tProbable cause of the error:  low quality data/too many N's in the data"
@@ -425,9 +427,9 @@ def singleSampleTool(fastq1, fastq2, paired, k, results):
     # pp.pprint(kCount)
     # pp.pprint(weightedProfile)
     return kCount
-def readProcessor(fastq, k, sName):
+def read_processor(fastq, k, sName):
     """
-    Function   : readProcessor
+    Function   : read_processor
     Input      : fastq file, k value
     Output     : Edits a global dictionary - results
     Description: Processes the single fastq file
@@ -463,13 +465,13 @@ def readProcessor(fastq, k, sName):
             lastKmer = str(lines[1][-35:])
             # print("{}\t{}\t{}".format(len(firstKmer),len(midKmer),len(lastKmer)))
             if firstKmer in kmerDict[k] or midKmer in kmerDict[k] or lastKmer in kmerDict[k]:
-                countKmers(lines[1], k, sName)
+                count_kmers(lines[1], k, sName)
                 if reads: readFile.write('\n'.join('{}'.format(l) for l in lines))
         # print(kCount)
             t3 = time.time()
     else:
         logging.error(f"ERROR: File does not exist: {fastq}")
-def countKmers(read, k, sName):
+def count_kmers(read, k, sName):
     """
     Function   : goodReads
     Input      : sequence read, k, step size
@@ -504,9 +506,9 @@ def countKmers(read, k, sName):
         if alleleNumber not in kCount[sName][allele]: kCount[sName][allele][alleleNumber] = 1
         else:
             kCount[sName][allele][alleleNumber] += 1
-def weightedProf(alleleCount, weightDict):
+def weight_profile(alleleCount, weightDict):
     """
-    Function   : weightedProf
+    Function   : weight_profile
     Input      : allele count global var, weight factors
     Output/Desc: Normalizes alleleCount by weight factor
     """
@@ -524,9 +526,9 @@ def weightedProf(alleleCount, weightDict):
 
     return weightedDict
 
-def loadModule(k, dbPrefix):
+def load_module(k, dbPrefix):
     """
-    Function   : loadModule
+    Function   : load_module
     Input      : k value and prefix of the DB file
     Output     : Updates the DB dictionary variables
     Description: Used in loading the DB as set of variables by calling other functions
@@ -539,15 +541,15 @@ def loadModule(k, dbPrefix):
     profileFile = dbPrefix+'_profile.txt'
     global kmerDict
     kmerDict = {}
-    kmerDict[k] = loadKmerDict(dbFile)
+    kmerDict[k] = load_kmer_dict(dbFile)
     global weightDict
-    weightDict = loadWeightDict(weightFile)
+    weightDict = load_weight_dict(weightFile)
     global stProfile
-    stProfile = loadSTfromFile(profileFile)
-    loadConfig(config)
-def loadSTfromFile(profileF):
+    stProfile = load_ST_from_file(profileFile)
+    load_config(config)
+def load_ST_from_file(profileF):
     """
-    Function   : loadSTfromFile
+    Function   : load_ST_from_file
     Input      : profile definition file
     Output     : Updates the DB dictionary variables
     Description: Used in loading the DB as set of variables
@@ -560,9 +562,9 @@ def loadSTfromFile(profileF):
                 if cols[0] not in st: st[cols[0]] = {}
                 st[cols[0]][cols[1]] = cols[2]
     return st
-def loadKmerDict(dbFile):
+def load_kmer_dict(dbFile):
     """
-    Function   : loadKmerDict
+    Function   : load_kmer_dict
     Input      : DB prefix
     Output     : Updates the DB dictionary variables
     Description: Used in loading the DB as set of variables
@@ -575,9 +577,9 @@ def loadKmerDict(dbFile):
             kmerTableDict[array[0]] = {}
             kmerTableDict[array[0]][array[1]] = array[2][1:-1].rsplit(',')
     return kmerTableDict
-def loadWeightDict(weightFile):
+def load_weight_dict(weightFile):
     """
-    Function   : loadWeightDict
+    Function   : load_weight_dict
     Input      : Weight file prefix
     Output     : Updates the DB dictionary variables
     Description: Used in loading the DB as set of variables
@@ -597,9 +599,10 @@ def loadWeightDict(weightFile):
             weightDict[loc][allele] = float(array[1])
     return weightDict
 
-def loadConfig(config):
+def load_config(config):
     """
-    Function   : loadConfig Input      : config file path from getopts
+    Function   : load_config
+    Input      : config file path from getopts
     Output     : Updates configDict
     Description: Used to find allele fasta files for getCoverage
     """
@@ -627,9 +630,9 @@ def loadConfig(config):
                 exit(0)
     return configDict
 
-def printResults(results, output_filename, overwrite, timeDisp):
+def print_results(results, output_filename, overwrite, timeDisp):
     """
-    Function   : printResults
+    Function   : print_results
     Input      : results, output file, overwrite?
     Output     : Prints on the screen or in a file
     Description: Prints the results in the format asked by the user
@@ -676,7 +679,7 @@ def printResults(results, output_filename, overwrite, timeDisp):
 ################################################################################
 # Predict part ends here
 ################################################################################
-def reverseComplement(seq):
+def reverse_complement(seq):
     """
     Build DB part starts
     Returns the reverse complement of the sequence
@@ -692,9 +695,9 @@ def reverseComplement(seq):
         strn = "Reverse Complement Error:" + seqU
         logging.debug(strn)
 
-def getFastaDict(fullLocusFile):
+def get_fasta_dict(fullLocusFile):
     """
-    Function   : getFastaDict
+    Function   : get_fasta_dict
     Input      : locus file name
     Output     : dictionary with all the allele sequences
     Description: Stores each allele sequence in a dictionary
@@ -710,11 +713,11 @@ def getFastaDict(fullLocusFile):
         fastaDict[key] = {'sequence':sequence}
     return fastaDict
 
-def formKmerDB(configDict, k, output_filename):
+def form_kmer_db(configDict, k, output_filename):
     """
-    Function   : formKmerDB
+    Function   : form_kmer_db
     Input      : configuration file, k value, output prefix
-    Output     : abil-genecaller DB
+    Output     : abil_URDOcaller DB
     Description: Constructs the k-mer DB in both strand orientation
     """
     dbFileName = output_filename+'_'+str(k)+'.txt'
@@ -724,7 +727,7 @@ def formKmerDB(configDict, k, output_filename):
     for locus in configDict['loci']:
         msgs = "formKmerDB :" +locus
         logging.debug(msgs)
-        fastaDict = getFastaDict(configDict['loci'][locus])
+        fastaDict = get_fasta_dict(configDict['loci'][locus])
         sum = 0
         n = 0
         for allele in list(fastaDict.keys()):
@@ -741,7 +744,7 @@ def formKmerDB(configDict, k, output_filename):
             i = 0
             while i+k <= l:
                 kmer = seq[i:i+k]
-                revCompKmer = reverseComplement(kmer)
+                revCompKmer = reverse_complement(kmer)
                 if kmer not in kmerDict:
                     kmerDict[kmer] = {}
                     kmerDict[kmer][splitId[0]] = []
@@ -771,7 +774,7 @@ def formKmerDB(configDict, k, output_filename):
                 kfile.write(string)
     with open(weightFileName, 'w') as wfile:
         for locus in configDict['loci']:
-            fastaDict = getFastaDict(configDict['loci'][locus])
+            fastaDict = get_fasta_dict(configDict['loci'][locus])
             for allele in list(fastaDict.keys()):
                 splitId = allele.split('_')
                 seq = fastaDict[allele]['sequence']
@@ -781,9 +784,9 @@ def formKmerDB(configDict, k, output_filename):
                 if fac > 1.05 or fac < 0.95:
                     wfile.write(s)
 
-def copyProfileFile(profileDict, output_filename):
+def copy_profile(profileDict, output_filename):
     """
-    Function   : copyProfileFile
+    Function   : copy_profile
     Input      : profileDict
     Output     : None
     Description: Duplicated profile file for db
@@ -794,9 +797,9 @@ def copyProfileFile(profileDict, output_filename):
         with open(profileFileName, "w") as f1:
             f1.writelines(lines)
 
-def makeCustomDB(config, k, output_filename):
+def make_custom_db(config, k, output_filename):
     """
-    Function   : makeCustomDB
+    Function   : make_custom_db
     Input      : configuration file, k value, output prefix
     Output     : None
     Description: Processes the config file and calls the relevant function
@@ -825,8 +828,8 @@ def makeCustomDB(config, k, output_filename):
             if not os.path.isfile(configDict[head][element]):
                 print("ERROR: %s file does not exist at %s" % (element, configDict[head][element]))
                 exit(0)
-    formKmerDB(configDict, k, output_filename)
-    copyProfileFile(configDict['profile'], output_filename)
+    form_kmer_db(configDict, k, output_filename)
+    copy_profile(configDict['profile'], output_filename)
 
 ################################################################################
 # Build DB part ends
@@ -834,64 +837,64 @@ def makeCustomDB(config, k, output_filename):
 ################################################################################
 
 
-def checkParams(buildDB, predict, config, k, batch, directory, fastq1, fastq2, dbPrefix):
+def check_params(buildDB, predict, config, k, batch, directory, fastq1, fastq2, dbPrefix):
     if predict and buildDB:
-        print(helpTextSmall)
+        print(HELP_TEXT_SMALL)
         print("Select either predict or buildDB module")
         exit(0)
     if not predict and not buildDB:
-        print(helpTextSmall)
+        print(HELP_TEXT_SMALL)
         print("Select either predict or buildDB module")
         exit(0)
     if predict:
         if config is None and coverage:
-            print(helpTextSmall)
+            print(HELP_TEXT_SMALL)
             print("Config parameter is required.")
             exit(0)
         if not os.path.isfile(dbPrefix+'_'+str(k)+'.txt'):
-            print(helpTextSmall)
+            print(HELP_TEXT_SMALL)
             print("DB file does not exist : ", dbPrefix, '_', str(k), '.txt or change DB prefix.')
             exit(0)
         if not os.path.isfile(dbPrefix+'_weight.txt'):
-            print(helpTextSmall)
+            print(HELP_TEXT_SMALL)
             print("DB file does not exist : ", dbPrefix, '_weight.txt or change DB prefix.')
             exit(0)
         if not os.path.isfile(dbPrefix+'_profile.txt'):
-            print(helpTextSmall)
+            print(HELP_TEXT_SMALL)
             print("DB file does not exist : ", dbPrefix, '_profile.txt or change DB prefix.')
             exit(0)
         if listMode:
             if not os.path.isfile(fList):
-                print(helpTextSmall)
+                print(HELP_TEXT_SMALL)
                 print("Error: List file ("+fList+") does not exist!")
                 exit(0)
         elif batch:
             if not os.path.isdir(directory):
-                print(helpTextSmall)
+                print(HELP_TEXT_SMALL)
                 print("Error: Directory ("+directory+") does not exist!")
                 exit(0)
         elif paired:
             if not os.path.isfile(fastq1):
-                print(helpTextSmall)
+                print(HELP_TEXT_SMALL)
                 print("Error: FASTQ file ("+fastq1+") does not exist!")
                 exit(0)
             if not os.path.isfile(fastq2):
-                print(helpTextSmall)
+                print(HELP_TEXT_SMALL)
                 print("Error: FASTQ file ("+fastq2+") does not exist!")
                 exit(0)
         elif not paired:
             if not os.path.isfile(fastq1):
-                print(helpTextSmall)
+                print(HELP_TEXT_SMALL)
                 print("Error: FASTQ file ("+fastq1+") does not exist!")
                 exit(0)
     if buildDB:
         try:
             if not os.path.isfile(config):
-                print(helpTextSmall)
+                print(HELP_TEXT_SMALL)
                 print("Error: Configuration file ("+config+") does not exist!")
                 exit(0)
         except Exception:
-            print(helpTextSmall)
+            print(HELP_TEXT_SMALL)
             print("Error: Specify Configuration file")
             exit(0)
 
@@ -972,12 +975,12 @@ for opt, arg in options:
     elif opt in '-r':
         reads = True
     elif opt in '-v':
-        print(version)
+        print(VERSION)
         exit(0)
     elif opt in ('-h', '--help'):
-        print(helpText)
+        print(HELP_TEXT)
         exit(0)
-checkParams(buildDB, predict, config, k, batch, directory, fastq1, fastq2, dbPrefix)
+check_params(buildDB, predict, config, k, batch, directory, fastq1, fastq2, dbPrefix)
 if buildDB:
     try:
         if not log:
@@ -990,7 +993,7 @@ if buildDB:
         print("Info: Making DB for k = ", k)
         print("Info: Making DB with prefix =", dbPrefix)
         print("Info: Log file written to ", log)
-        makeCustomDB(config, k, dbPrefix)
+        make_custom_db(config, k, dbPrefix)
     else:
         print("Error: The input config file "+config +" does not exist.")
 elif predict:
@@ -1004,17 +1007,17 @@ elif predict:
     logging.debug("==============================================================================")
     logging.debug(f"Command: {' '.join(sys.argv)}")
     logging.debug("Starting Marker Prediction")
-    logging.debug(f"Temporary directory: {tmpdir}")
-    loadModule(k, dbPrefix)
+    logging.debug(f"Temporary directory: {TMPDIR}")
+    load_module(k, dbPrefix)
     rawCounts = {}
     global kCount
     kCount = {}
     if batch:
-        rawCounts = batchTool(directory, k)
+        rawCounts = batch_tool(directory, k)
     else:
-        rawCounts = singleSampleTool(fastq1, fastq2, paired, k, rawCounts)
-    weightCounts = weightedProf(rawCounts, weightDict)
-    printResults(weightCounts, output_filename, overwrite, timeDisp)
+        rawCounts = single_sample_tool(fastq1, fastq2, paired, k, rawCounts)
+    weightCounts = weight_profile(rawCounts, weightDict)
+    print_results(weightCounts, output_filename, overwrite, timeDisp)
 else:
     print("Error: Please select the mode")
     print("--buildDB (for database building) or --predict (for marker discovery)")
