@@ -22,7 +22,7 @@ commercial or government usage of any version of this code/algorithm.
 If you are a commercial or governmental user, please contact abil@ihrc.com
 for permissions.
 
-abil_URDOcaller is licensed under a modified Creative Commong By-NC-SA
+abil_URDOcaller is licensed under a modified Creative Commons By-NC-SA v4
 license, please see the LICENSE file for specific terms.
 
 For additional terms and conditions for government employees, see
