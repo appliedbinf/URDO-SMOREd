@@ -1,0 +1,5 @@
+[loci]
+genericmarkers	db/genericmarkers.fasta
+ptyping	db/ptyping.fasta
+[profile]
+profile	db/profile_2.txt
