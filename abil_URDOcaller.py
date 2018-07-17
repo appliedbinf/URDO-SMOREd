@@ -225,7 +225,7 @@ def batch_tool(fdir, kmer):
     for read_one in file_list:
         fastq1_processed = f"{TMPDIR}/{read_one}"
         fastq2_processed = fastq1_processed.replace("_R1_", "_R2_")
-        kCount = single_sample_tool(fastq1_processed, fastq2_processed,  kmer, rawCounts)
+        kCount = single_sample_tool(fastq1_processed, fastq2_processed, kmer, rawCounts)
     shutil.rmtree(TMPDIR)
     return kCount
 def single_sample_tool(fastq1, fastq2, k, results):
@@ -238,7 +238,6 @@ def single_sample_tool(fastq1, fastq2, k, results):
     # pp.pprint(kmerDict)
     if __reads__:
         read_file_name = fastq1.split('/')[-1].split('.')[0][:-1] + '_reads.fq'
-        global read_file
         read_file = open(read_file_name, 'w+')
     sName = fastq1.split('/')[-1].split('_')[0]
     msg = f"Preprocessing: working with {fastq1} and {fastq2}"
@@ -275,7 +274,6 @@ def read_processor(fastq, k, sName):
     logging.debug(msg)
     if os.path.isfile(fastq):
         logging.debug(f"Analysis: Kmer counting using k={k}")
-        finalProfile = {}
         if sName not in kCount:
             kCount[sName] = {}
         f = open(fastq)
@@ -756,6 +754,7 @@ __log__ = ''
 __k__ = 35
 __directory__ = None
 __reads__ = False
+__read_file__ = None
 """Input arguments"""
 options, remainder = getopt.getopt(sys.argv[1:], 'o:x1:2:kbd:phP:c:rva:', [
     'buildDB',
