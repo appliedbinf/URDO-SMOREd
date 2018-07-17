@@ -294,10 +294,10 @@ def read_processor(fastq, k, sName):
                 logging.debug(m2)
                 return 0
             start = int((len(lines[1])-k)//2)
-            firstKmer = str(lines[1][:k])
-            midKmer = str(lines[1][start:k+start])
-            lastKmer = str(lines[1][-35:])
-            if firstKmer in kmerDict[k] or midKmer in kmerDict[k] or lastKmer in kmerDict[k]:
+            first_kmer = str(lines[1][:k])
+            middle_kmer = str(lines[1][start:k+start])
+            last_kmer = str(lines[1][-35:])
+            if first_kmer in kmerDict[k] or middle_kmer in kmerDict[k] or last_kmer in kmerDict[k]:
                 count_kmers(lines[1], k, sName)
                 if __reads__: read_file.write('\n'.join('{}'.format(l) for l in lines))
     else:
