@@ -31,8 +31,17 @@ For additional terms and conditions for government employees, see
 
 #predict part starts here
 ############################################################
-HELP_TEXT_SMALL = "help"
-HELP_TEXT = "HELP"
+HELP_TEXT_SMALL = """
+To build a database:
+abil_URDOcaller.py --buildDB -c <config file> [-k <int>] [-P|--prefix <database prefix>] [-a <log file path>]
+
+To predict and call markers:
+abil_URDOcaller.py --predict -c <config file> -1 <fwd read FASTQ> -2 <rev read FASTQ> [-d < input directory] [-o <output file>] [-P | --prefix <database prefix>] [-r] -[x] 
+
+abil_URDOcaller.py --help for more detailed instructions
+"""
+
+HELP_TEXT = ""
 TMPDIR = tempfile.mkdtemp()
 def batch_tool(fdir, kmer):
     """
@@ -41,7 +50,7 @@ def batch_tool(fdir, kmer):
     Output     : STs and allelic profiles for each FASTQ file
     Description: Processes all FASTQ files present in the input directory
     """
-    if not directory.endswith('/'):
+    if not fdir.endswith('/'):
         fdir += '/'
     freq_dict_samples = {}
     all_first_reads = [x for x in os.listdir(fdir) if "_R1_" in x]
@@ -115,10 +124,10 @@ def batch_tool(fdir, kmer):
     for read_one in file_list:
         fastq1_processed = f"{TMPDIR}/{read_one}"
         fastq2_processed = fastq1_processed.replace("_R1_", "_R2_")
-        kCount = single_sample_tool(fastq1_processed, fastq2_processed, paired, kmer, rawCounts)
+        kCount = single_sample_tool(fastq1_processed, fastq2_processed,  kmer, rawCounts)
     shutil.rmtree(TMPDIR)
     return kCount
-def single_sample_tool(fastq1, fastq2, paired, k, results):
+def single_sample_tool(fastq1, fastq2, k, results):
     """
     Function   : single_sample_tool
     Input      : fastq file 1 and 2, paired or single, k value, output dictionary
@@ -126,7 +135,7 @@ def single_sample_tool(fastq1, fastq2, paired, k, results):
     Description: Processes both FASTQ files passed to the function
     """
     # pp.pprint(kmerDict)
-    if reads:
+    if __reads__:
         read_file_name = fastq1.split('/')[-1].split('.')[0][:-1] + '_reads.fq'
         global read_file
         read_file = open(read_file_name, 'w+')
@@ -150,7 +159,7 @@ def single_sample_tool(fastq1, fastq2, paired, k, results):
         logging.error(f"ERROR: {string}")
         print(string)
         exit()
-    if reads:
+    if __reads__:
         read_file.close()
     return kCount
 def read_processor(fastq, k, sName):
@@ -189,7 +198,7 @@ def read_processor(fastq, k, sName):
             lastKmer = str(lines[1][-35:])
             if firstKmer in kmerDict[k] or midKmer in kmerDict[k] or lastKmer in kmerDict[k]:
                 count_kmers(lines[1], k, sName)
-                if reads: read_file.write('\n'.join('{}'.format(l) for l in lines))
+                if __reads__: read_file.write('\n'.join('{}'.format(l) for l in lines))
     else:
         logging.error(f"ERROR: File does not exist: {fastq}")
 def count_kmers(read, k, sName):
@@ -269,7 +278,7 @@ def load_module(k, dbPrefix):
     weightDict = load_weight_dict(weightFile)
     global stProfile
     stProfile = load_st_from_file(profileFile)
-    load_config(config)
+    load_config(__config__)
 def load_st_from_file(profileF):
     """
     Function   : load_st_from_file
@@ -354,7 +363,7 @@ def load_config(config):
                 exit(0)
     return configDict
 
-def print_results(results, output_filename, overwrite, timeDisp):
+def print_results(results, output_filename, overwrite):
     """
     Function   : print_results
     Input      : results, output file, overwrite?
@@ -594,11 +603,6 @@ def check_params(buildDB, predict, config, k, batch, directory, fastq1, fastq2, 
             print(HELP_TEXT_SMALL)
             print("DB file does not exist : ", dbPrefix, '_profile.txt or change DB prefix.')
             exit(0)
-        if listMode:
-            if not os.path.isfile(fList):
-                print(HELP_TEXT_SMALL)
-                print("Error: List file ("+fList+") does not exist!")
-                exit(0)
         elif batch:
             if not os.path.isdir(directory):
                 print(HELP_TEXT_SMALL)
@@ -634,28 +638,25 @@ def check_params(buildDB, predict, config, k, batch, directory, fastq1, fastq2, 
 # Default Params
 ################################################################################
 
-buildDB = False
-predict = False
-output_filename = None
-batch = False
-listMode = False
-overwrite = False
-paired = False
-fastq1 = None
-fastq2 = None
-user_k = False
-config = None
-timeDisp = False
-reads = False
-dbPrefix = 'kmer'
-log = ''
-k = 35
-fuzzy = 5
-coverage = True
+__buildDB__ = False
+__predict__ = False
+__output_filename__ = None
+__batch__ = False
+__overwrite__ = False
+__paired__ = False
+__fastq1__ = None
+__fastq2__ = None
+__user_k__ = False
+__config__ = None
+__timeDisp__ = False
+__reads__ = False
+__dbPrefix__ = 'kmer'
+__log__ = ''
+__k__ = 35
 directory = None
-
+__reads__ = False
 """Input arguments"""
-options, remainder = getopt.getopt(sys.argv[1:], 'o:x1:2:kbd:phP:c:trva:', [
+options, remainder = getopt.getopt(sys.argv[1:], 'o:x1:2:kbd:phP:c:rva:', [
     'buildDB',
     'predict',
     'output=',
@@ -670,67 +671,62 @@ options, remainder = getopt.getopt(sys.argv[1:], 'o:x1:2:kbd:phP:c:trva:', [
     'help'])
 for opt, arg in options:
     if opt in ('-o', '--output'):
-        output_filename = arg
+        __output_filename__ = arg
     elif opt in ('-x', '--overwrite'):
-        overwrite = True
+        __overwrite__ = True
     elif opt in '--buildDB':
-        buildDB = True
+        __buildDB__ = True
     elif opt in ('-P', '--prefix'):
-        dbPrefix = arg
+        __dbPrefix__ = arg
     elif opt in '--predict':
-        predict = True
+        __predict__ = True
     elif opt in ('-c', '--config'):
-        config = arg
+        __config__ = arg
     elif opt in '-k':
-        user_k = True
+        __user_k__ = True
         try:
-            k = int(arg)
+            __k__ = int(arg)
         except ValueError:
             print("Error: Enter a numerical k value.")
             exit(0)
         # Check to make sure the arg is an int.
-    elif opt in ('-l', '--list'):
-        listMode = True
-        fList = arg
     elif opt in ('-1', '--fastq1'):
-        fastq1 = arg
+        __fastq1__ = arg
     elif opt in ('-2', '--fastq2'):
-        fastq2 = arg
+        __fastq2__ = arg
     elif opt in ('-d', '--dir', '--directory'):
-        directory = os.path.abspath(arg)
-        batch = True
-    elif opt in '-t':
-        timeDisp = True
+        __directory__ = os.path.abspath(arg)
+        __batch__ = True
     elif opt in '-a':
-        log = arg
+        __log__ = arg
     elif opt in '-r':
-        reads = True
+        __reads__ = True
     elif opt in '-v':
         print(VERSION)
         exit(0)
     elif opt in ('-h', '--help'):
         print(HELP_TEXT)
         exit(0)
-check_params(buildDB, predict, config, k, batch, directory, fastq1, fastq2, dbPrefix)
-if buildDB:
+check_params(__buildDB__, __predict__, __config__, __k__, __batch__, __directory__, __fastq1__, __fastq2__, __dbPrefix__)
+if __buildDB__:
     try:
-        if not log:
-            log = dbPrefix+'.log'
+        if not __log__:
+            log = __dbPrefix__+'.log'
     except TypeError:
         log = 'kmer.log'
     logging.basicConfig(filename=log, level=logging.DEBUG,
                         format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-    if os.path.isfile(config):
-        print("Info: Making DB for k = ", k)
-        print("Info: Making DB with prefix =", dbPrefix)
+    if os.path.isfile(__config__):
+        print("Info: Making DB for k = ", __k__)
+        print("Info: Making DB with prefix =", __dbPrefix__)
         print("Info: Log file written to ", log)
-        make_custom_db(config, k, dbPrefix)
+        make_custom_db(__config__, __k__, _dbPrefix__)
     else:
-        print("Error: The input config file "+config +" does not exist.")
-elif predict:
+        print("Error: The input config file "+__config__ +" does not exist.")
+elif __predict__:
     try:
-        if not log:
-            log = dbPrefix+'.log'
+        if not __log__:
+            log = __dbPrefix__+'.log'
     except TypeError:
         log = 'kmer.log'
     logging.basicConfig(filename=log, level=logging.DEBUG,
@@ -739,16 +735,16 @@ elif predict:
     logging.debug(f"Command: {' '.join(sys.argv)}")
     logging.debug("Starting Marker Prediction")
     logging.debug(f"Temporary directory: {TMPDIR}")
-    load_module(k, dbPrefix)
+    load_module(__k__, __dbPrefix__)
     rawCounts = {}
     global kCount
     kCount = {}
-    if batch:
-        rawCounts = batch_tool(directory, k)
+    if __batch__:
+        rawCounts = batch_tool(__directory__, __k__)
     else:
-        rawCounts = single_sample_tool(fastq1, fastq2, paired, k, rawCounts)
+        rawCounts = single_sample_tool(__fastq1__, __fastq2__, __paired__, __k__, rawCounts)
     weightCounts = weight_profile(rawCounts, weightDict)
-    print_results(weightCounts, output_filename, overwrite, timeDisp)
+    print_results(weightCounts, __output_filename__, __overwrite__)
 else:
     print("Error: Please select the mode")
     print("--buildDB (for database building) or --predict (for marker discovery)")
