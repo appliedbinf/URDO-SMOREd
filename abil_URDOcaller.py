@@ -43,14 +43,16 @@ __fastq2__ = None
 __user_k__ = False
 __config__ = None
 __timeDisp__ = False
-__reads__ = False
-__dbPrefix__ = 'kmer'
+__db_prefix__ = 'kmer'
 __log__ = ''
 __k__ = 35
 __directory__ = None
 __reads__ = False
-__read_file__ = None
 __allele_count__ = {}
+__kmer_dict__ = {}
+__weight_dict_global__ = {}
+__st_profile__ = {}
+__config_dict__ = {}
 HELP_TEXT_SMALL = """
 To build a database:
 abil_URDOcaller.py --buildDB -c <config file> [-k <int>] [-P|--prefix <database prefix>] [-a <log file path>]
@@ -96,7 +98,7 @@ abil_URDOcaller.py --buildDB -c <config file> -k <kmer length(optional)> -P <DB 
       locus1    locusFile1
       locus2    locusFile2
       [profile]
-      profile   profileFile
+      profile   profile_file
   kmer length : is the kmer length for the db. Note, while processing this should be smaller than the read length.
     We suggest kmer lengths of 35, 66 depending on the read length.
   DB prefix(optional) : holds the information for DB files to be created and their location. This module creates 3 files with this prefix.
@@ -275,7 +277,7 @@ def single_sample_tool(fastq1, fastq2, k, results):
         logging.error(f"Preprocessing: [Merging reads] Could not merge read files for sample {sample_name}")
         logging.error(f"ERROR: {subprocess_error}")
         sys.exit(f"Could not merge read files for sample {sample_name}!")
-    read_processor(TMPDIR, k, sample_name, results)
+    read_processor(TMPDIR, k, sample_name, results, read_file)
     if results[sample_name] == {}:
         string = f"No k-mer matches were found for the sample {fastq1} and {fastq2}"
         string += f"\n\tProbable cause of the error:  low quality data/too many N's in the data"
@@ -285,7 +287,7 @@ def single_sample_tool(fastq1, fastq2, k, results):
     if __reads__:
         read_file.close()
     return results
-def read_processor(fastq, k, sample_name, count_dict):
+def read_processor(fastq, k, sample_name, count_dict, read_fh):
     """
     Function   : read_processor
     Input      : fastq file, k value
@@ -297,7 +299,7 @@ def read_processor(fastq, k, sample_name, count_dict):
     logging.debug(msg)
     if os.path.isfile(fastq):
         logging.debug(f"Analysis: Kmer counting using k={k}")
-        if sample_name not in kmer_counts:
+        if sample_name not in count_dict:
             count_dict[sample_name] = {}
         fastq_file = open(fastq)
         for lines in iter(lambda: tuple(islice(fastq_file, 4)), ()):
@@ -309,16 +311,17 @@ def read_processor(fastq, k, sample_name, count_dict):
                     print(error_k_len)
                     logging.debug(error_k_len)
                     return 0
-            except Exception:
+            except:
                 logging.debug(f"ERROR: Check fastq file {fastq_file}")
                 return 0
             start = int((len(lines[1])-k)//2)
             first_kmer = str(lines[1][:k])
             middle_kmer = str(lines[1][start:k+start])
             last_kmer = str(lines[1][-35:])
-            if first_kmer in kmerDict[k] or middle_kmer in kmerDict[k] or last_kmer in kmerDict[k]:
+            if first_kmer in __kmer_dict__[k] or middle_kmer in __kmer_dict__[k] or last_kmer in __kmer_dict__[k]:
                 count_kmers(lines[1], k, sample_name, count_dict)
-                if __reads__: read_file.write('\n'.join('{}'.format(l) for l in lines))
+                if __reads__:
+                    read_fh.write(''.join('{}'.format(l) for l in lines))
     else:
         logging.error(f"ERROR: File does not exist: {fastq}")
 def count_kmers(read, k, sample_name, count_dict):
@@ -333,11 +336,11 @@ def count_kmers(read, k, sample_name, count_dict):
     line = read.rstrip()
     for start_pos in range(len(line)-k-1):
         kmer_string = str(line[start_pos:start_pos+k])
-        if kmer_string in kmerDict[k]:
-            for prob_locus in kmerDict[k][kmer_string]:
+        if kmer_string in __kmer_dict__[k]:
+            for prob_locus in __kmer_dict__[k][kmer_string]:
                 if prob_locus not in __allele_count__:
                     __allele_count__[prob_locus] = {}
-                prob_alleles = kmerDict[k][kmer_string][prob_locus]
+                prob_alleles = __kmer_dict__[k][kmer_string][prob_locus]
                 for allele in prob_alleles:
                     allele = allele.rstrip()
                     if allele in __allele_count__[prob_locus]:
@@ -359,88 +362,85 @@ def count_kmers(read, k, sample_name, count_dict):
         else:
             count_dict[sample_name][allele][allele_number] += 1
 
-def weight_profile(allele_count, weightDict):
+def weight_profile(allele_count, weight_dict):
     """
     Function   : weight_profile
     Input      : allele count global var, weight factors
     Output/Desc: Normalizes __allele_count__ by weight factor
     """
     logging.debug("Post-processing: Adjusting counts based on marker size")
-    weightedDict = {}
+    weighted_dict = {}
     for sample in allele_count:
-        weightedDict[sample] = {}
+        weighted_dict[sample] = {}
         for loc in allele_count[sample]:
-            weightedDict[sample][loc] = {}
-            for aNum in allele_count[sample][loc]:
-                if aNum in weightDict[loc]:
-                    weightedDict[sample][loc][aNum] = allele_count[sample][loc][aNum] // weightDict[loc][aNum]
+            weighted_dict[sample][loc] = {}
+            for a_num in allele_count[sample][loc]:
+                if a_num in weight_dict[loc]:
+                    weighted_dict[sample][loc][a_num] = allele_count[sample][loc][a_num] // weight_dict[loc][a_num]
                 else:
-                    weightedDict[sample][loc][aNum] = allele_count[sample][loc][aNum]
+                    weighted_dict[sample][loc][a_num] = allele_count[sample][loc][a_num]
 
-    return weightedDict
+    return weighted_dict
 
-def load_module(k, dbPrefix):
+def load_module(k, db_prefix):
     """
     Function   : load_module
     Input      : k value and prefix of the DB file
     Output     : Updates the DB dictionary variables
     Description: Used in loading the DB as set of variables by calling other functions
     """
-    global dbFile
-    dbFile = dbPrefix+'_'+str(k)+'.txt'
-    global weightFile
-    weightFile = dbPrefix+'_weight.txt'
-    global profileFile
-    profileFile = dbPrefix+'_profile.txt'
-    global kmerDict
-    kmerDict = {}
-    kmerDict[k] = load_kmer_dict(dbFile)
-    global weightDict
-    weightDict = load_weight_dict(weightFile)
-    global stProfile
-    stProfile = load_st_from_file(profileFile)
+    # global db_file
+    db_file = db_prefix+'_'+str(k)+'.txt'
+    weight_file = db_prefix+'_weight.txt'
+    profile_file = db_prefix+'_profile.txt'
+    __kmer_dict__[k] = load_kmer_dict(db_file)
+    temp_weight_dict = {}
+    temp_weight_dict = load_weight_dict(weight_file)
+    __weight_dict_global__.update(temp_weight_dict)
+    temp_st_dict = load_st_from_file(profile_file)
+    __st_profile__.update(temp_st_dict)
     load_config(__config__)
-def load_st_from_file(profileF):
+def load_st_from_file(profile_file):
     """
     Function   : load_st_from_file
     Input      : profile definition file
     Output     : Updates the DB dictionary variables
     Description: Used in loading the DB as set of variables
     """
-    with open(profileF, 'r') as definitionFile:
-        st = {}
-        for line in definitionFile:
+    with open(profile_file, 'r') as profiles_fh:
+        st_table = {}
+        for line in profiles_fh:
             if not line.startswith("marker"):
                 cols = line.rstrip().rsplit('\t')
-                if cols[0] not in st:
-                    st[cols[0]] = {}
-                st[cols[0]][cols[1]] = cols[2]
-    return st
-def load_kmer_dict(dbFile):
+                if cols[0] not in st_table:
+                    st_table[cols[0]] = {}
+                st_table[cols[0]][cols[1]] = cols[2]
+    return st_table
+def load_kmer_dict(db_file):
     """
     Function   : load_kmer_dict
     Input      : DB prefix
     Output     : Updates the DB dictionary variables
     Description: Used in loading the DB as set of variables
     """
-    kmerTableDict = {}
-    with open(dbFile, 'r') as kmerTableFile:
-        lines = kmerTableFile.readlines()
+    kmer_table_dict = {}
+    with open(db_file, 'r') as kmer_fh:
+        lines = kmer_fh.readlines()
         for line in lines:
             array = line.rstrip().rsplit('\t')
-            kmerTableDict[array[0]] = {}
-            kmerTableDict[array[0]][array[1]] = array[2][1:-1].rsplit(',')
-    return kmerTableDict
-def load_weight_dict(weightFile):
+            kmer_table_dict[array[0]] = {}
+            kmer_table_dict[array[0]][array[1]] = array[2][1:-1].rsplit(',')
+    return kmer_table_dict
+def load_weight_dict(weight_file):
     """
     Function   : load_weight_dict
     Input      : Weight file prefix
     Output     : Updates the DB dictionary variables
     Description: Used in loading the DB as set of variables
     """
-    weightDict = {}
-    with open(weightFile, 'r') as weightTableFile:
-        lines = weightTableFile.readlines()
+    __weight_dict_global__.clear()
+    with open(weight_file, 'r') as weight_table_fh:
+        lines = weight_table_fh.readlines()
         for line in lines:
             array = line.rstrip().rsplit('\t')
             try:
@@ -448,10 +448,10 @@ def load_weight_dict(weightFile):
             except ValueError:
                 print("Error : Allele name in locus file should be seperated by '_' or '-'")
                 exit(0)
-            if loc not in weightDict:
-                weightDict[loc] = {}
-            weightDict[loc][allele] = float(array[1])
-    return weightDict
+            if loc not in __weight_dict_global__:
+                __weight_dict_global__[loc] = {}
+            __weight_dict_global__[loc][allele] = float(array[1])
+    return __weight_dict_global__
 
 def load_config(config):
     """
@@ -460,30 +460,29 @@ def load_config(config):
     Output     : Updates configDict
     Description: Used to find allele fasta files for getCoverage
     """
-    global configDict
-    configDict = {}
-    with open(config) as configFile:
-        lines = configFile.readlines()
+    config_dict = {}
+    with open(config) as config_fh:
+        lines = config_fh.readlines()
         head = ''
         for line in lines:
             if line.rstrip() == '':
                 continue
             if line.rstrip() == '[loci]':
                 head = 'loci'
-                configDict[head] = {}
+                config_dict[head] = {}
             elif line.rstrip() == '[profile]':
                 head = 'profile'
-                configDict[head] = {}
+                config_dict[head] = {}
             else:
                 arr = line.strip().split()
-                configDict[head][arr[0]] = arr[1]
-    for head in configDict:
-        for element in configDict[head]:
-            if not os.path.isfile(configDict[head][element]):
-                print("ERROR: %s file does not exist at %s" % (element, configDict[head][element]))
+                config_dict[head][arr[0]] = arr[1]
+    for head in config_dict:
+        for element in config_dict[head]:
+            if not os.path.isfile(config_dict[head][element]):
+                print("ERROR: %s file does not exist at %s" % (element, config_dict[head][element]))
                 exit(0)
-    return configDict
-
+    __config_dict__.update(config_dict)
+    return
 def print_results(results, output_filename, overwrite):
     """
     Function   : print_results
@@ -497,25 +496,25 @@ def print_results(results, output_filename, overwrite):
             outfile = open(output_filename, "a")
         else:
             outfile = open(output_filename, "w")
-    # pp.pprint(stProfile)
+    # pp.pprint(__st_profile__)
     output = {}
     output["sample"] = []
     out_string = 'Sample'
     logging.debug("Post-processing: Finding most likely phenotypes and markers")
-    for s in results:
-        sample = s
-        output["sample"].append(s)
-        for loc in results[s]:
+    for sample in results:
+        # sample = s
+        output["sample"].append(sample)
+        for loc in results[sample]:
             if loc == "genericmarkers":
-                for mID in results[s][loc]:
-                    if stProfile[loc][mID] not in output:
-                        output[stProfile[loc][mID]] = {}
-                    output[stProfile[loc][mID]][s] = results[s][loc][mID]
+                for marker_id in results[sample][loc]:
+                    if __st_profile__[loc][marker_id] not in output:
+                        output[__st_profile__[loc][marker_id]] = {}
+                    output[__st_profile__[loc][marker_id]][sample] = results[sample][loc][marker_id]
             else:
-                max_mID = max(results[s][loc].items(), key=operator.itemgetter(1))[0]
-                if stProfile[loc][max_mID] not in output:
-                    output[stProfile[loc][max_mID]] = {}
-                output[stProfile[loc][max_mID]][s] = results[s][loc][max_mID]
+                max_marker_id = max(results[sample][loc].items(), key=operator.itemgetter(1))[0]
+                if __st_profile__[loc][max_marker_id] not in output:
+                    output[__st_profile__[loc][max_marker_id]] = {}
+                output[__st_profile__[loc][max_marker_id]][sample] = results[sample][loc][max_marker_id]
     sorted_samples = sorted(output["sample"])
     for sample in sorted_samples:
         out_string += (f"\t{sample}")
@@ -542,16 +541,15 @@ def reverse_complement(seq):
     Build DB part starts
     Returns the reverse complement of the sequence
     """
-    seqU = seq.upper()
+    seq_uppercase = seq.upper()
     seq_dict = {'A':'T', 'T':'A',
                 'G':'C', 'C':'G', 'Y':'R',
                 'R':'Y', 'S':'S', 'W':'W',
                 'K':'M', 'M':'K', 'N':'N'}
     try:
-        return "".join([seq_dict[base] for base in reversed(seqU)])
+        return "".join([seq_dict[base] for base in reversed(seq_uppercase)])
     except Exception:
-        strn = "Reverse Complement Error:" + seqU
-        logging.debug(strn)
+        logging.debug(f"Reverse Complement Error: {seq_uppercase}")
 
 def get_fasta_dict(full_locus_file):
     """
@@ -578,9 +576,8 @@ def form_kmer_db(config_dict, k, output_filename):
     Output     : abil_URDOcaller DB
     Description: Constructs the k-mer DB in both strand orientation
     """
-    dbFileName = output_filename+'_'+str(k)+'.txt'
-    weightFileName = output_filename+'_weight.txt'
-    kmerDict = {}
+    db_file_name = output_filename+'_'+str(k)+'.txt'
+    weight_file_name = output_filename+'_weight.txt'
     mean = {}
     for locus in config_dict['loci']:
         msgs = "formKmerDB :" +locus
@@ -598,49 +595,49 @@ def form_kmer_db(config_dict, k, output_filename):
             except ValueError:
                 print("Error : Allele name in locus file should be seperated by '_' or '-'")
                 exit(0)
-            splitId = allele.replace('-', '_').rsplit('_', 1)
+            allele_id = allele.replace('-', '_').rsplit('_', 1)
             i = 0
             while i+k <= seq_len:
                 kmer = seq[i:i+k]
                 revCompKmer = reverse_complement(kmer)
-                if kmer not in kmerDict:
-                    kmerDict[kmer] = {}
-                    kmerDict[kmer][splitId[0]] = []
-                    kmerDict[kmer][splitId[0]].append(int(splitId[1]))
+                if kmer not in __kmer_dict__:
+                    __kmer_dict__[kmer] = {}
+                    __kmer_dict__[kmer][allele_id[0]] = []
+                    __kmer_dict__[kmer][allele_id[0]].append(int(allele_id[1]))
                 else:
-                    if splitId[0] not in kmerDict[kmer]:
-                        kmerDict[kmer][splitId[0]] = []
-                        kmerDict[kmer][splitId[0]].append(int(splitId[1]))
+                    if allele_id[0] not in __kmer_dict__[kmer]:
+                        __kmer_dict__[kmer][allele_id[0]] = []
+                        __kmer_dict__[kmer][allele_id[0]].append(int(allele_id[1]))
                     else:
-                        kmerDict[kmer][splitId[0]].append(int(splitId[1]))
-                if revCompKmer not in kmerDict:
-                    kmerDict[revCompKmer] = {}
-                    kmerDict[revCompKmer][splitId[0]] = []
-                    kmerDict[revCompKmer][splitId[0]].append(int(splitId[1]))
+                        __kmer_dict__[kmer][allele_id[0]].append(int(allele_id[1]))
+                if revCompKmer not in __kmer_dict__:
+                    __kmer_dict__[revCompKmer] = {}
+                    __kmer_dict__[revCompKmer][allele_id[0]] = []
+                    __kmer_dict__[revCompKmer][allele_id[0]].append(int(allele_id[1]))
                 else:
-                    if splitId[0] not in kmerDict[revCompKmer]:
-                        kmerDict[revCompKmer][splitId[0]] = []
-                        kmerDict[revCompKmer][splitId[0]].append(int(splitId[1]))
+                    if allele_id[0] not in __kmer_dict__[revCompKmer]:
+                        __kmer_dict__[revCompKmer][allele_id[0]] = []
+                        __kmer_dict__[revCompKmer][allele_id[0]].append(int(allele_id[1]))
                     else:
-                        kmerDict[revCompKmer][splitId[0]].append(int(splitId[1]))
+                        __kmer_dict__[revCompKmer][allele_id[0]].append(int(allele_id[1]))
                 i += 1
         mean[locus] = total_kmer_length/seq_location*1.0
-    with open(dbFileName, 'w') as kfile:
-        for key in kmerDict:
-            for key1 in kmerDict[key]:
-                string = str(key)+'\t'+str(key1)+'\t'+str(kmerDict[key][key1]).replace(" ", "")+'\n'
+    with open(db_file_name, 'w') as kfile:
+        for key in __kmer_dict__:
+            for key1 in __kmer_dict__[key]:
+                string = str(key)+'\t'+str(key1)+'\t'+str(__kmer_dict__[key][key1]).replace(" ", "")+'\n'
                 kfile.write(string)
-    with open(weightFileName, 'w') as wfile:
-        for locus in configDict['loci']:
-            fastaDict = get_fasta_dict(configDict['loci'][locus])
+    with open(weight_file_name, 'w') as wfile:
+        for locus in config_dict['loci']:
+            fastaDict = get_fasta_dict(config_dict['loci'][locus])
             for allele in list(fastaDict.keys()):
-                splitId = allele.split('_')
+                allele_id = allele.split('_')
                 seq = fastaDict[allele]['sequence']
-                l = len(seq)
-                fac = (l/mean[locus])
-                s = allele  + '\t' + str(fac) + '\n'
-                if fac > 1.05 or fac < 0.95:
-                    wfile.write(s)
+                seq_len = len(seq)
+                frac = (seq_len/mean[locus])
+                output_string = allele  + '\t' + str(frac) + '\n'
+                if frac > 1.05 or frac < 0.95:
+                    wfile.write(output_string)
 
 def copy_profile(profileDict, output_filename):
     """
@@ -649,10 +646,10 @@ def copy_profile(profileDict, output_filename):
     Output     : None
     Description: Duplicated profile file for db
     """
-    profileFileName = output_filename+'_profile.txt'
+    profile_fileName = output_filename+'_profile.txt'
     with open(profileDict['profile']) as f:
         lines = f.readlines()
-        with open(profileFileName, "w") as f1:
+        with open(profile_fileName, "w") as f1:
             f1.writelines(lines)
 
 def make_custom_db(config, k, output_filename):
@@ -695,7 +692,7 @@ def make_custom_db(config, k, output_filename):
 ################################################################################
 
 
-def check_params(buildDB, predict, config, k, batch, directory, fastq1, fastq2, dbPrefix):
+def check_params(buildDB, predict, config, k, batch, directory, fastq1, fastq2, db_prefix):
     """
     Check input parameters
     """
@@ -712,17 +709,17 @@ def check_params(buildDB, predict, config, k, batch, directory, fastq1, fastq2, 
             print(HELP_TEXT_SMALL)
             print("Config parameter is required.")
             exit(0)
-        if not os.path.isfile(dbPrefix+'_'+str(k)+'.txt'):
+        if not os.path.isfile(db_prefix+'_'+str(k)+'.txt'):
             print(HELP_TEXT_SMALL)
-            print(f"DB file does not exist : {dbPrefix}_{k}.txt or change DB prefix.")
+            print(f"DB file does not exist : {db_prefix}_{k}.txt or change DB prefix.")
             exit(0)
-        if not os.path.isfile(dbPrefix+'_weight.txt'):
+        if not os.path.isfile(db_prefix+'_weight.txt'):
             print(HELP_TEXT_SMALL)
-            print(f"DB file does not exist : {dbPrefix}_weight.txt or change DB prefix.")
+            print(f"DB file does not exist : {db_prefix}_weight.txt or change DB prefix.")
             exit(0)
-        if not os.path.isfile(dbPrefix+'_profile.txt'):
+        if not os.path.isfile(db_prefix+'_profile.txt'):
             print(HELP_TEXT_SMALL)
-            print(f"DB file does not exist : {dbPrefix}_profile.txt or change DB prefix.")
+            print(f"DB file does not exist : {db_prefix}_profile.txt or change DB prefix.")
             exit(0)
         elif batch:
             if not os.path.isdir(directory):
@@ -765,7 +762,7 @@ for opt, arg in options:
     elif opt in '--buildDB':
         __buildDB__ = True
     elif opt in ('-P', '--prefix'):
-        __dbPrefix__ = arg
+        __db_prefix__ = arg
     elif opt in '--predict':
         __predict__ = True
     elif opt in ('-c', '--config'):
@@ -795,26 +792,26 @@ for opt, arg in options:
     elif opt in ('-h', '--help'):
         print(HELP_TEXT)
         exit(0)
-check_params(__buildDB__, __predict__, __config__, __k__, __batch__, __directory__, __fastq1__, __fastq2__, __dbPrefix__)
+check_params(__buildDB__, __predict__, __config__, __k__, __batch__, __directory__, __fastq1__, __fastq2__, __db_prefix__)
 if __buildDB__:
     try:
         if not __log__:
-            log = __dbPrefix__+'.log'
+            log = __db_prefix__+'.log'
     except TypeError:
         log = 'kmer.log'
     logging.basicConfig(filename=log, level=logging.DEBUG,
                         format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
     if os.path.isfile(__config__):
         print("Info: Making DB for k = ", __k__)
-        print("Info: Making DB with prefix =", __dbPrefix__)
+        print("Info: Making DB with prefix =", __db_prefix__)
         print("Info: Log file written to ", log)
-        make_custom_db(__config__, __k__, _dbPrefix__)
+        make_custom_db(__config__, __k__, __db_prefix__)
     else:
         print("Error: The input config file "+__config__ +" does not exist.")
 elif __predict__:
     try:
         if not __log__:
-            log = __dbPrefix__+'.log'
+            log = __db_prefix__+'.log'
     except TypeError:
         log = 'kmer.log'
     logging.basicConfig(filename=log, level=logging.DEBUG,
@@ -823,15 +820,13 @@ elif __predict__:
     logging.debug(f"Command: {' '.join(sys.argv)}")
     logging.debug("Starting Marker Prediction")
     logging.debug(f"Temporary directory: {TMPDIR}")
-    load_module(__k__, __dbPrefix__)
+    load_module(__k__, __db_prefix__)
     RAW_COUNTS = {}
-    global kmer_counts
-    kmer_counts = {}
     if __batch__:
         RAW_COUNTS = batch_tool(__directory__, __k__, RAW_COUNTS)
     else:
         RAW_COUNTS = single_sample_tool(__fastq1__, __fastq2__, __k__, RAW_COUNTS)
-    weightCounts = weight_profile(RAW_COUNTS, weightDict)
+    weightCounts = weight_profile(RAW_COUNTS, __weight_dict_global__)
     print_results(weightCounts, __output_filename__, __overwrite__)
 else:
     print("Error: Please select the mode")
