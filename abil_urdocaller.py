@@ -29,7 +29,7 @@ For additional terms and conditions for government employees, see
 "For Government Employees" section
 """
 
-#predict part starts here
+# predict part starts here
 ############################################################
 
 __buildDB__ = False
@@ -166,6 +166,8 @@ takes one line. For paired end samples the 2 files should be tab separated on si
   Prints the help manual for this application
 """
 TMPDIR = tempfile.mkdtemp()
+
+
 def batch_tool(fdir, kmer, results):
     """
     Function   : batch_tool
@@ -186,7 +188,8 @@ def batch_tool(fdir, kmer, results):
 
     for sample_name, value in freq_dict_samples.items():
         if value > 1:
-            sample_first_reads = [x for x in all_first_reads if sample_name in x]
+            sample_first_reads = [
+                x for x in all_first_reads if sample_name in x]
             for sample_read_one in sample_first_reads:
                 combined_file_one = \
                     sample_name + "_L999_R1_" + \
@@ -203,11 +206,11 @@ def batch_tool(fdir, kmer, results):
                                     gzip >> {TMPDIR}/{combined_file_one}",
                                     shell=True, stderr=subprocess.STDOUT)
                 except subprocess.CalledProcessError as subprocess_error:
-                    logging.error(f"Preprocessing: [Merging lanes] Could not merge read files for sample {sample_name}")
+                    logging.error(f"Preprocessing: [Merging lanes] Could not merge {sample_name}")
                     logging.error(f"ERROR: {subprocess_error}")
-                    sys.exit(f"Could not merge read files for sample {sample_name}!")
+                    sys.exit(f"Could not merge read files for {sample_name}!")
                 else:
-                    logging.debug(f"Preprocessing: [Merging lanes] Merged read files for sample {sample_name}")
+                    logging.debug(f"Preprocessing: [Merging lanes] Merged reads for {sample_name}")
                 sample_read_two = sample_read_one.replace("_R1_", "_R2_")
 
                 try:
@@ -215,11 +218,11 @@ def batch_tool(fdir, kmer, results):
                                     gzip >> {TMPDIR}/{combined_file_two}",
                                     shell=True, stderr=subprocess.STDOUT)
                 except subprocess.CalledProcessError as subprocess_error:
-                    logging.error(f"Preprocessing: [Merging lanes] Could not merge read files for sample {sample_name}\n{subprocess_error}")
+                    logging.error(f"Preprocessing: [Merging lanes] Could not merge {sample_name}")
                     logging.error(f"ERROR: {subprocess_error}")
                     sys.exit(f"Could not merge read files for sample {sample_name}!")
                 else:
-                    logging.debug(f"Preprocessing: [Merging lanes] Merged read files for sample {sample_name}")
+                    logging.debug(f"Preprocessing: [Merging lanes] Merged read for {sample_name}")
         else:
             full_sample_name = [x for x in all_first_reads if sample_name in x]
             sys_call_string_sample_one = f"ln -sL {fdir}/{full_sample_name[0]} \
@@ -228,11 +231,11 @@ def batch_tool(fdir, kmer, results):
                 subprocess.call(sys_call_string_sample_one,
                                 shell=True, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as subprocess_error:
-                logging.error(f"Preprocessing: [Linking reads] Could not link read files for sample {sample_name}")
+                logging.error(f"Preprocessing: [Linking reads] Could not link {sample_name} files")
                 logging.error(f"ERROR: {subprocess_error}")
                 sys.exit(f"Could not link read files for sample {sample_name}!")
             else:
-                logging.debug(f"Preprocessing: [Linking reads] Linked read files for sample {sample_name}")
+                logging.debug(f"Preprocessing: [Linking reads] Linked reads for {sample_name}")
 
             sample_two = full_sample_name[0].replace("_R1_", "_R2_")
             sys_call_string_sample_two = f"ln -sL {fdir}/{sample_two} {TMPDIR}/{sample_two}"
@@ -240,12 +243,11 @@ def batch_tool(fdir, kmer, results):
                 subprocess.call(sys_call_string_sample_two,
                                 shell=True, stderr=subprocess.STDOUT)
             except subprocess.CalledProcessError as subprocess_error:
-                logging.error(f"Preprocessing: [Linking reads] Could not link read files for sample {sample_name}")
+                logging.error(f"Preprocessing: [Linking reads] Could not link {sample_name} files")
                 logging.error(f"ERROR: {subprocess_error}")
                 sys.exit(f"Could not link read files for sample {sample_name}!")
             else:
-                logging.debug(f"Preprocessing: [Linking reads] Linked read files for sample {sample_name}")
-
+                logging.debug(f"Preprocessing: [Linking reads] Linked reads for {sample_name}")
 
     file_list = [x for x in os.listdir(TMPDIR) if "_R1_" in x]
     for read_one in file_list:
@@ -254,6 +256,8 @@ def batch_tool(fdir, kmer, results):
         single_sample_tool(fastq1_processed, fastq2_processed, kmer, results)
     shutil.rmtree(TMPDIR)
     return results
+
+
 def single_sample_tool(fastq1, fastq2, k, results):
     """
     Function   : single_sample_tool
@@ -269,14 +273,16 @@ def single_sample_tool(fastq1, fastq2, k, results):
     logging.debug(msg)
     __allele_count__.clear()
     logging.debug(f"Preprocessing: [Merging reads] Merging {fastq1} and {fastq2}")
-    vsearch_cmd = f"vsearch --fastq_mergepairs {fastq1} --reverse {fastq2} --fastqout {TMPDIR}/reads.fq 2>/dev/null 1>/dev/null"
+    vsearch_cmd = "vsearch --fastq_mergepairs {} --reverse {} --fastqout {}/reads.fq {}".format(
+        fastq1, fastq2, TMPDIR, "2>/dev/null 1>/dev/null")
+
     logging.debug(f"Preprocessing: [Merging reads] VSEARCH command\n\t{vsearch_cmd}")
     try:
         subprocess.call(vsearch_cmd, shell=True, stderr=subprocess.STDOUT)
     except subprocess.CalledProcessError as subprocess_error:
-        logging.error(f"Preprocessing: [Merging reads] Could not merge read files for sample {sample_name}")
+        logging.error(f"Preprocessing: [Merging reads] Could not merge {sample_name}")
         logging.error(f"ERROR: {subprocess_error}")
-        sys.exit(f"Could not merge read files for sample {sample_name}!")
+        sys.exit(f"Could not merge read files for {sample_name}!")
     if __reads__:
         read_processor(TMPDIR, k, sample_name, results, read_file)
     else:
@@ -290,6 +296,8 @@ def single_sample_tool(fastq1, fastq2, k, results):
     if __reads__:
         read_file.close()
     return results
+
+
 def read_processor(fastq, k, sample_name, count_dict, read_fh):
     """
     Function   : read_processor
@@ -307,7 +315,8 @@ def read_processor(fastq, k, sample_name, count_dict, read_fh):
         fastq_file = open(fastq)
         for lines in iter(lambda: tuple(islice(fastq_file, 4)), ()):
             if len(lines) < 4:
-                logging.debug("ERROR: Please verify the input FASTQ files are correct")
+                logging.debug(
+                    "ERROR: Please verify the input FASTQ files are correct")
             try:
                 if len(lines[1]) < k:
                     error_k_len = f"ERROR: Read ID: {[0][1:]} is length {len(lines[1])} and < {k}"
@@ -318,15 +327,19 @@ def read_processor(fastq, k, sample_name, count_dict, read_fh):
                 logging.debug(f"ERROR: Check fastq file {fastq_file}")
                 return 0
             start = int((len(lines[1])-k)//2)
-            first_kmer = str(lines[1][:k])
-            middle_kmer = str(lines[1][start:k+start])
-            last_kmer = str(lines[1][-35:])
-            if first_kmer in __kmer_dict__[k] or middle_kmer in __kmer_dict__[k] or last_kmer in __kmer_dict__[k]:
+            # first_kmer = str(lines[1][:k])
+            # middle_kmer = str(lines[1][start:k+start])
+            # last_kmer = str(lines[1][-35:])
+            kmer_list = [str(lines[1][:k]), str(
+                lines[1][start:k+start]), str(lines[1][-35:])]
+            if any(kmer in __kmer_dict__[k] for kmer in kmer_list):
                 count_kmers(lines[1], k, sample_name, count_dict)
                 if __reads__:
                     read_fh.write(''.join('{}'.format(l) for l in lines))
     else:
         logging.error(f"ERROR: File does not exist: {fastq}")
+
+
 def count_kmers(read, k, sample_name, count_dict):
     """
     Function   : goodReads
@@ -353,8 +366,10 @@ def count_kmers(read, k, sample_name, count_dict):
         start_pos += 1
     max_supports = {}
     for allele in __allele_count__:
-        allele_number = max(__allele_count__[allele].items(), key=operator.itemgetter(1))[0]
-        allele_k_count = __allele_count__[allele][max(__allele_count__[allele].items(), key=operator.itemgetter(1))[0]]
+        allele_number = max(
+            __allele_count__[allele].items(), key=operator.itemgetter(1))[0]
+        allele_k_count = __allele_count__[allele][max(__allele_count__[allele].items(),
+                                                      key=operator.itemgetter(1))[0]]
         if allele not in max_supports:
             max_supports[allele] = {}
         max_supports[allele][allele_number] = allele_k_count
@@ -364,6 +379,7 @@ def count_kmers(read, k, sample_name, count_dict):
             count_dict[sample_name][allele][allele_number] = 1
         else:
             count_dict[sample_name][allele][allele_number] += 1
+
 
 def weight_profile(allele_count, weight_dict):
     """
@@ -385,6 +401,7 @@ def weight_profile(allele_count, weight_dict):
 
     return weighted_dict
 
+
 def load_module(k, db_prefix):
     """
     Function   : load_module
@@ -403,6 +420,8 @@ def load_module(k, db_prefix):
     temp_st_dict = load_st_from_file(profile_file)
     __st_profile__.update(temp_st_dict)
     load_config(__config__)
+
+
 def load_st_from_file(profile_file):
     """
     Function   : load_st_from_file
@@ -419,6 +438,8 @@ def load_st_from_file(profile_file):
                     st_table[cols[0]] = {}
                 st_table[cols[0]][cols[1]] = cols[2]
     return st_table
+
+
 def load_kmer_dict(db_file):
     """
     Function   : load_kmer_dict
@@ -434,6 +455,8 @@ def load_kmer_dict(db_file):
             kmer_table_dict[array[0]] = {}
             kmer_table_dict[array[0]][array[1]] = array[2][1:-1].rsplit(',')
     return kmer_table_dict
+
+
 def load_weight_dict(weight_file):
     """
     Function   : load_weight_dict
@@ -449,12 +472,14 @@ def load_weight_dict(weight_file):
             try:
                 (loc, allele) = array[0].replace('-', '_').rsplit('_', 1)
             except ValueError:
-                print("Error : Allele name in locus file should be seperated by '_' or '-'")
+                print(
+                    "Error : Allele name in locus file should be seperated by '_' or '-'")
                 exit(0)
             if loc not in __weight_dict_global__:
                 __weight_dict_global__[loc] = {}
             __weight_dict_global__[loc][allele] = float(array[1])
     return __weight_dict_global__
+
 
 def load_config(config):
     """
@@ -482,10 +507,13 @@ def load_config(config):
     for head in config_dict:
         for element in config_dict[head]:
             if not os.path.isfile(config_dict[head][element]):
-                print("ERROR: %s file does not exist at %s" % (element, config_dict[head][element]))
+                print("ERROR: %s file does not exist at %s" %
+                      (element, config_dict[head][element]))
                 exit(0)
     __config_dict__.update(config_dict)
     return
+
+
 def print_results(results, output_filename, overwrite):
     """
     Function   : print_results
@@ -503,7 +531,8 @@ def print_results(results, output_filename, overwrite):
     output = {}
     output["sample"] = []
     out_string = 'Sample'
-    logging.debug("Post-processing: Finding most likely phenotypes and markers")
+    logging.debug(
+        "Post-processing: Finding most likely phenotypes and markers")
     for sample in results:
         # sample = s
         output["sample"].append(sample)
@@ -512,12 +541,15 @@ def print_results(results, output_filename, overwrite):
                 for marker_id in results[sample][loc]:
                     if __st_profile__[loc][marker_id] not in output:
                         output[__st_profile__[loc][marker_id]] = {}
-                    output[__st_profile__[loc][marker_id]][sample] = results[sample][loc][marker_id]
+                    output[__st_profile__[loc][marker_id]
+                          ][sample] = results[sample][loc][marker_id]
             else:
-                max_marker_id = max(results[sample][loc].items(), key=operator.itemgetter(1))[0]
+                max_marker_id = max(
+                    results[sample][loc].items(), key=operator.itemgetter(1))[0]
                 if __st_profile__[loc][max_marker_id] not in output:
                     output[__st_profile__[loc][max_marker_id]] = {}
-                output[__st_profile__[loc][max_marker_id]][sample] = results[sample][loc][max_marker_id]
+                output[__st_profile__[loc][max_marker_id]
+                      ][sample] = results[sample][loc][max_marker_id]
     sorted_samples = sorted(output["sample"])
     for sample in sorted_samples:
         out_string += (f"\t{sample}")
@@ -539,20 +571,23 @@ def print_results(results, output_filename, overwrite):
 ################################################################################
 # Predict part ends here
 ################################################################################
+
+
 def reverse_complement(seq):
     """
     Build DB part starts
     Returns the reverse complement of the sequence
     """
     seq_uppercase = seq.upper()
-    seq_dict = {'A':'T', 'T':'A',
-                'G':'C', 'C':'G', 'Y':'R',
-                'R':'Y', 'S':'S', 'W':'W',
-                'K':'M', 'M':'K', 'N':'N'}
+    seq_dict = {'A': 'T', 'T': 'A',
+                'G': 'C', 'C': 'G', 'Y': 'R',
+                'R': 'Y', 'S': 'S', 'W': 'W',
+                'K': 'M', 'M': 'K', 'N': 'N'}
     try:
         return "".join([seq_dict[base] for base in reversed(seq_uppercase)])
     except Exception:
         logging.debug(f"Reverse Complement Error: {seq_uppercase}")
+
 
 def get_fasta_dict(full_locus_file):
     """
@@ -569,8 +604,9 @@ def get_fasta_dict(full_locus_file):
     for entry in entries:
         key = [x for x in entry.split('\n')[0].split() if len(x) != 0][0]
         sequence = ''.join(entry.split('\n')[1:]).rstrip()
-        fasta_dict[key] = {'sequence':sequence}
+        fasta_dict[key] = {'sequence': sequence}
     return fasta_dict
+
 
 def form_kmer_db(config_dict, k, output_filename):
     """
@@ -583,7 +619,7 @@ def form_kmer_db(config_dict, k, output_filename):
     weight_file_name = output_filename+'_weight.txt'
     mean = {}
     for locus in config_dict['loci']:
-        msgs = "formKmerDB :" +locus
+        msgs = "formKmerDB :" + locus
         logging.debug(msgs)
         fasta_dict = get_fasta_dict(config_dict['loci'][locus])
         total_kmer_length = 0
@@ -593,11 +629,6 @@ def form_kmer_db(config_dict, k, output_filename):
             seq_len = len(seq)
             total_kmer_length += seq_len
             seq_location += 1
-            try:
-                (loc, num) = allele.replace('-', '_').rsplit('_', 1)
-            except ValueError:
-                print("Error : Allele name in locus file should be seperated by '_' or '-'")
-                exit(0)
             allele_id = allele.replace('-', '_').rsplit('_', 1)
             i = 0
             while i+k <= seq_len:
@@ -610,25 +641,31 @@ def form_kmer_db(config_dict, k, output_filename):
                 else:
                     if allele_id[0] not in __kmer_dict__[kmer]:
                         __kmer_dict__[kmer][allele_id[0]] = []
-                        __kmer_dict__[kmer][allele_id[0]].append(int(allele_id[1]))
+                        __kmer_dict__[kmer][allele_id[0]].append(
+                            int(allele_id[1]))
                     else:
-                        __kmer_dict__[kmer][allele_id[0]].append(int(allele_id[1]))
+                        __kmer_dict__[kmer][allele_id[0]].append(
+                            int(allele_id[1]))
                 if rev_comp_kmer not in __kmer_dict__:
                     __kmer_dict__[rev_comp_kmer] = {}
                     __kmer_dict__[rev_comp_kmer][allele_id[0]] = []
-                    __kmer_dict__[rev_comp_kmer][allele_id[0]].append(int(allele_id[1]))
+                    __kmer_dict__[rev_comp_kmer][allele_id[0]].append(
+                        int(allele_id[1]))
                 else:
                     if allele_id[0] not in __kmer_dict__[rev_comp_kmer]:
                         __kmer_dict__[rev_comp_kmer][allele_id[0]] = []
-                        __kmer_dict__[rev_comp_kmer][allele_id[0]].append(int(allele_id[1]))
+                        __kmer_dict__[rev_comp_kmer][allele_id[0]].append(
+                            int(allele_id[1]))
                     else:
-                        __kmer_dict__[rev_comp_kmer][allele_id[0]].append(int(allele_id[1]))
+                        __kmer_dict__[rev_comp_kmer][allele_id[0]].append(
+                            int(allele_id[1]))
                 i += 1
         mean[locus] = total_kmer_length/seq_location*1.0
     with open(db_file_name, 'w') as kfile:
         for key in __kmer_dict__:
             for key1 in __kmer_dict__[key]:
-                string = str(key)+'\t'+str(key1)+'\t'+str(__kmer_dict__[key][key1]).replace(" ", "")+'\n'
+                string = str(key)+'\t'+str(key1)+'\t' + \
+                    str(__kmer_dict__[key][key1]).replace(" ", "")+'\n'
                 kfile.write(string)
     with open(weight_file_name, 'w') as wfile:
         for locus in config_dict['loci']:
@@ -637,10 +674,11 @@ def form_kmer_db(config_dict, k, output_filename):
                 allele_id = allele.split('_')
                 seq = fasta_dict[allele]['sequence']
                 seq_len = len(seq)
-                frac = (seq_len /mean[locus])
-                output_string = allele  + '\t' + str(frac) + '\n'
+                frac = (seq_len / mean[locus])
+                output_string = allele + '\t' + str(frac) + '\n'
                 if frac > 1.05 or frac < 0.95:
                     wfile.write(output_string)
+
 
 def copy_profile(profile_dict, output_filename):
     """
@@ -654,6 +692,7 @@ def copy_profile(profile_dict, output_filename):
         lines = profiles_fh.readlines()
         with open(profile_filename, "w") as profiles_out_fh:
             profiles_out_fh.writelines(lines)
+
 
 def make_custom_db(config, k, output_filename):
     """
@@ -684,7 +723,8 @@ def make_custom_db(config, k, output_filename):
     for head in config_dict:
         for element in config_dict[head]:
             if not os.path.isfile(config_dict[head][element]):
-                print("ERROR: %s file does not exist at %s" % (element, config_dict[head][element]))
+                print("ERROR: %s file does not exist at %s" %
+                      (element, config_dict[head][element]))
                 exit(0)
     form_kmer_db(config_dict, k, output_filename)
     copy_profile(config_dict['profile'], output_filename)
@@ -699,14 +739,6 @@ def check_params(build_db, predict, config, k, batch, directory, fastq1, fastq2,
     """
     Check input parameters
     """
-    if predict and build_db:
-        print(HELP_TEXT_SMALL)
-        print("Select either predict or buildDB module")
-        exit(0)
-    if not predict and not build_db:
-        print(HELP_TEXT_SMALL)
-        print("Select either predict or buildDB module")
-        exit(0)
     if predict:
         if config is None:
             print(HELP_TEXT_SMALL)
@@ -746,6 +778,7 @@ def check_params(build_db, predict, config, k, batch, directory, fastq1, fastq2,
 
 ################################################################################
 # The Program Starts Execution Here
+
 
 # Input arguments
 __options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:kbd:phP:c:rva:', [
@@ -799,7 +832,17 @@ for opt, arg in __options__:
     elif opt in ('-h', '--help'):
         print(HELP_TEXT)
         exit(0)
-check_params(__buildDB__, __predict__, __config__, __k__, __batch__, __directory__, __fastq1__, __fastq2__, __db_prefix__)
+
+if __predict__ and __buildDB__:
+    print(HELP_TEXT_SMALL)
+    print("Select either predict or buildDB module")
+    exit(0)
+if not __predict__ and not __buildDB__:
+    print(HELP_TEXT_SMALL)
+    print("Select either predict or buildDB module")
+    exit(0)
+check_params(__buildDB__, __predict__, __config__, __k__, __batch__,
+             __directory__, __fastq1__, __fastq2__, __db_prefix__)
 if __buildDB__:
     try:
         if not __log__:
@@ -814,7 +857,7 @@ if __buildDB__:
         print("Info: Log file written to ", __log__)
         make_custom_db(__config__, __k__, __db_prefix__)
     else:
-        print("Error: The input config file "+__config__ +" does not exist.")
+        print("Error: The input config file "+__config__ + " does not exist.")
 elif __predict__:
     try:
         if not __log__:
@@ -823,7 +866,8 @@ elif __predict__:
         __log__ = 'kmer.log'
     logging.basicConfig(filename=__log__, level=logging.DEBUG,
                         format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-    logging.debug("==============================================================================")
+    logging.debug(
+        "==============================================================================")
     logging.debug(f"Command: {' '.join(sys.argv)}")
     logging.debug("Starting Marker Prediction")
     logging.debug(f"Temporary directory: {TMPDIR}")
