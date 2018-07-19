@@ -662,32 +662,32 @@ def make_custom_db(config, k, output_filename):
     Output     : None
     Description: Processes the config file and calls the relevant function
     """
-    configDict = {}
+    config_dict = {}
     if output_filename is None:
         output_filename = 'kmerDB'
-    with open(config, 'r') as configFile:
-        lines = configFile.readlines()
+    with open(config, 'r') as config_file:
+        lines = config_file.readlines()
         head = ''
         for line in lines:
             if line.rstrip() == '':
                 continue
             if line.rstrip() == '[loci]':
                 head = 'loci'
-                configDict[head] = {}
+                config_dict[head] = {}
             elif line.rstrip() == '[profile]':
                 head = 'profile'
-                configDict[head] = {}
+                config_dict[head] = {}
             else:
                 print(line.strip().split())
                 arr = line.strip().split()
-                configDict[head][arr[0]] = arr[1]
-    for head in configDict:
-        for element in configDict[head]:
-            if not os.path.isfile(configDict[head][element]):
-                print("ERROR: %s file does not exist at %s" % (element, configDict[head][element]))
+                config_dict[head][arr[0]] = arr[1]
+    for head in config_dict:
+        for element in config_dict[head]:
+            if not os.path.isfile(config_dict[head][element]):
+                print("ERROR: %s file does not exist at %s" % (element, config_dict[head][element]))
                 exit(0)
-    form_kmer_db(configDict, k, output_filename)
-    copy_profile(configDict['profile'], output_filename)
+    form_kmer_db(config_dict, k, output_filename)
+    copy_profile(config_dict['profile'], output_filename)
 
 ################################################################################
 # Build DB part ends
