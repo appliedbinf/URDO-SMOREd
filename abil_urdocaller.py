@@ -848,7 +848,7 @@ if __buildDB__:
     try:
         if not __log__:
             __log__ = subprocess.check_output('date "+%Y%m%d_%H%M"', shell = True).decode('utf-8').rstrip() +'.log'
-            sys.write.stderr(f"Writing log file to: {__log__}\n")
+            sys.stderr.write(f"Writing log file to: {__log__}\n")
     except TypeError:
         __log__ = 'kmer.log'
     logging.basicConfig(filename=__log__, level=logging.DEBUG,
@@ -863,7 +863,8 @@ if __buildDB__:
 elif __predict__:
     try:
         if not __log__:
-            __log__ = __db_prefix__+'.log'
+            __log__ = subprocess.check_output('date "+%Y%m%d_%H%M"', shell = True).decode('utf-8').rstrip() +'.log'
+            sys.stderr.write(f"Writing log file to: {__log__}\n")
     except TypeError:
         __log__ = 'kmer.log'
     logging.basicConfig(filename=__log__, level=logging.DEBUG,
