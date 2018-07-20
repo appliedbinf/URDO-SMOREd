@@ -558,7 +558,7 @@ def print_results(results, output_filename, overwrite):
     for key in sorted_output_keys:
         if key != "sample":
             out_string += f"{key}"
-            for sample in output["sample"]:
+            for sample in sorted_samples:
                 if sample in output[key]:
                     out_string += f"\t{output[key][sample]}"
                 else:
@@ -841,12 +841,14 @@ if not __predict__ and not __buildDB__:
     print(HELP_TEXT_SMALL)
     print("Select either predict or buildDB module")
     exit(0)
+
 check_params(__buildDB__, __predict__, __config__, __k__, __batch__,
              __directory__, __fastq1__, __fastq2__, __db_prefix__)
 if __buildDB__:
     try:
         if not __log__:
-            __log__ = __db_prefix__+'.log'
+            __log__ = subprocess.check_output('date "+%Y%m%d_%H%M"', shell = True).decode('utf-8').rstrip() +'.log'
+            sys.write.stderr(f"Writing log file to: {__log__}\n")
     except TypeError:
         __log__ = 'kmer.log'
     logging.basicConfig(filename=__log__, level=logging.DEBUG,
