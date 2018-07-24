@@ -265,20 +265,22 @@ def single_sample_tool(fastq1, fastq2, k, results):
     Output     : STs and allelic profiles for each FASTQ file
     Description: Processes both FASTQ files passed to the function
     """
-    if __reads__:
-        read_file_name = fastq1.split('/')[-1].split('.')[0][:-1] + '_reads.fq'
-        read_file = open(read_file_name, 'w+')
     sample_name = fastq1.split('/')[-1].split('_')[0]
+    if __reads__:
+        read_file_name = sample_name + '_reads.fq'
+        read_file = open(read_file_name, 'w+')
     msg = f"Preprocessing: working with {fastq1} and {fastq2}"
     logging.debug(msg)
     __allele_count__.clear()
     logging.debug(f"Preprocessing: [Merging reads] Merging {fastq1} and {fastq2}")
     vsearch_cmd = "vsearch --fastq_mergepairs {} --reverse {} --fastqout {}/reads.fq {}".format(
-        fastq1, fastq2, TMPDIR, "2>/dev/null 1>/dev/null")
+        fastq1, fastq2, TMPDIR, "")
 
     logging.debug(f"Preprocessing: [Merging reads] VSEARCH command\n\t{vsearch_cmd}")
     try:
-        subprocess.call(vsearch_cmd, shell=True, stderr=subprocess.STDOUT)
+        vsearch_pipes = subprocess.Popen(vsearch_cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        std_out, std_err = vsearch_pipes.communicate()
+        logging.debug(f"Preprocessing: [Merging reads] VSEARCH stats\n{std_err.decode('utf-8')}")
     except subprocess.CalledProcessError as subprocess_error:
         logging.error(f"Preprocessing: [Merging reads] Could not merge {sample_name}")
         logging.error(f"ERROR: {subprocess_error}")
@@ -331,7 +333,7 @@ def read_processor(fastq, k, sample_name, count_dict, read_fh):
             # middle_kmer = str(lines[1][start:k+start])
             # last_kmer = str(lines[1][-35:])
             kmer_list = [str(lines[1][:k]), str(
-                lines[1][start:k+start]), str(lines[1][-35:])]
+                lines[1][start:k+start]), str(lines[1][-35:]).rstrip()]
             if any(kmer in __kmer_dict__[k] for kmer in kmer_list):
                 count_kmers(lines[1], k, sample_name, count_dict)
                 if __reads__:
@@ -572,7 +574,7 @@ def print_results(results, output_filename, overwrite):
 # Predict part ends here
 ################################################################################
 
-
+()
 def reverse_complement(seq):
     """
     Build DB part starts
@@ -781,7 +783,7 @@ def check_params(build_db, predict, config, k, batch, directory, fastq1, fastq2,
 
 
 # Input arguments
-__options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:kbd:phP:c:rva:', [
+__options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rva:', [
     'buildDB',
     'predict',
     'output=',
@@ -847,7 +849,7 @@ check_params(__buildDB__, __predict__, __config__, __k__, __batch__,
 if __buildDB__:
     try:
         if not __log__:
-            __log__ = subprocess.check_output('date "+%Y%m%d_%H%M"', shell = True).decode('utf-8').rstrip() +'.log'
+            __log__ = subprocess.check_output('date "+%Y%m%d_%H%M"', shell=True).decode('utf-8').rstrip() +'.log'
             sys.stderr.write(f"Writing log file to: {__log__}\n")
     except TypeError:
         __log__ = 'kmer.log'
@@ -863,7 +865,7 @@ if __buildDB__:
 elif __predict__:
     try:
         if not __log__:
-            __log__ = subprocess.check_output('date "+%Y%m%d_%H%M"', shell = True).decode('utf-8').rstrip() +'.log'
+            __log__ = subprocess.check_output('date "+%Y%m%d_%H%M"', shell=True).decode('utf-8').rstrip() +'.log'
             sys.stderr.write(f"Writing log file to: {__log__}\n")
     except TypeError:
         __log__ = 'kmer.log'
