@@ -558,6 +558,7 @@ def print_results(results, output_filename, overwrite):
         outfile.write(f"{out_string}\n")
     else:
         print(f"{out_string}\n")
+
 def select_markers(result_dict):
     """Reformat results dict for printing"""
     output = {}
@@ -801,7 +802,7 @@ def check_params(params):
 
 
 # Input arguments
-__options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:kbd:phP:c:rva:w', [
+__options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rva:w', [
     'buildDB',
     'predict',
     'output=',
