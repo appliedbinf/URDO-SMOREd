@@ -34,9 +34,9 @@ For additional terms and conditions for government employees, see
 
 __buildDB__ = False
 __predict__ = False
-__output_filename__ = None
+OUTPUT_FILENAME = None
 __batch__ = False
-__overwrite__ = False
+OVERWRITE = False
 __paired__ = False
 __fastq1__ = None
 __fastq2__ = None
@@ -53,6 +53,7 @@ __kmer_dict__ = {}
 __weight_dict_global__ = {}
 __st_profile__ = {}
 __config_dict__ = {}
+WEIGHT = False
 HELP_TEXT_SMALL = """
 To build a database:
 abil_URDOcaller.py --buildDB -c <config file> [-k <int>] [-P|--prefix <database prefix>] [-a <log file path>]
@@ -166,7 +167,6 @@ takes one line. For paired end samples the 2 files should be tab separated on si
   Prints the help manual for this application
 """
 TMPDIR = tempfile.mkdtemp()
-
 
 def batch_tool(fdir, kmer, results):
     """
@@ -333,9 +333,9 @@ def read_processor(fastq, k, sample_name, count_dict, read_fh):
             # middle_kmer = str(lines[1][start:k+start])
             # last_kmer = str(lines[1][-35:])
             kmer_list = [str(lines[1][:k]), str(
-                lines[1][start:k+start]), str(lines[1][-35:]).rstrip()]
+                lines[1][start:k+start]), str(lines[1][-35:])]
             if any(kmer in __kmer_dict__[k] for kmer in kmer_list):
-                count_kmers(lines[1], k, sample_name, count_dict)
+                count_kmers(lines, k, sample_name, count_dict)
                 if __reads__:
                     read_fh.write(''.join('{}'.format(l) for l in lines))
     else:
@@ -351,7 +351,7 @@ def count_kmers(read, k, sample_name, count_dict):
     """
     __allele_count__.clear()
     start_pos = 0
-    line = read.rstrip()
+    line = read[1].rstrip()
     for start_pos in range(len(line)-k-1):
         kmer_string = str(line[start_pos:start_pos+k])
         if kmer_string in __kmer_dict__[k]:
@@ -570,11 +570,12 @@ def print_results(results, output_filename, overwrite):
         outfile.write(f"{out_string}\n")
     else:
         print(f"{out_string}\n")
+
 ################################################################################
 # Predict part ends here
 ################################################################################
 
-()
+
 def reverse_complement(seq):
     """
     Build DB part starts
@@ -783,7 +784,7 @@ def check_params(build_db, predict, config, k, batch, directory, fastq1, fastq2,
 
 
 # Input arguments
-__options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rva:', [
+__options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:kbd:phP:c:rva:w', [
     'buildDB',
     'predict',
     'output=',
@@ -798,9 +799,9 @@ __options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rva:
     'help'])
 for opt, arg in __options__:
     if opt in ('-o', '--output'):
-        __output_filename__ = arg
+        OUTPUT_FILENAME = arg
     elif opt in ('-x', '--overwrite'):
-        __overwrite__ = True
+        OVERWRITE = True
     elif opt in '--buildDB':
         __buildDB__ = True
     elif opt in ('-P', '--prefix'):
@@ -834,6 +835,9 @@ for opt, arg in __options__:
     elif opt in ('-h', '--help'):
         print(HELP_TEXT)
         exit(0)
+    elif opt is '-w':
+        WEIGHT = True
+
 
 if __predict__ and __buildDB__:
     print(HELP_TEXT_SMALL)
@@ -882,8 +886,11 @@ elif __predict__:
         RAW_COUNTS = batch_tool(__directory__, __k__, RAW_COUNTS)
     else:
         RAW_COUNTS = single_sample_tool(__fastq1__, __fastq2__, __k__, RAW_COUNTS)
-    __weight_counts__ = weight_profile(RAW_COUNTS, __weight_dict_global__)
-    print_results(__weight_counts__, __output_filename__, __overwrite__)
+    if WEIGHT:
+        WEIGHT_COUNTS = weight_profile(RAW_COUNTS, __weight_dict_global__)
+        print_results(WEIGHT_COUNTS, OUTPUT_FILENAME, OVERWRITE)
+    else:
+        print_results(RAW_COUNTS, OUTPUT_FILENAME, OVERWRITE)
 else:
     print("Error: Please select the mode")
     print("--buildDB (for database building) or --predict (for marker discovery)")
