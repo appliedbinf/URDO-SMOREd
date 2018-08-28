@@ -1,0 +1,5 @@
+[loci]
+genericmarkers	/storage/aroon/cdc-jonas/URDO-predictor/db/expanded_genericmarkers.fasta
+ptyping	/storage/aroon/cdc-jonas/URDO-predictor/db/ptyping.fasta
+[profile]
+profile	/storage/aroon/cdc-jonas/URDO-predictor/db/expanded_profile.tsv
