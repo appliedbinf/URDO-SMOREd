@@ -15,7 +15,7 @@ import tempfile
 import shutil
 from itertools import islice
 import operator
-VERSION = """ abil_URDOcaller ALPHA.1 (updated : July 13, 2018) """
+VERSION = """ abil_URDOcaller ALPHA.2 (updated : August 12, 2018) """
 """
 abil_URDOcaller free for academic users and requires permission before any
 commercial or government usage of any version of this code/algorithm.
@@ -571,8 +571,12 @@ def select_markers(result_dict):
                 for marker_id in result_dict[sample][loc]:
                     if __st_profile__[loc][marker_id] not in output:
                         output[__st_profile__[loc][marker_id]] = {}
-                    output[__st_profile__[loc][marker_id]
-                          ][sample] = result_dict[sample][loc][marker_id]
+                    if sample not in output[__st_profile__[loc][marker_id]]:
+                        output[__st_profile__[loc][marker_id]
+                              ][sample] = result_dict[sample][loc][marker_id]
+                    else:
+                        output[__st_profile__[loc][marker_id]
+                              ][sample] += result_dict[sample][loc][marker_id]
             else:
                 max_marker_id = max(
                     result_dict[sample][loc].items(), key=operator.itemgetter(1))[0]
