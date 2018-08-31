@@ -55,6 +55,7 @@ __st_profile__ = {}
 __config_dict__ = {}
 WEIGHT = False
 READ_PATH = ''
+SUMMARY_STATS = {}
 HELP_TEXT_SMALL = """
 To build a database:
 abil_URDOcaller.py --buildDB -c <config file> [-k <int>] [-P|--prefix <database prefix>] [-a <log file path>]
@@ -325,7 +326,7 @@ def read_processor(fastq, k, sample_name, count_dict, read_fh):
         if sample_name not in count_dict:
             count_dict[sample_name] = {}
         fastq_file = open(fastq)
-        for lines in iter(lambda: tuple(islice(fastq_file, 4)), ()):
+        for lines in iter(lambda: list(islice(fastq_file, 4)), ()):
             if len(lines) < 4:
                 logging.debug(
                     "ERROR: Please verify the input FASTQ files are correct")
@@ -335,7 +336,7 @@ def read_processor(fastq, k, sample_name, count_dict, read_fh):
                     print(error_k_len)
                     logging.debug(error_k_len)
                     return 0
-            except RuntimeError:
+            except IndexError:
                 logging.debug(f"ERROR: Check fastq file {fastq_file}")
                 return 0
             start = int((len(lines[1])-k)//2)
@@ -345,8 +346,10 @@ def read_processor(fastq, k, sample_name, count_dict, read_fh):
             kmer_list = [str(lines[1][:k]), str(
                 lines[1][start:k+start]), str(lines[1][-35:])]
             if any(kmer in __kmer_dict__[k] for kmer in kmer_list):
-                count_kmers(lines, k, sample_name, count_dict)
+                k_cov, assignment = count_kmers(lines, k, sample_name, count_dict)
                 if __reads__:
+                    #lines = list(lines)
+                    lines[2] = f"+{k_cov:.3f};{assignment}\n"
                     read_fh.write(''.join('{}'.format(l) for l in lines))
     else:
         logging.error(f"ERROR: File does not exist: {fastq}")
@@ -362,7 +365,8 @@ def count_kmers(read, k, sample_name, count_dict):
     __allele_count__.clear()
     start_pos = 0
     line = read[1].rstrip()
-    for start_pos in range(len(line)-k-1):
+    total_k_count = len(line) - k + 1
+    for start_pos in range(len(line)-k+1):
         kmer_string = str(line[start_pos:start_pos+k])
         if kmer_string in __kmer_dict__[k]:
             for prob_locus in __kmer_dict__[k][kmer_string]:
@@ -377,20 +381,30 @@ def count_kmers(read, k, sample_name, count_dict):
                         __allele_count__[prob_locus][allele] = 1
         start_pos += 1
     max_supports = {}
+    max_allele_count = 0
+    max_allele = ''
+    max_allele_number = 0
+    allele_k_count = ''
     for allele in __allele_count__:
         allele_number = max(
             __allele_count__[allele].items(), key=operator.itemgetter(1))[0]
         allele_k_count = __allele_count__[allele][max(__allele_count__[allele].items(),
                                                       key=operator.itemgetter(1))[0]]
-        if allele not in max_supports:
-            max_supports[allele] = {}
-        max_supports[allele][allele_number] = allele_k_count
-        if allele not in count_dict[sample_name]:
-            count_dict[sample_name][allele] = {}
-        if allele_number not in count_dict[sample_name][allele]:
-            count_dict[sample_name][allele][allele_number] = 1
-        else:
-            count_dict[sample_name][allele][allele_number] += 1
+        if allele_k_count > max_allele_count:
+            max_allele_count = allele_k_count
+            max_allele = allele
+            max_allele_number = allele_number
+
+    if max_allele not in max_supports:
+        max_supports[max_allele] = {}
+    max_supports[max_allele][max_allele_number] = max_allele_count
+    if max_allele not in count_dict[sample_name]:
+        count_dict[sample_name][max_allele] = {}
+    if max_allele_number not in count_dict[sample_name][max_allele]:
+        count_dict[sample_name][max_allele][max_allele_number] = 1
+    else:
+        count_dict[sample_name][max_allele][max_allele_number] += 1
+    return (max_allele_count/total_k_count), __st_profile__[max_allele][max_allele_number]
 
 
 def weight_profile(allele_count, weight_dict):
