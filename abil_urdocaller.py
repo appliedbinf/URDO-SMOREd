@@ -15,7 +15,7 @@ import tempfile
 import shutil
 from itertools import islice
 import operator
-VERSION = """ abil_URDOcaller ALPHA.2 (updated : August 12, 2018) """
+VERSION = """ abil_URDOcaller ALPHA.3 (updated : September XX, 2018) """
 """
 abil_URDOcaller free for academic users and requires permission before any
 commercial or government usage of any version of this code/algorithm.
@@ -54,6 +54,7 @@ __weight_dict_global__ = {}
 __st_profile__ = {}
 __config_dict__ = {}
 WEIGHT = False
+READ_PATH = ''
 HELP_TEXT_SMALL = """
 To build a database:
 abil_URDOcaller.py --buildDB -c <config file> [-k <int>] [-P|--prefix <database prefix>] [-a <log file path>]
@@ -157,7 +158,9 @@ takes one line. For paired end samples the 2 files should be tab separated on si
 -P,--prefix = <prefix>
   Prefix using which the db was created (Defaults = kmer). The location of the db could also be provided.
 -r
-  A seperate reads file is created which has all the reads covering all the locus.
+  A FASTQ file is generated in the current directory for each sample containing reads with kmer matches.
+-R, --readsdir = < output directory >
+  A FASTQ file is generated in the specified directory for each sample containing reads with kmer matches.
 -v
   Prints the version of the software.
 -x,--overwrite
@@ -267,8 +270,11 @@ def single_sample_tool(fastq1, fastq2, k, results):
     """
     sample_name = fastq1.split('/')[-1].split('_')[0]
     if __reads__:
-        read_file_name = sample_name + '_reads.fq'
-        read_file = open(read_file_name, 'w+')
+        read_file_name = READ_PATH + sample_name + '_reads.fq'
+        try:
+            read_file = open(read_file_name, 'w+')
+        except OSError as error:
+            print(f"Count not open {read_file}\n{error}")
     msg = f"Preprocessing: working with {fastq1} and {fastq2}"
     logging.debug(msg)
     __allele_count__.clear()
@@ -806,7 +812,7 @@ def check_params(params):
 
 
 # Input arguments
-__options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rva:w', [
+__options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rR:va:w', [
     'buildDB',
     'predict',
     'output=',
@@ -818,7 +824,8 @@ __options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rva:
     'fastq2=',
     'dir=',
     'directory=',
-    'help'])
+    'help',
+    'readsdir='])
 for opt, arg in __options__:
     if opt in ('-o', '--output'):
         OUTPUT_FILENAME = arg
@@ -851,6 +858,15 @@ for opt, arg in __options__:
         __log__ = arg
     elif opt in '-r':
         __reads__ = True
+    elif opt in '-R':
+        __reads__ = True
+        READ_PATH = os.path.abspath(arg) + "/"
+        if not os.path.isdir(READ_PATH):
+            try:
+                os.makedirs(READ_PATH)
+            except OSError as error:
+                print(f"Count not make {READ_PATH}\n{error}")
+                exit(1)
     elif opt in '-v':
         print(VERSION)
         exit(0)
