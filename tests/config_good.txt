@@ -1,0 +1,4 @@
+[loci]
+alleles	repDB-rename.fasta
+[profile]
+profile	profile.txt
