@@ -2,7 +2,7 @@
 import pytest
 import sys
 from os import getcwd, path, pardir
-sys.path.append(path.abspath(path.join(getcwd(), pardir)))
+sys.path.append(path.abspath("~/repo"))
 from abil_urdocaller import reverse_complement
 def test_reverse_complement():
     assert reverse_complement('ATCG') == 'CGAT'
