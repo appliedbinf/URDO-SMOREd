@@ -2,7 +2,7 @@
 import pytest
 import sys
 from os import getcwd, path, pardir
-sys.path.append(path.abspath(path.join(getcwd(), pardir)))
+sys.path.append(path.abspath("~/repo"))
 from abil_urdocaller import get_fasta_dict
 def test_get_fasta_dict_singleline():
 	assert get_fasta_dict("./test_get_fasta_dict.fasta") == {'seq1': {'sequence': 'ATGC'}}
