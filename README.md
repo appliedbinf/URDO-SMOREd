@@ -1,5 +1,4 @@
-[![CircleCI](https://circleci.com/gh/ar0ch/URDO-predictor.svg?style=svg&circle-token=e5cfa9a42dfa40c1a26051677c8ee81d58bfbc01)](https://circleci.com/gh/ar0ch/URDO-predictor) 
-![PyPI - Python Version](https://img.shields.io/pypi/pyversions/Django.svg)
+[![CircleCI](https://circleci.com/gh/ar0ch/URDO-predictor.svg?style=svg&circle-token=e5cfa9a42dfa40c1a26051677c8ee81d58bfbc01)](https://circleci.com/gh/ar0ch/URDO-predictor) [![codecov](https://codecov.io/gh/ar0ch/URDO-predictor/branch/master/graph/badge.svg?token=7GMwrJkKA8)](https://codecov.io/gh/ar0ch/URDO-predictor) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/Django.svg) 
 
 # Readme for abil\_URDOcaller
 =============================================================================================

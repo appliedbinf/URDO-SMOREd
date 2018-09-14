@@ -57,6 +57,7 @@ jobs:
                     coverage run -a abil_urdocaller.py -h
                     coverage run -a  abil_urdocaller.py --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads
                     coverage xml
+                    coverage report 
                     codecov
 
             - store_artifacts:
