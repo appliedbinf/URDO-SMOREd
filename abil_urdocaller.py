@@ -340,15 +340,11 @@ def read_processor(fastq, k, sample_name, count_dict, read_fh):
                 logging.debug(f"ERROR: Check fastq file {fastq_file}")
                 return 0
             start = int((len(lines[1])-k)//2)
-            # first_kmer = str(lines[1][:k])
-            # middle_kmer = str(lines[1][start:k+start])
-            # last_kmer = str(lines[1][-35:])
             kmer_list = [str(lines[1][:k]), str(
                 lines[1][start:k+start]), str(lines[1][-35:])]
             if any(kmer in __kmer_dict__[k] for kmer in kmer_list):
                 k_cov, assignment = count_kmers(lines, k, sample_name, count_dict)
                 if __reads__:
-                    #lines = list(lines)
                     lines[2] = f"+{k_cov:.3f};{assignment}\n"
                     read_fh.write(''.join('{}'.format(l) for l in lines))
     else:
@@ -365,7 +361,6 @@ def count_kmers(read, k, sample_name, count_dict):
     __allele_count__.clear()
     start_pos = 0
     line = read[1].rstrip()
-    total_k_count = len(line) - k + 1
     for start_pos in range(len(line)-k+1):
         kmer_string = str(line[start_pos:start_pos+k])
         if kmer_string in __kmer_dict__[k]:
@@ -404,7 +399,7 @@ def count_kmers(read, k, sample_name, count_dict):
         count_dict[sample_name][max_allele][max_allele_number] = 1
     else:
         count_dict[sample_name][max_allele][max_allele_number] += 1
-    return (max_allele_count/total_k_count), __st_profile__[max_allele][max_allele_number]
+    return (max_allele_count/(len(line) - k + 1)), __st_profile__[max_allele][max_allele_number]
 
 
 def weight_profile(allele_count, weight_dict):
@@ -446,7 +441,12 @@ def load_module(k, db_prefix):
     __weight_dict_global__.update(temp_weight_dict)
     temp_st_dict = load_st_from_file(profile_file)
     __st_profile__.update(temp_st_dict)
-    load_config(__config__)
+    try:
+        load_config(__config__)
+    except OSError as e:
+        print(e)
+        logging.debug(e)
+        exit(1)
 
 
 def load_st_from_file(profile_file):
@@ -534,9 +534,9 @@ def load_config(config):
     for head in config_dict:
         for element in config_dict[head]:
             if not os.path.isfile(config_dict[head][element]):
-                print("ERROR: %s file does not exist at %s" %
+                raise OSError("ERROR: %s file does not exist at %s" %
                       (element, config_dict[head][element]))
-                exit(0)
+                return
     __config_dict__.update(config_dict)
     return
 
@@ -584,7 +584,6 @@ def select_markers(result_dict):
     output = {}
     output["sample"] = []
     for sample in result_dict:
-        # sample = s
         output["sample"].append(sample)
         for loc in result_dict[sample]:
             if loc == "genericmarkers":
@@ -824,7 +823,6 @@ def check_params(params):
 ################################################################################
 # The Program Starts Execution Here
 
-
 # Input arguments
 __options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rR:va:w', [
     'buildDB',
@@ -890,62 +888,62 @@ for opt, arg in __options__:
     elif opt == '-w':
         WEIGHT = True
 
+if __name__ == "__main__":
+    if __predict__ and __buildDB__:
+        print(HELP_TEXT_SMALL)
+        print("Select either predict or buildDB module")
+        exit(0)
+    if not __predict__ and not __buildDB__:
+        print(HELP_TEXT_SMALL)
+        print("Select either predict or buildDB module")
+        exit(0)
+    PARAMETERS = [__buildDB__, __predict__, __config__, __k__, __batch__,
+                  __directory__, __fastq1__, __fastq2__, __db_prefix__]
 
-if __predict__ and __buildDB__:
-    print(HELP_TEXT_SMALL)
-    print("Select either predict or buildDB module")
-    exit(0)
-if not __predict__ and not __buildDB__:
-    print(HELP_TEXT_SMALL)
-    print("Select either predict or buildDB module")
-    exit(0)
-PARAMETERS = [__buildDB__, __predict__, __config__, __k__, __batch__,
-              __directory__, __fastq1__, __fastq2__, __db_prefix__]
-
-check_params(PARAMETERS)
-if __buildDB__:
-    try:
-        if not __log__:
-            __log__ = subprocess.check_output('date "+%Y%m%d_%H%M"',
-                                              shell=True).decode('utf-8').rstrip() +'.log'
-            sys.stderr.write(f"Writing log file to: {__log__}\n")
-    except TypeError:
-        __log__ = 'kmer.log'
-    logging.basicConfig(filename=__log__, level=logging.DEBUG,
-                        format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-    if os.path.isfile(__config__):
-        print("Info: Making DB for k = ", __k__)
-        print("Info: Making DB with prefix =", __db_prefix__)
-        print("Info: Log file written to ", __log__)
-        make_custom_db(__config__, __k__, __db_prefix__)
+    check_params(PARAMETERS)
+    if __buildDB__:
+        try:
+            if not __log__:
+                __log__ = subprocess.check_output('date "+%Y%m%d_%H%M"',
+                                                  shell=True).decode('utf-8').rstrip() +'.log'
+                sys.stderr.write(f"Writing log file to: {__log__}\n")
+        except TypeError:
+            __log__ = 'kmer.log'
+        logging.basicConfig(filename=__log__, level=logging.DEBUG,
+                            format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+        if os.path.isfile(__config__):
+            print("Info: Making DB for k = ", __k__)
+            print("Info: Making DB with prefix =", __db_prefix__)
+            print("Info: Log file written to ", __log__)
+            make_custom_db(__config__, __k__, __db_prefix__)
+        else:
+            print("Error: The input config file "+__config__ + " does not exist.")
+    elif __predict__:
+        try:
+            if not __log__:
+                __log__ = subprocess.check_output('date "+%Y%m%d_%H%M"',
+                                                  shell=True).decode('utf-8').rstrip() +'.log'
+                sys.stderr.write(f"Writing log file to: {__log__}\n")
+        except TypeError:
+            __log__ = 'kmer.log'
+        logging.basicConfig(filename=__log__, level=logging.DEBUG,
+                            format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
+        logging.debug(
+            "==============================================================================")
+        logging.debug(f"Command: {' '.join(sys.argv)}")
+        logging.debug("Starting Marker Prediction")
+        logging.debug(f"Temporary directory: {TMPDIR}")
+        load_module(__k__, __db_prefix__)
+        RAW_COUNTS = {}
+        if __batch__:
+            RAW_COUNTS = batch_tool(__k__, RAW_COUNTS)
+        else:
+            RAW_COUNTS = single_sample_tool(__fastq1__, __fastq2__, __k__, RAW_COUNTS)
+        if WEIGHT:
+            WEIGHT_COUNTS = weight_profile(RAW_COUNTS, __weight_dict_global__)
+            print_results(WEIGHT_COUNTS, OUTPUT_FILENAME, OVERWRITE)
+        else:
+            print_results(RAW_COUNTS, OUTPUT_FILENAME, OVERWRITE)
     else:
-        print("Error: The input config file "+__config__ + " does not exist.")
-elif __predict__:
-    try:
-        if not __log__:
-            __log__ = subprocess.check_output('date "+%Y%m%d_%H%M"',
-                                              shell=True).decode('utf-8').rstrip() +'.log'
-            sys.stderr.write(f"Writing log file to: {__log__}\n")
-    except TypeError:
-        __log__ = 'kmer.log'
-    logging.basicConfig(filename=__log__, level=logging.DEBUG,
-                        format='%(asctime)s %(message)s', datefmt='%m/%d/%Y %I:%M:%S %p')
-    logging.debug(
-        "==============================================================================")
-    logging.debug(f"Command: {' '.join(sys.argv)}")
-    logging.debug("Starting Marker Prediction")
-    logging.debug(f"Temporary directory: {TMPDIR}")
-    load_module(__k__, __db_prefix__)
-    RAW_COUNTS = {}
-    if __batch__:
-        RAW_COUNTS = batch_tool(__k__, RAW_COUNTS)
-    else:
-        RAW_COUNTS = single_sample_tool(__fastq1__, __fastq2__, __k__, RAW_COUNTS)
-    if WEIGHT:
-        WEIGHT_COUNTS = weight_profile(RAW_COUNTS, __weight_dict_global__)
-        print_results(WEIGHT_COUNTS, OUTPUT_FILENAME, OVERWRITE)
-    else:
-        print_results(RAW_COUNTS, OUTPUT_FILENAME, OVERWRITE)
-else:
-    print("Error: Please select the mode")
-    print("--buildDB (for database building) or --predict (for marker discovery)")
+        print("Error: Please select the mode")
+        print("--buildDB (for database building) or --predict (for marker discovery)")
