@@ -35,7 +35,7 @@ jobs:
                 command: |
                     python3 -m venv venv
                     . venv/bin/activate
-                    pip install pytest pytest-cov coverage
+                    pip install pytest pytest-cov coverage codecov
 
             - save_cache:
                 paths:
@@ -57,6 +57,7 @@ jobs:
                     coverage run -a abil_urdocaller.py -h
                     coverage run -a  abil_urdocaller.py --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads
                     coverage xml
+                    codecov
 
             - store_artifacts:
                 path: test-reports
