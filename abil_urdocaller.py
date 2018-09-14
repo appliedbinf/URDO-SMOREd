@@ -300,12 +300,12 @@ def single_sample_tool(fastq1, fastq2, k, results):
         read_processor(TMPDIR, k, sample_name, results, read_file)
     else:
         read_processor(TMPDIR, k, sample_name, results, None)
-    # if results[sample_name] == {}:
-    #     string = f"No k-mer matches were found for the sample {fastq1} and {fastq2}"
-    #     string += f"\n\tProbable cause of the error:  low quality data/too many N's in the data"
-    #     logging.error(f"ERROR: {string}")
-    #     print(string)
-    #     exit()
+    if results[sample_name] == {}:
+        string = f"No k-mer matches were found for the sample {fastq1} and {fastq2}"
+        string += f"\n\tProbable cause of the error:  low quality data/too many N's in the data"
+        logging.error(f"ERROR: {string}")
+        print(string)
+        exit()
     if __reads__:
         read_file.close()
     return results
