@@ -35,7 +35,7 @@ jobs:
                 command: |
                     python3 -m venv venv
                     . venv/bin/activate
-                    pip install pytest pytest-cov
+                    pip install pytest pytest-cov coverage
 
             - save_cache:
                 paths:
