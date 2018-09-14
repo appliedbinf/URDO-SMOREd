@@ -49,24 +49,14 @@ jobs:
                     pytest tests -v
 
             - run:
-                name: test buildDB
-                command: . venv/bin/activate && coverage run  abil_urdocaller.py --buildDB -c tests/db/expanded_config.txt -P tests/db/db
-            
-            - run:
-                name: test predict
-                command: . venv/bin/activate && coverage run -a abil_urdocaller.py --predict -c tests/db/expanded_config.txt -P tests/db/db -1 tests/reads/MID-2_S2_L001_R1_001.fastq -2 tests/reads/MID-2_S2_L001_R2_001.fastq
-               
-            - run:
-                name: test help
-                command: . venv/bin/activate && coverage run -a abil_urdocaller.py -h
-                
-            - run:
-                name: test predict with dir
-                command:  . venv/bin/activate &&coverage run -a  abil_urdocaller.py --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads
-                
-            - run:
-                name: make coverage xml
-                command:  . venv/bin/activate &&coverage xml
+                name: Coverage tests
+                command: |
+                    . venv/bin/activate 
+                    coverage run  abil_urdocaller.py --buildDB -c tests/db/expanded_config.txt -P tests/db/db
+                    coverage run -a abil_urdocaller.py --predict -c tests/db/expanded_config.txt -P tests/db/db -1 tests/reads/MID-2_S2_L001_R1_001.fastq -2 tests/reads/MID-2_S2_L001_R2_001.fastq
+                    coverage run -a abil_urdocaller.py -h
+                    coverage run -a  abil_urdocaller.py --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads
+                    coverage xml
 
             - store_artifacts:
                 path: test-reports
