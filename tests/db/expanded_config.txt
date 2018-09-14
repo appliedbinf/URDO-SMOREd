@@ -1,0 +1,5 @@
+[loci]
+genericmarkers	tests/db/expanded_genericmarkers.fasta
+ptyping	tests/db/ptyping.fasta
+[profile]
+profile	tests/db/expanded_profile.tsv
