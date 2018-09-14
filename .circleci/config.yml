@@ -3,9 +3,9 @@
 # Check https://circleci.com/docs/2.0/language-python/ for more details
 #
 version: 2
-test:
-  override:
-    - py.test tests
+#test:
+#  override:
+#    - py.test tests
 jobs:
   build:
     docker:
@@ -52,6 +52,12 @@ jobs:
           command: |
             . venv/bin/activate
             pytest tests -v
+
+     - run: coverage run --source $PWD abil_urdocaller.py --buildDB -c tests/db/expanded_config.txt -P tests/db/db
+     - run: coverage run -a --source $PWD abil_urdocaller.py --predict -c tests/db/expanded_config.txt -P tests/db/db -1 tests/reads/MID-2_S2_L001_R1_001.fastq -2 tests/reads/MID-2_S2_L001_R2_001.fastq
+     - run: coverage run -a --source $PWD abil_urdocaller.py -h
+     - run: coverage run -a --source $PWD abil_urdocaller.py --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads
+     - run: coverage xml
 
 
       - store_artifacts:
