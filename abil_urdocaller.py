@@ -195,14 +195,14 @@ def batch_tool(kmer, results):
     from queue import Queue
     sample_queue = Queue()
 
-    def make_command(read_one):
+    def add_jobdata_to_queue(read_one):
         """Make job data for queue"""
         fastq1_processed = f"{TMPDIR}/{read_one}"
         fastq2_processed = fastq1_processed.replace("_R1_", "_R2_")
         data = (fastq1_processed, fastq2_processed, kmer, results)
         return data
     for file in file_list:
-        sample_queue.put(make_command(file))
+        sample_queue.put(add_jobdata_to_queue(file))
 
     def process_samples(sample_queue):
         """Queue production"""
@@ -818,8 +818,6 @@ def make_custom_db(config, k, output_filename):
 # Build DB part ends
 # Check Parameters
 ################################################################################
-
-
 def check_params(params):
     """
     Check input parameters
@@ -866,7 +864,7 @@ def check_params(params):
 # The Program Starts Execution Here
 
 # Input arguments
-__options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rR:va:w', [
+__options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rR:va:wt:', [
     'buildDB',
     'predict',
     'output=',
@@ -879,7 +877,8 @@ __options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rR:v
     'dir=',
     'directory=',
     'help',
-    'readsdir='])
+    'readsdir=',
+    'threads='])
 for opt, arg in __options__:
     if opt in ('-o', '--output'):
         OUTPUT_FILENAME = arg
@@ -929,6 +928,12 @@ for opt, arg in __options__:
         exit(0)
     elif opt == '-w':
         WEIGHT = True
+    elif opt in ('-t', '--threads'):
+        try:
+            WORKERS = int(opt)
+        except ValueError:
+            print("Please provide an integer number of threads")
+            exit()
 
 if __name__ == "__main__":
     if __predict__ and __buildDB__:
