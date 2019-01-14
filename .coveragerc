@@ -10,6 +10,11 @@ exclude_lines =
     if __name__ == .__main__.:
     if __name__ == "__main__":
     except OSError
-    except ValeuError
+    def check_params
+    raise OSError
+    except ValueError
+    except subprocess.CalledProcessError
+    if sample_results[sample_name] == {}:
+    
 ignore_errors = True
 omit = tests/*
