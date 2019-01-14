@@ -48,11 +48,12 @@ __log__ = ''
 __k__ = 35
 __directory__ = None
 __reads__ = False
-__allele_count__ = {}
+#__allele_count__ = {}
 __kmer_dict__ = {}
 __weight_dict_global__ = {}
 __st_profile__ = {}
 __config_dict__ = {}
+WORKERS = 10
 WEIGHT = False
 READ_PATH = ''
 SUMMARY_STATS = {}
@@ -61,7 +62,7 @@ To build a database:
 abil_URDOcaller.py --buildDB -c <config file> [-k <int>] [-P|--prefix <database prefix>] [-a <log file path>]
 
 To predict and call markers:
-abil_URDOcaller.py --predict -c <config file> -1 <fwd read FASTQ> -2 <rev read FASTQ> [-d <input directory>] [-o <output file>] [-P | --prefix <database prefix>] [-r] -[x] 
+abil_URDOcaller.py --predict -c <config file> -1 <fwd read FASTQ> -2 <rev read FASTQ> [-d <input directory>] [-o <output file>] [-P | --prefix <database prefix>] [-r] -[x]
 
 abil_URDOcaller.py --help for more detailed instructions
 """
@@ -70,7 +71,7 @@ HELP_TEXT = """
 Readme for abil_URDOcaller
 =============================================================================================
 Usage
-./abil_URDOcaller.py 
+./abil_URDOcaller.py
 [--buildDB]
 [--predict]
 [-1 filename_fastq1][--fastq1 filename_fastq1]
@@ -96,7 +97,7 @@ There are two steps to predicting ST using abil_URDOcaller.
 Synopsis:
 abil_URDOcaller.py --buildDB -c <config file> -k <kmer length(optional)> -P <DB prefix(optional)>
   config file : is a tab delimited file which has the information for typing scheme ie loci, its multifasta file and profile definition file.
-    Format : 
+    Format :
       [loci]
       locus1    locusFile1
       locus2    locusFile2
@@ -111,12 +112,12 @@ Required arguments
 --buildDB
   Identifier for build db module
 -c,--config = <configuration file>
-  Config file in the format described above. 
+  Config file in the format described above.
 
-Optional arguments  
+Optional arguments
 -k = <kmer length>
   Kmer size for which the db has to be formed(Default k = 35). Note the tool works best with kmer length in between 35 and 66
-  for read lengths of 55 to 150 bp. Kmer size can be increased accordingly. It is advised to keep lower kmer sizes 
+  for read lengths of 55 to 150 bp. Kmer size can be increased accordingly. It is advised to keep lower kmer sizes
   if the quality of reads is not very good.
 -P,--prefix = <prefix>
   Prefix for db and log files to be created(Default = kmer). Also you can specify folder where you want the dbb to be created.
@@ -126,9 +127,9 @@ Optional arguments
   Prints the help manual for this application
 
  --------------------------------------------------------------------------------------------
- 
+
 2. abil_URDOcaller.py --predict
-  
+
 abil_URDOcaller --predict : can run in two modes
   1) single sample (default mode)
   2) multi-sample : run abil_URDOcaller for all the samples in a folder (for a particular specie)
@@ -140,8 +141,8 @@ Required arguments
 --predict
   Identifier for predict module
 -c,--config = <configuration file>
-  Config file in the format described above. 
-  
+  Config file in the format described above.
+
 Optional arguments
 -1,--fastq1 = <fastq1_filename>
   Path to first fastq file for paired end sample and path to the fastq file for single end file.
@@ -152,7 +153,7 @@ Optional arguments
 -d,--dir,--directory = <directory>
   Directory containing paired end read files for multi-sample prediction
 -k = <kmer_length>
-  Kmer length for which the db was created (Default k = 35). 
+  Kmer length for which the db was created (Default k = 35).
 takes one line. For paired end samples the 2 files should be tab separated on single line.
 -o,--output = <output_filename>
   Prints the output to a file instead of stdio.
@@ -172,6 +173,7 @@ takes one line. For paired end samples the 2 files should be tab separated on si
 """
 TMPDIR = tempfile.mkdtemp()
 
+
 def batch_tool(kmer, results):
     """
     Function   : batch_tool
@@ -188,12 +190,34 @@ def batch_tool(kmer, results):
         else:
             freq_dict_samples[sample_name] = 1
     link_reads(freq_dict_samples, all_first_reads)
-
     file_list = [x for x in os.listdir(TMPDIR) if "_R1_" in x]
-    for read_one in file_list:
+    import threading
+    from queue import Queue
+    sample_queue = Queue()
+
+    def make_command(read_one):
+        """Make job data for queue"""
         fastq1_processed = f"{TMPDIR}/{read_one}"
         fastq2_processed = fastq1_processed.replace("_R1_", "_R2_")
-        single_sample_tool(fastq1_processed, fastq2_processed, kmer, results)
+        data = (fastq1_processed, fastq2_processed, kmer, results)
+        return data
+    for file in file_list:
+        sample_queue.put(make_command(file))
+
+    def process_samples(sample_queue):
+        """Queue production"""
+        while True:
+            job_config = sample_queue.get()
+            single_sample_tool(data=job_config)
+            sample_queue.task_done()
+    worker_count = 0
+    while worker_count < WORKERS:
+        thread_id = threading.Thread(target=process_samples, args=(sample_queue,))
+        thread_id.daemon = True
+        thread_id.start()
+        worker_count += 1
+
+    sample_queue.join()
     shutil.rmtree(TMPDIR)
     return results
 
@@ -262,13 +286,18 @@ def link_reads(sample_freq, read_ones):
             else:
                 logging.debug(f"Preprocessing: [Linking reads] Linked reads for {sample_name}")
 
-def single_sample_tool(fastq1, fastq2, k, results):
+def single_sample_tool(**kwargs):
     """
     Function   : single_sample_tool
     Input      : fastq file 1 and 2, paired or single, k value, output dictionary
     Output     : STs and allelic profiles for each FASTQ file
     Description: Processes both FASTQ files passed to the function
     """
+    if 'data' in kwargs:
+        fastq1, fastq2, k, sample_results = kwargs['data']
+    else:
+        fastq1, fastq2, k, sample_results = kwargs.values()
+
     sample_name = fastq1.split('/')[-1].split('_')[0]
     if __reads__:
         read_file_name = READ_PATH + sample_name + '_reads.fq'
@@ -276,13 +305,11 @@ def single_sample_tool(fastq1, fastq2, k, results):
             read_file = open(read_file_name, 'w+')
         except OSError as error:
             print(f"Count not open {read_file}\n{error}")
-    msg = f"Preprocessing: working with {fastq1} and {fastq2}"
-    logging.debug(msg)
-    __allele_count__.clear()
+    logging.debug(f"Preprocessing: working with {fastq1} and {fastq2}")
     logging.debug(f"Preprocessing: [Merging reads] Merging {fastq1} and {fastq2}")
-    vsearch_cmd = "vsearch --fastq_mergepairs {} --reverse {} --fastqout {}/reads.fq {}".format(
-        fastq1, fastq2, TMPDIR, "")
-
+    vsearch_cmd = "vsearch --fastq_mergepairs {} --reverse {} --fastaout {}/{}.fa".format(
+        fastq1, fastq2, TMPDIR, sample_name)
+    vsearch_cmd += " --minseqlength 75"
     logging.debug(f"Preprocessing: [Merging reads] VSEARCH command\n\t{vsearch_cmd}")
     try:
         vsearch_pipes = subprocess.Popen(vsearch_cmd,
@@ -296,19 +323,35 @@ def single_sample_tool(fastq1, fastq2, k, results):
         logging.error(f"Preprocessing: [Merging reads] Could not merge {sample_name}")
         logging.error(f"ERROR: {subprocess_error}")
         sys.exit(f"Could not merge read files for {sample_name}!")
+    vsearch_cmd = "vsearch  --derep_fulllength  {0}/{1}.fa  --output {0}/{1}_centroids.fa ".format(
+        TMPDIR, sample_name)
+    vsearch_cmd += "--relabel out_ --sizeout --fasta_width 0"
+    try:
+        vsearch_pipes = subprocess.Popen(vsearch_cmd,
+                                         shell=True,
+                                         stdout=subprocess.PIPE,
+                                         stderr=subprocess.PIPE)
+        std_out, std_err = vsearch_pipes.communicate()
+        logging.debug(f"Preprocessing: [Merging reads]\n")
+        logging.debug(f"{std_out.decode('utf-8')}{std_err.decode('utf-8')}")
+    except subprocess.CalledProcessError as subprocess_error:
+        logging.error(f"Preprocessing: [Merging reads] Could not merge {sample_name}")
+        logging.error(f"ERROR: {subprocess_error}")
+        sys.exit(f"Could not merge read files for {sample_name}!")
     if __reads__:
-        read_processor(TMPDIR, k, sample_name, results, read_file)
+        read_processor(TMPDIR, k, sample_name, sample_results, read_file)
     else:
-        read_processor(TMPDIR, k, sample_name, results, None)
-    if results[sample_name] == {}:
+        read_processor(TMPDIR, k, sample_name, sample_results, None)
+    if sample_results[sample_name] == {}:
         string = f"No k-mer matches were found for the sample {fastq1} and {fastq2}"
         string += f"\n\tProbable cause of the error:  low quality data/too many N's in the data"
         logging.error(f"ERROR: {string}")
-        print(string)
-        exit()
+        if not __batch__:
+            exit()
     if __reads__:
         read_file.close()
-    return results
+    # if 'data' in kwargs:
+    return sample_results
 
 
 def read_processor(fastq, k, sample_name, count_dict, read_fh):
@@ -318,7 +361,7 @@ def read_processor(fastq, k, sample_name, count_dict, read_fh):
     Output     : Edits a global dictionary - results
     Description: Processes the single fastq file
     """
-    fastq = "/".join([fastq, "reads.fq"])
+    fastq = f"{fastq}/{sample_name}_centroids.fa"
     msg = f"Analysis: Begin processing merged reads ({fastq})"
     logging.debug(msg)
     if os.path.isfile(fastq):
@@ -326,16 +369,13 @@ def read_processor(fastq, k, sample_name, count_dict, read_fh):
         if sample_name not in count_dict:
             count_dict[sample_name] = {}
         fastq_file = open(fastq)
-        for lines in iter(lambda: list(islice(fastq_file, 4)), ()):
-            if len(lines) < 4:
+        for lines in iter(lambda: list(islice(fastq_file, 2)), ()):
+            if len(lines) < 2:
                 logging.debug(
                     "ERROR: Please verify the input FASTQ files are correct")
             try:
                 if len(lines[1]) < k:
-                    error_k_len = f"ERROR: Read ID: {[0][1:]} is length {len(lines[1])} and < {k}"
-                    print(error_k_len)
-                    logging.debug(error_k_len)
-                    return 0
+                    continue
             except IndexError:
                 logging.debug(f"ERROR: Check fastq file {fastq_file}")
                 return 0
@@ -345,7 +385,7 @@ def read_processor(fastq, k, sample_name, count_dict, read_fh):
             if any(kmer in __kmer_dict__[k] for kmer in kmer_list):
                 k_cov, assignment = count_kmers(lines, k, sample_name, count_dict)
                 if __reads__:
-                    lines[2] = f"+{k_cov:.3f};{assignment}\n"
+                    lines[0] = f"{lines[0].rstrip()};{k_cov:.3f};{assignment}\n"
                     read_fh.write(''.join('{}'.format(l) for l in lines))
     else:
         logging.error(f"ERROR: File does not exist: {fastq}")
@@ -358,11 +398,11 @@ def count_kmers(read, k, sample_name, count_dict):
     Output     : Edits the count of global variable __allele_count__
     Description: Increment the count for each k-mer match
     """
-    __allele_count__.clear()
+    __allele_count__ = {}
     start_pos = 0
-    line = read[1].rstrip()
-    for start_pos in range(len(line)-k+1):
-        kmer_string = str(line[start_pos:start_pos+k])
+    read[1].rstrip()
+    for start_pos in range(len(read[1])-k+1):
+        kmer_string = str(read[1][start_pos:start_pos+k])
         if kmer_string in __kmer_dict__[k]:
             for prob_locus in __kmer_dict__[k][kmer_string]:
                 if prob_locus not in __allele_count__:
@@ -396,10 +436,12 @@ def count_kmers(read, k, sample_name, count_dict):
     if max_allele not in count_dict[sample_name]:
         count_dict[sample_name][max_allele] = {}
     if max_allele_number not in count_dict[sample_name][max_allele]:
-        count_dict[sample_name][max_allele][max_allele_number] = 1
+        count_dict[sample_name][max_allele][max_allele_number] = int(
+            read[0].split(";")[1].split("=")[1])
     else:
-        count_dict[sample_name][max_allele][max_allele_number] += 1
-    return (max_allele_count/(len(line) - k + 1)), __st_profile__[max_allele][max_allele_number]
+        count_dict[sample_name][max_allele][max_allele_number] += int(
+            read[0].split(";")[1].split("=")[1])
+    return (max_allele_count/(len(read[1]) - k + 1)), __st_profile__[max_allele][max_allele_number]
 
 
 def weight_profile(allele_count, weight_dict):
@@ -443,9 +485,9 @@ def load_module(k, db_prefix):
     __st_profile__.update(temp_st_dict)
     try:
         load_config(__config__)
-    except OSError as e:
-        print(e)
-        logging.debug(e)
+    except OSError as error:
+        print(error)
+        logging.debug(error)
         exit(1)
 
 
@@ -535,8 +577,8 @@ def load_config(config):
         for element in config_dict[head]:
             if not os.path.isfile(config_dict[head][element]):
                 raise OSError("ERROR: %s file does not exist at %s" %
-                      (element, config_dict[head][element]))
-                return
+                              (element, config_dict[head][element]))
+                return 0
     __config_dict__.update(config_dict)
     return
 
@@ -938,7 +980,11 @@ if __name__ == "__main__":
         if __batch__:
             RAW_COUNTS = batch_tool(__k__, RAW_COUNTS)
         else:
-            RAW_COUNTS = single_sample_tool(__fastq1__, __fastq2__, __k__, RAW_COUNTS)
+            # fastq1, fastq2, k, sample_results
+            RAW_COUNTS = single_sample_tool(fastq1=__fastq1__,
+                                            fastq2=__fastq2__,
+                                            k=__k__,
+                                            sample_results=RAW_COUNTS)
         if WEIGHT:
             WEIGHT_COUNTS = weight_profile(RAW_COUNTS, __weight_dict_global__)
             print_results(WEIGHT_COUNTS, OUTPUT_FILENAME, OVERWRITE)
