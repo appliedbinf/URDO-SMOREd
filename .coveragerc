@@ -9,5 +9,7 @@ exclude_lines =
     raise NotImplementedError
     if __name__ == .__main__.:
     if __name__ == "__main__":
+    except OSError
+    except ValeuError
 ignore_errors = True
 omit = tests/*
