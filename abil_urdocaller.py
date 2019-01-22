@@ -16,25 +16,23 @@ import shutil
 from itertools import islice
 import operator
 import urdohelper
-VERSION = """ abil_URDOcaller ALPHA.3 (updated : September XX, 2018) """
+VERSION = """ SMORE'D ALPHA.4 (updated : January 15, 2019) """
 """
-abil_URDOcaller free for academic users and requires permission before any
+SMORE'D is free for academic users and requires permission before any
 commercial or government usage of any version of this code/algorithm.
 If you are a commercial or governmental user, please contact abil@ihrc.com
 for permissions.
 
-abil_URDOcaller is licensed under a modified Creative Commons By-NC-SA v4
+SMORE'D is licensed under a modified Creative Commons By-NC-SA v4
 license, please see the LICENSE file for specific terms.
 
 For additional terms and conditions for government employees, see
 "For Government Employees" section
 """
-
-# predict part starts here
 ############################################################
 
 __buildDB__ = False
-__predict__ = False
+__predict__ = True
 OUTPUT_FILENAME = None
 __batch__ = False
 OVERWRITE = False
@@ -42,6 +40,10 @@ __paired__ = False
 __fastq1__ = None
 __fastq2__ = None
 __user_k__ = False
+if "URDO_DEFAULT_CONFIG" in os.environ:
+    __config__ = os.environ['URDO_DEFAULT_CONFIG']
+else:
+    __config__ = None
 __config__ = None
 __timeDisp__ = False
 __db_prefix__ = 'kmer'
@@ -54,13 +56,18 @@ __kmer_dict__ = {}
 __weight_dict_global__ = {}
 __st_profile__ = {}
 __config_dict__ = {}
-WORKERS = 10
+WORKERS = 1
 WEIGHT = False
 READ_PATH = ''
 SUMMARY_STATS = {}
 TMPDIR = tempfile.mkdtemp()
 
-def batch_tool(kmer, results):
+def results_callback(data):
+    count_data, sampleid = data
+    RAW_COUNTS[sampleid] = count_data
+    return
+
+def batch_tool(kmer, directory):
     """
     Function   : batch_tool
     Input      : Directory name, paired only, k value
@@ -68,7 +75,7 @@ def batch_tool(kmer, results):
     Description: Processes all FASTQ files present in the input directory
     """
     freq_dict_samples = {}
-    all_first_reads = [x for x in os.listdir(__directory__) if "_R1_" in x]
+    all_first_reads = [x for x in os.listdir(directory) if "_R1_" in x]
     for first_read_name in all_first_reads:
         sample_name = "_".join(first_read_name.split("_")[:-3])
         if sample_name in freq_dict_samples:
@@ -77,50 +84,62 @@ def batch_tool(kmer, results):
             freq_dict_samples[sample_name] = 1
     urdohelper.link_reads(freq_dict_samples, all_first_reads)
     file_list = [x for x in os.listdir(TMPDIR) if "_R1_" in x]
-    import threading
-    from queue import Queue
-    sample_queue = Queue()
-
+    # import threading
+    # from queue import Queue
+    # sample_queue = Queue()
+    [SAMPLES.append(x.split('/')[-1].split('_')[0]) for x in sorted(file_list)]
+    [RAW_COUNTS.append({}) for x in sorted(file_list)]
+    sq = list()
     def add_jobdata_to_queue(read_one):
         """Make job data for queue"""
         fastq1_processed = f"{TMPDIR}/{read_one}"
         fastq2_processed = fastq1_processed.replace("_R1_", "_R2_")
-        data = (fastq1_processed, fastq2_processed, kmer, results)
+        sample_name = fastq1_processed.split('/')[-1].split('_')[0]
+        sample_id = SAMPLES.index(sample_name)
+        data = [fastq1_processed, fastq2_processed, kmer, sample_name, sample_id]
         return data
     for file in file_list:
-        sample_queue.put(add_jobdata_to_queue(file))
+        sq.append(add_jobdata_to_queue(file))
+    # def process_samples(sample_queue):
+    #     """Queue production"""
+    #     while True:
+    #         job_config = sample_queue.get()
+    #         single_sample_tool(data=job_config)
+    #         sample_queue.task_done()
+    # worker_count = 0
+    # while worker_count < WORKERS:
+    #     thread_id = threading.Thread(target=process_samples, args=(sample_queue,))
+    #     thread_id.daemon = True
+    #     thread_id.start()
+    #     worker_count += 1
 
-    def process_samples(sample_queue):
-        """Queue production"""
-        while True:
-            job_config = sample_queue.get()
-            single_sample_tool(data=job_config)
-            sample_queue.task_done()
-    worker_count = 0
-    while worker_count < WORKERS:
-        thread_id = threading.Thread(target=process_samples, args=(sample_queue,))
-        thread_id.daemon = True
-        thread_id.start()
-        worker_count += 1
-
-    sample_queue.join()
+    # sample_queue.join()
+    from multiprocessing import Pool
+    p = Pool(WORKERS)
+    for job_config in sq:
+        p.apply_async(single_sample_tool, job_config, callback = results_callback)
+    p.close()
+    p.join()
     shutil.rmtree(TMPDIR)
-    return results
+    return
 
-
-def single_sample_tool(**kwargs):
+def single_sample_tool(*args, **kwargs):
     """
     Function   : single_sample_tool
     Input      : fastq file 1 and 2, paired or single, k value, output dictionary
     Output     : STs and allelic profiles for each FASTQ file
     Description: Processes both FASTQ files passed to the function
     """
-    if 'data' in kwargs:
-        fastq1, fastq2, k, sample_results = kwargs['data']
-    else:
-        fastq1, fastq2, k, sample_results = kwargs.values()
 
-    sample_name = fastq1.split('/')[-1].split('_')[0]
+    if args:
+        fastq1, fastq2, k, sample_results, sample_names = args
+        sample_name = fastq1.split('/')[-1].split('_')[0]
+    else:
+        fastq1, fastq2, k = kwargs.values()
+        sample_name = fastq1.split('/')[-1].split('_')[0]
+        SAMPLES.append(sample_name)
+        RAW_COUNTS.append({})
+    sample_id = SAMPLES.index(sample_name)
     if __reads__:
         read_file_name = READ_PATH + sample_name + '_reads.fq'
         try:
@@ -161,10 +180,10 @@ def single_sample_tool(**kwargs):
         logging.error(f"ERROR: {subprocess_error}")
         sys.exit(f"Could not merge read files for {sample_name}!")
     if __reads__:
-        read_processor(TMPDIR, k, sample_name, sample_results, read_file)
+        kmer_data = read_processor(TMPDIR, k, sample_name, sample_id, read_file)
     else:
-        read_processor(TMPDIR, k, sample_name, sample_results, None)
-    if sample_results[sample_name] == {}:
+        kmer_data = read_processor(TMPDIR, k, sample_name, sample_id, None)
+    if kmer_data == {}:
         string = f"No k-mer matches were found for the sample {fastq1} and {fastq2}"
         string += f"\n\tProbable cause of the error:  low quality data/too many N's in the data"
         logging.error(f"ERROR: {string}")
@@ -172,80 +191,80 @@ def single_sample_tool(**kwargs):
             exit()
     if __reads__:
         read_file.close()
-    # if 'data' in kwargs:
-    return sample_results
+
+    return (kmer_data, SAMPLES.index(sample_name))
 
 
-def read_processor(fastq, k, sample_name, count_dict, read_fh):
+def read_processor(fasta_dir, k, sample_name, sample_id, read_fh):
     """
     Function   : read_processor
     Input      : fastq file, k value
     Output     : Edits a global dictionary - results
     Description: Processes the single fastq file
     """
-    fastq = f"{fastq}/{sample_name}_centroids.fa"
-    msg = f"Analysis: Begin processing merged reads ({fastq})"
+    # fasta_dir = f"{fasta_dir}/{sample_name}_centroids.fa"
+    count_dict = {}
+    msg = f"Analysis: Begin processing merged reads ({fasta_dir}/{sample_name}_centroids.fa)"
     logging.debug(msg)
-    if os.path.isfile(fastq):
+    if os.path.isfile(f"{fasta_dir}/{sample_name}_centroids.fa"):
         logging.debug(f"Analysis: Kmer counting using k={k}")
-        if sample_name not in count_dict:
-            count_dict[sample_name] = {}
-        fastq_file = open(fastq)
+        fastq_file = open(f"{fasta_dir}/{sample_name}_centroids.fa", 'r')
         for lines in iter(lambda: list(islice(fastq_file, 2)), ()):
             if len(lines) < 2:
-                logging.debug(
-                    "ERROR: Please verify the input FASTQ files are correct")
+                break
             try:
                 if len(lines[1]) < k:
                     continue
             except IndexError:
-                logging.debug(f"ERROR: Check fastq file {fastq_file}")
+                logging.debug(f"ERROR: Check fastq file {fasta_dir}/{sample_name}_centroids.fa")
                 return 0
             start = int((len(lines[1])-k)//2)
             kmer_list = [str(lines[1][:k]), str(
                 lines[1][start:k+start]), str(lines[1][-35:])]
             if any(kmer in __kmer_dict__[k] for kmer in kmer_list):
-                k_cov, assignment = count_kmers(lines, k, sample_name, count_dict)
+                k_cov, assignment = count_kmers(lines, k, sample_name, sample_id, count_dict)
                 if __reads__:
                     lines[0] = f"{lines[0].rstrip()};{k_cov:.3f};{assignment}\n"
                     read_fh.write(''.join('{}'.format(l) for l in lines))
+        return count_dict
     else:
-        logging.error(f"ERROR: File does not exist: {fastq}")
+        logging.error(f"ERROR: File does not exist: {fasta_dir}/{sample_name}_centroids.fa")
 
 
-def count_kmers(read, k, sample_name, count_dict):
+def count_kmers(read, k, sample_name, sample_id, count_dict):
     """
     Function   : goodReads
     Input      : sequence read, k, step size
     Output     : Edits the count of global variable __allele_count__
     Description: Increment the count for each k-mer match
     """
-    __allele_count__ = {}
+    # print(sample_name)
+    allele_counts = {}
     start_pos = 0
     read[1].rstrip()
     for start_pos in range(len(read[1])-k+1):
         kmer_string = str(read[1][start_pos:start_pos+k])
         if kmer_string in __kmer_dict__[k]:
             for prob_locus in __kmer_dict__[k][kmer_string]:
-                if prob_locus not in __allele_count__:
-                    __allele_count__[prob_locus] = {}
+                if prob_locus not in allele_counts:
+                    allele_counts[prob_locus] = {}
                 prob_alleles = __kmer_dict__[k][kmer_string][prob_locus]
                 for allele in prob_alleles:
                     allele = allele.rstrip()
-                    if allele in __allele_count__[prob_locus]:
-                        __allele_count__[prob_locus][allele] += 1
+                    if allele in allele_counts[prob_locus]:
+                        allele_counts[prob_locus][allele] += 1
                     else:
-                        __allele_count__[prob_locus][allele] = 1
+                        allele_counts[prob_locus][allele] = 1
         start_pos += 1
     max_supports = {}
     max_allele_count = 0
     max_allele = ''
     max_allele_number = 0
     allele_k_count = ''
-    for allele in __allele_count__:
+    for allele in allele_counts:
         allele_number = max(
-            __allele_count__[allele].items(), key=operator.itemgetter(1))[0]
-        allele_k_count = __allele_count__[allele][max(__allele_count__[allele].items(),
+            allele_counts[allele].items(), key=operator.itemgetter(1))[0]
+        allele_k_count = allele_counts[allele][max(allele_counts[allele].items(),
                                                       key=operator.itemgetter(1))[0]]
         if allele_k_count > max_allele_count:
             max_allele_count = allele_k_count
@@ -255,13 +274,13 @@ def count_kmers(read, k, sample_name, count_dict):
     if max_allele not in max_supports:
         max_supports[max_allele] = {}
     max_supports[max_allele][max_allele_number] = max_allele_count
-    if max_allele not in count_dict[sample_name]:
-        count_dict[sample_name][max_allele] = {}
-    if max_allele_number not in count_dict[sample_name][max_allele]:
-        count_dict[sample_name][max_allele][max_allele_number] = int(
+    if max_allele not in count_dict:
+        count_dict[max_allele] = {}
+    if max_allele_number not in count_dict[max_allele]:
+        count_dict[max_allele][max_allele_number] = int(
             read[0].split(";")[1].split("=")[1])
     else:
-        count_dict[sample_name][max_allele][max_allele_number] += int(
+        count_dict[max_allele][max_allele_number] += int(
             read[0].split(";")[1].split("=")[1])
     return (max_allele_count/(len(read[1]) - k + 1)), __st_profile__[max_allele][max_allele_number]
 
@@ -383,13 +402,14 @@ def load_config(config):
     return
 
 
-def print_results(results, output_filename, overwrite):
+def print_results(results, samples, output_filename, overwrite):
     """
     Function   : print_results
     Input      : results, output file, overwrite?
     Output     : Prints on the screen or in a file
     Description: Prints the results in the format asked by the user
     """
+    # import pprint as pp
     # pp.pprint(results)
     if output_filename != None:
         if overwrite is False:
@@ -401,16 +421,15 @@ def print_results(results, output_filename, overwrite):
     out_string = 'Sample'
     logging.debug(
         "Post-processing: Finding most likely phenotypes and markers")
-    output = select_markers(results)
-    sorted_samples = sorted(output["sample"])
-    for sample in sorted_samples:
+    output = select_markers(results, samples)
+    # pp.pprint(output)
+    for sample in samples:
         out_string += (f"\t{sample}")
     out_string += "\n"
-    sorted_output_keys = sorted(output)
-    for key in sorted_output_keys:
+    for key in output:
         if key != "sample":
             out_string += f"{key}"
-            for sample in sorted_samples:
+            for sample in samples:
                 if sample in output[key]:
                     out_string += f"\t{output[key][sample]}"
                 else:
@@ -421,30 +440,31 @@ def print_results(results, output_filename, overwrite):
     else:
         print(f"{out_string}\n")
 
-def select_markers(result_dict):
+def select_markers(result_dict, samples):
     """Reformat results dict for printing"""
     output = {}
     output["sample"] = []
-    for sample in result_dict:
+    for sample in samples:
         output["sample"].append(sample)
-        for loc in result_dict[sample]:
+        sample_id = samples.index(sample)
+        for loc in result_dict[sample_id]:
             if loc == "genericmarkers":
-                for marker_id in result_dict[sample][loc]:
+                for marker_id in result_dict[sample_id][loc]:
                     if __st_profile__[loc][marker_id] not in output:
                         output[__st_profile__[loc][marker_id]] = {}
                     if sample not in output[__st_profile__[loc][marker_id]]:
                         output[__st_profile__[loc][marker_id]
-                              ][sample] = result_dict[sample][loc][marker_id]
+                              ][sample] = result_dict[sample_id][loc][marker_id]
                     else:
                         output[__st_profile__[loc][marker_id]
-                              ][sample] += result_dict[sample][loc][marker_id]
+                              ][sample] += result_dict[sample_id][loc][marker_id]
             else:
                 max_marker_id = max(
-                    result_dict[sample][loc].items(), key=operator.itemgetter(1))[0]
+                    result_dict[sample_id][loc].items(), key=operator.itemgetter(1))[0]
                 if __st_profile__[loc][max_marker_id] not in output:
                     output[__st_profile__[loc][max_marker_id]] = {}
                 output[__st_profile__[loc][max_marker_id]
-                      ][sample] = result_dict[sample][loc][max_marker_id]
+                      ][sample] = result_dict[sample_id][loc][max_marker_id]
     return output
 ################################################################################
 # Predict part ends here
@@ -663,6 +683,17 @@ def check_params(params):
 ################################################################################
 # The Program Starts Execution Here
 
+try:
+    temp_arg = sys.argv[1]
+except IndexError:
+    print(urdohelper.HELP_TEXT_SMALL)
+    exit(0)
+
+if "URDO_DEFAULT_DB" in os.environ and __predict__ is True:
+    __db_prefix__ = os.environ['URDO_DEFAULT_DB']
+else:
+     __db_prefix__ = "kmer"
+
 # Input arguments
 __options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rR:va:wt:', [
     'buildDB',
@@ -686,6 +717,9 @@ for opt, arg in __options__:
         OVERWRITE = True
     elif opt in '--buildDB':
         __buildDB__ = True
+        __predict__ = False
+        __config__ = ""
+        __db_prefix__ = "kmer"
     elif opt in ('-P', '--prefix'):
         __db_prefix__ = arg
     elif opt in '--predict':
@@ -732,7 +766,7 @@ for opt, arg in __options__:
         WEIGHT = True
     elif opt in ('-t', '--threads'):
         try:
-            WORKERS = int(opt)
+            WORKERS = int(arg)
         except ValueError:
             print("Please provide an integer number of threads")
             exit()
@@ -783,20 +817,20 @@ if __name__ == "__main__":
         logging.debug("Starting Marker Prediction")
         logging.debug(f"Temporary directory: {TMPDIR}")
         load_module(__k__, __db_prefix__)
-        RAW_COUNTS = {}
+        RAW_COUNTS = []
+        SAMPLES = []
         if __batch__:
-            RAW_COUNTS = batch_tool(__k__, RAW_COUNTS)
+            batch_tool(__k__, __directory__)
         else:
             # fastq1, fastq2, k, sample_results
-            RAW_COUNTS = single_sample_tool(fastq1=__fastq1__,
+            results_callback(single_sample_tool(fastq1=__fastq1__,
                                             fastq2=__fastq2__,
-                                            k=__k__,
-                                            sample_results=RAW_COUNTS)
+                                            k=__k__))
         if WEIGHT:
             WEIGHT_COUNTS = urdohelper.weight_profile(RAW_COUNTS, __weight_dict_global__)
-            print_results(WEIGHT_COUNTS, OUTPUT_FILENAME, OVERWRITE)
+            print_results(WEIGHT_COUNTS, SAMPLES, OUTPUT_FILENAME, OVERWRITE)
         else:
-            print_results(RAW_COUNTS, OUTPUT_FILENAME, OVERWRITE)
+            print_results(RAW_COUNTS, SAMPLES, OUTPUT_FILENAME, OVERWRITE)
     else:
         print("Error: Please select the mode")
         print("--buildDB (for database building) or --predict (for marker discovery)")
