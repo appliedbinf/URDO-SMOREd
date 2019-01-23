@@ -622,7 +622,6 @@ def make_custom_db(config, k, output_filename):
                 head = 'profile'
                 config_dict[head] = {}
             else:
-                print(line.strip().split())
                 arr = line.strip().split()
                 config_dict[head][arr[0]] = arr[1]
     for head in config_dict:
