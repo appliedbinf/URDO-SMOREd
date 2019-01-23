@@ -44,7 +44,6 @@ if "URDO_DEFAULT_CONFIG" in os.environ:
     __config__ = os.environ['URDO_DEFAULT_CONFIG']
 else:
     __config__ = None
-__config__ = None
 __timeDisp__ = False
 __db_prefix__ = 'kmer'
 __log__ = ''
