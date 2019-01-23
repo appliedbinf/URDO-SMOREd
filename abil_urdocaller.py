@@ -63,6 +63,7 @@ SUMMARY_STATS = {}
 TMPDIR = tempfile.mkdtemp()
 
 def results_callback(data):
+    """Collate results from singleSampleTool"""
     count_data, sampleid = data
     RAW_COUNTS[sampleid] = count_data
     return
@@ -87,9 +88,9 @@ def batch_tool(kmer, directory):
     # import threading
     # from queue import Queue
     # sample_queue = Queue()
-    [SAMPLES.append(x.split('/')[-1].split('_')[0]) for x in sorted(file_list)]
-    [RAW_COUNTS.append({}) for x in sorted(file_list)]
-    sq = list()
+    SAMPLES.extend(x.split('/')[-1].split('_')[0] for x in sorted(file_list))
+    RAW_COUNTS.extend({} for x in sorted(file_list))
+    sample_queue = list()
     def add_jobdata_to_queue(read_one):
         """Make job data for queue"""
         fastq1_processed = f"{TMPDIR}/{read_one}"
@@ -99,7 +100,7 @@ def batch_tool(kmer, directory):
         data = [fastq1_processed, fastq2_processed, kmer, sample_name, sample_id]
         return data
     for file in file_list:
-        sq.append(add_jobdata_to_queue(file))
+        sample_queue.append(add_jobdata_to_queue(file))
     # def process_samples(sample_queue):
     #     """Queue production"""
     #     while True:
@@ -115,11 +116,11 @@ def batch_tool(kmer, directory):
 
     # sample_queue.join()
     from multiprocessing import Pool
-    p = Pool(WORKERS)
-    for job_config in sq:
-        p.apply_async(single_sample_tool, job_config, callback = results_callback)
-    p.close()
-    p.join()
+    pool = Pool(WORKERS)
+    for job_config in sample_queue:
+        pool.apply_async(single_sample_tool, job_config, callback=results_callback)
+    pool.close()
+    pool.join()
     shutil.rmtree(TMPDIR)
     return
 
@@ -222,7 +223,7 @@ def read_processor(fasta_dir, k, sample_name, sample_id, read_fh):
             kmer_list = [str(lines[1][:k]), str(
                 lines[1][start:k+start]), str(lines[1][-35:])]
             if any(kmer in __kmer_dict__[k] for kmer in kmer_list):
-                k_cov, assignment = count_kmers(lines, k, sample_name, sample_id, count_dict)
+                k_cov, assignment = count_kmers(lines, k, count_dict)
                 if __reads__:
                     lines[0] = f"{lines[0].rstrip()};{k_cov:.3f};{assignment}\n"
                     read_fh.write(''.join('{}'.format(l) for l in lines))
@@ -231,7 +232,7 @@ def read_processor(fasta_dir, k, sample_name, sample_id, read_fh):
         logging.error(f"ERROR: File does not exist: {fasta_dir}/{sample_name}_centroids.fa")
 
 
-def count_kmers(read, k, sample_name, sample_id, count_dict):
+def count_kmers(read, k, count_dict):
     """
     Function   : goodReads
     Input      : sequence read, k, step size
@@ -265,7 +266,7 @@ def count_kmers(read, k, sample_name, sample_id, count_dict):
         allele_number = max(
             allele_counts[allele].items(), key=operator.itemgetter(1))[0]
         allele_k_count = allele_counts[allele][max(allele_counts[allele].items(),
-                                                      key=operator.itemgetter(1))[0]]
+                                                   key=operator.itemgetter(1))[0]]
         if allele_k_count > max_allele_count:
             max_allele_count = allele_k_count
             max_allele = allele
@@ -684,7 +685,7 @@ def check_params(params):
 # The Program Starts Execution Here
 
 try:
-    temp_arg = sys.argv[1]
+    sys.argv[1]
 except IndexError:
     print(urdohelper.HELP_TEXT_SMALL)
     exit(0)
@@ -692,7 +693,7 @@ except IndexError:
 if "URDO_DEFAULT_DB" in os.environ and __predict__ is True:
     __db_prefix__ = os.environ['URDO_DEFAULT_DB']
 else:
-     __db_prefix__ = "kmer"
+    __db_prefix__ = "kmer"
 
 # Input arguments
 __options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rR:va:wt:', [
@@ -824,8 +825,8 @@ if __name__ == "__main__":
         else:
             # fastq1, fastq2, k, sample_results
             results_callback(single_sample_tool(fastq1=__fastq1__,
-                                            fastq2=__fastq2__,
-                                            k=__k__))
+                                                fastq2=__fastq2__,
+                                                k=__k__))
         if WEIGHT:
             WEIGHT_COUNTS = urdohelper.weight_profile(RAW_COUNTS, __weight_dict_global__)
             print_results(WEIGHT_COUNTS, SAMPLES, OUTPUT_FILENAME, OVERWRITE)
