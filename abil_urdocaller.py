@@ -480,7 +480,7 @@ def reverse_complement(seq):
     seq_dict = {'A': 'T', 'T': 'A',
                 'G': 'C', 'C': 'G', 'Y': 'R',
                 'R': 'Y', 'S': 'S', 'W': 'W',
-                'K': 'M', 'M': 'K', 'N': 'N', 'V':'V'}
+                'K': 'M', 'M': 'K', 'N': 'N', 'V':'V', 'H':'H'}
     try:
         return "".join([seq_dict[base] for base in reversed(seq_uppercase)])
     except ValueError:
