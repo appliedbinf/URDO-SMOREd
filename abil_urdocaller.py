@@ -16,7 +16,7 @@ import shutil
 from itertools import islice
 import operator
 import urdohelper
-VERSION = """ SMORE'D ALPHA.4 (updated : January 15, 2019) """
+VERSION = """ SMORE'D ALPHA.4.1 (updated : January 15, 2019) """
 """
 SMORE'D is free for academic users and requires permission before any
 commercial or government usage of any version of this code/algorithm.
@@ -150,7 +150,7 @@ def single_sample_tool(*args, **kwargs):
     logging.debug(f"Preprocessing: [Merging reads] Merging {fastq1} and {fastq2}")
     vsearch_cmd = "vsearch --fastq_mergepairs {} --reverse {} --fastaout {}/{}.fa".format(
         fastq1, fastq2, TMPDIR, sample_name)
-    vsearch_cmd += " --minseqlength 75 --fastq_allowmergestagger"
+    vsearch_cmd += " --minseqlength 75 --fastq_allowmergestagger --fastq_maxdiffs 20 --fastq_maxns 10"
     logging.debug(f"Preprocessing: [Merging reads] VSEARCH command\n\t{vsearch_cmd}")
     try:
         vsearch_pipes = subprocess.Popen(vsearch_cmd,
