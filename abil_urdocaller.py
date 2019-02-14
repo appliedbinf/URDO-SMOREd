@@ -150,7 +150,7 @@ def single_sample_tool(*args, **kwargs):
     logging.debug(f"Preprocessing: [Merging reads] Merging {fastq1} and {fastq2}")
     vsearch_cmd = "vsearch --fastq_mergepairs {} --reverse {} --fastaout {}/{}.fa".format(
         fastq1, fastq2, TMPDIR, sample_name)
-    vsearch_cmd += " --minseqlength 75"
+    vsearch_cmd += " --minseqlength 75 --fastq_allowmergestagger"
     logging.debug(f"Preprocessing: [Merging reads] VSEARCH command\n\t{vsearch_cmd}")
     try:
         vsearch_pipes = subprocess.Popen(vsearch_cmd,
