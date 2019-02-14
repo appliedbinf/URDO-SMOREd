@@ -16,8 +16,8 @@ import shutil
 from itertools import islice
 import operator
 import urdohelper
-VERSION = """ SMORE'D ALPHA.4.1 (updated : January 15, 2019) """
-"""
+VERSION = """SMORE'D ALPHA.4.1 (updated : January 15, 2019)"""
+LICENSE = """
 SMORE'D is free for academic users and requires permission before any
 commercial or government usage of any version of this code/algorithm.
 If you are a commercial or governmental user, please contact abil@ihrc.com
@@ -84,9 +84,6 @@ def batch_tool(kmer, directory):
             freq_dict_samples[sample_name] = 1
     urdohelper.link_reads(freq_dict_samples, all_first_reads)
     file_list = [x for x in os.listdir(TMPDIR) if "_R1_" in x]
-    # import threading
-    # from queue import Queue
-    # sample_queue = Queue()
     SAMPLES.extend(x.split('/')[-1].split('_')[0] for x in sorted(file_list))
     RAW_COUNTS.extend({} for x in sorted(file_list))
     sample_queue = list()
@@ -100,20 +97,7 @@ def batch_tool(kmer, directory):
         return data
     for file in file_list:
         sample_queue.append(add_jobdata_to_queue(file))
-    # def process_samples(sample_queue):
-    #     """Queue production"""
-    #     while True:
-    #         job_config = sample_queue.get()
-    #         single_sample_tool(data=job_config)
-    #         sample_queue.task_done()
-    # worker_count = 0
-    # while worker_count < WORKERS:
-    #     thread_id = threading.Thread(target=process_samples, args=(sample_queue,))
-    #     thread_id.daemon = True
-    #     thread_id.start()
-    #     worker_count += 1
 
-    # sample_queue.join()
     from multiprocessing import Pool
     pool = Pool(WORKERS)
     for job_config in sample_queue:
@@ -141,7 +125,7 @@ def single_sample_tool(*args, **kwargs):
         RAW_COUNTS.append({})
     sample_id = SAMPLES.index(sample_name)
     if __reads__:
-        read_file_name = READ_PATH + sample_name + '_reads.fq'
+        read_file_name = READ_PATH + sample_name + '_seqs.fasta'
         try:
             read_file = open(read_file_name, 'w+')
         except OSError as error:
@@ -757,6 +741,7 @@ for opt, arg in __options__:
                 exit(1)
     elif opt in '-v':
         print(VERSION)
+        print(LICENSE)
         exit(0)
     elif opt in ('-h', '--help'):
         print(urdohelper.HELP_TEXT)
