@@ -17,4 +17,4 @@ exclude_lines =
     if sample_results[sample_name] == {}:
     
 ignore_errors = True
-omit = tests/*
+#omit = tests/*
