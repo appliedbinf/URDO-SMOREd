@@ -1,4 +1,2 @@
 [loci]
-alleles	db/repDB-rename.fasta
-[profile]
-profile	db/profile.txt
+alleles	tests/repDB-rename.fasta
