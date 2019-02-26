@@ -172,7 +172,7 @@ def single_sample_tool(*args, **kwargs):
         string += f"\n\tProbable cause of the error:  low quality data/too many N's in the data"
         logging.error(f"ERROR: {string}")
         if not __batch__:
-            exit()
+            sys.exit()
     if __reads__:
         read_file.close()
 
@@ -292,7 +292,8 @@ def load_module(k, db_prefix):
     except OSError as error:
         print(error)
         logging.debug(error)
-        exit(1)
+        sys.exit(1)
+
 
 
 def load_st_from_file(profile_file):
@@ -347,7 +348,7 @@ def load_weight_dict(weight_file):
             except ValueError:
                 print(
                     "Error : Allele name in locus file should be seperated by '_' or '-'")
-                exit(0)
+                sys.exit(0)
             if loc not in __weight_dict_global__:
                 __weight_dict_global__[loc] = {}
             __weight_dict_global__[loc][allele] = float(array[1])
@@ -383,6 +384,10 @@ def load_config(config):
                 raise OSError("ERROR: %s file does not exist at %s" %
                               (element, config_dict[head][element]))
     __config_dict__.update(config_dict)
+    if "loci" not in __config_dict__ or "profile" not in __config_dict__:
+        print("Config file missing [loci] or [profile] block")
+        raise(SystemExit)
+        sys.exit(1)
     return
 
 
@@ -400,13 +405,11 @@ def print_results(results, samples, output_filename, overwrite):
             outfile = open(output_filename, "a")
         else:
             outfile = open(output_filename, "w")
-    # pp.pprint(__st_profile__)
     output = {}
     out_string = 'Sample'
     logging.debug(
         "Post-processing: Finding most likely phenotypes and markers")
     output = select_markers(results, samples)
-    # pp.pprint(output)
     for sample in samples:
         out_string += (f"\t{sample}")
     out_string += "\n"
@@ -613,7 +616,7 @@ def make_custom_db(config, k, output_filename):
             if not os.path.isfile(config_dict[head][element]):
                 print("ERROR: %s file does not exist at %s" %
                       (element, config_dict[head][element]))
-                exit(0)
+                sys.exit(0)
     form_kmer_db(config_dict, k, output_filename)
     copy_profile(config_dict['profile'], output_filename)
 
@@ -627,41 +630,37 @@ def check_params(params):
     """
     build_db, predict, config, k, batch, directory, fastq1, fastq2, db_prefix = params
     if predict:
-        if config is None:
-            print(urdohelper.HELP_TEXT_SMALL)
-            print("Config parameter is required.")
-            exit(0)
         if not os.path.isfile(db_prefix+'_'+str(k)+'.txt'):
             print(urdohelper.HELP_TEXT_SMALL)
             print(f"DB file does not exist : {db_prefix}_{k}.txt or change DB prefix.")
-            exit(0)
+            sys.exit(0)
         if not os.path.isfile(db_prefix+'_weight.txt'):
             print(urdohelper.HELP_TEXT_SMALL)
             print(f"DB file does not exist : {db_prefix}_weight.txt or change DB prefix.")
-            exit(0)
+            sys.exit(0)
         if not os.path.isfile(db_prefix+'_profile.txt'):
             print(urdohelper.HELP_TEXT_SMALL)
             print(f"DB file does not exist : {db_prefix}_profile.txt or change DB prefix.")
-            exit(0)
+            sys.exit(0)
         elif batch:
             if not os.path.isdir(directory):
                 print(urdohelper.HELP_TEXT_SMALL)
                 print(f"Error: Directory ({directory}) does not exist!")
-                exit(0)
+                sys.exit(0)
         elif predict and not batch:
             if not os.path.isfile(fastq1) or not os.path.isfile(fastq2):
                 print(f"Error: Please check FASTQ file paths")
-                exit(0)
+                sys.exit(0)
     if build_db:
         try:
             if not os.path.isfile(config):
                 print(urdohelper.HELP_TEXT_SMALL)
                 print(f"Error: Configuration file ({config}) does not exist!")
-                exit(0)
+                sys.exit(0)
         except RuntimeError:
             print(urdohelper.HELP_TEXT_SMALL)
             print("Error: Specify Configuration file")
-            exit(0)
+            sys.exit(0)
 
 ################################################################################
 # The Program Starts Execution Here
@@ -670,7 +669,7 @@ try:
     sys.argv[1]
 except IndexError:
     print(urdohelper.HELP_TEXT_SMALL)
-    exit(0)
+    sys.exit(0)
 
 if "URDO_DEFAULT_DB" in os.environ and __predict__ is True:
     __db_prefix__ = os.environ['URDO_DEFAULT_DB']
@@ -715,7 +714,7 @@ for opt, arg in __options__:
             __k__ = int(arg)
         except ValueError:
             print("Error: Enter a numerical k value.")
-            exit(0)
+            sys.exit(0)
         # Check to make sure the arg is an int.
     elif opt in ('-1', '--fastq1'):
         __fastq1__ = arg
@@ -738,14 +737,14 @@ for opt, arg in __options__:
                 os.makedirs(READ_PATH)
             except OSError as error:
                 print(f"Count not make {READ_PATH}\n{error}")
-                exit(1)
+                sys.exit(1)
     elif opt in '-v':
         print(VERSION)
         print(LICENSE)
-        exit(0)
+        sys.exit(0)
     elif opt in ('-h', '--help'):
         print(urdohelper.HELP_TEXT)
-        exit(0)
+        sys.exit(0)
     elif opt == '-w':
         WEIGHT = True
     elif opt in ('-t', '--threads'):
@@ -753,17 +752,17 @@ for opt, arg in __options__:
             WORKERS = int(arg)
         except ValueError:
             print("Please provide an integer number of threads")
-            exit()
+            sys.exit()
 
 if __name__ == "__main__":
     if __predict__ and __buildDB__:
         print(urdohelper.HELP_TEXT_SMALL)
         print("Select either predict or buildDB module")
-        exit(0)
+        sys.exit(0)
     if not __predict__ and not __buildDB__:
         print(urdohelper.HELP_TEXT_SMALL)
         print("Select either predict or buildDB module")
-        exit(0)
+        sys.exit(0)
     PARAMETERS = [__buildDB__, __predict__, __config__, __k__, __batch__,
                   __directory__, __fastq1__, __fastq2__, __db_prefix__]
 
