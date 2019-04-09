@@ -16,7 +16,7 @@ import shutil
 from itertools import islice
 import operator
 import urdohelper
-VERSION = """SMORE'D ALPHA.4.1 (updated : January 15, 2019)"""
+VERSION = """SMORE'D ALPHA.4.2 (updated : April 09, 2019)"""
 LICENSE = """
 SMORE'D is free for academic users and requires permission before any
 commercial or government usage of any version of this code/algorithm.
@@ -194,6 +194,7 @@ def read_processor(fasta_dir, k, sample_name, sample_id, read_fh):
         logging.debug(f"Analysis: Kmer counting using k={k}")
         fastq_file = open(f"{fasta_dir}/{sample_name}_centroids.fa", 'r')
         for lines in iter(lambda: list(islice(fastq_file, 2)), ()):
+            lines = [l.rstrip() for l in lines]
             if len(lines) < 2:
                 break
             try:
@@ -204,7 +205,7 @@ def read_processor(fasta_dir, k, sample_name, sample_id, read_fh):
                 return 0
             start = int((len(lines[1])-k)//2)
             kmer_list = [str(lines[1][:k]), str(
-                lines[1][start:k+start]), str(lines[1][-35:])]
+                lines[1][start:k+start]), str(lines[1][-k:])]
             if any(kmer in __kmer_dict__[k] for kmer in kmer_list):
                 k_cov, assignment = count_kmers(lines, k, count_dict)
                 if __reads__:
