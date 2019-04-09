@@ -1,0 +1,3 @@
+[submodule "URDO-CANDy"]
+	path = URDO-CANDy
+	url = git@github.com:ar0ch/URDO-CANDy.git
