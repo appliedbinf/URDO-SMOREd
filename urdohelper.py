@@ -7,7 +7,7 @@ def link_reads(sample_freq, read_ones):
     for sample_name, value in sample_freq.items():
         if value > 1:
             sample_first_reads = [
-                x for x in read_ones if sample_name in x]
+                x for x in read_ones if x.startswith(sample_name)]
             for sample_read_one in sample_first_reads:
                 combined_file_one = \
                     sample_name + "_L999_R1_" + \
@@ -42,7 +42,7 @@ def link_reads(sample_freq, read_ones):
                 else:
                     logging.debug(f"Preprocessing: [Merging lanes] Merged read for {sample_name}")
         else:
-            full_sample_name = [x for x in read_ones if sample_name in x]
+            full_sample_name = [x for x in read_ones if x.startswith(sample_name)]
             sys_call_sample_one = f"ln -sL {__directory__}/{full_sample_name[0]} \
                                             {TMPDIR}/{full_sample_name[0]}"
             try:
