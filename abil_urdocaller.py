@@ -16,7 +16,7 @@ import shutil
 from itertools import islice
 import operator
 import urdohelper
-VERSION = """SMORE'D ALPHA.4.2 (updated : April 09, 2019)"""
+VERSION = """SMORE'D ALPHA.4.3 (updated : April 15, 2019)"""
 LICENSE = """
 SMORE'D is free for academic users and requires permission before any
 commercial or government usage of any version of this code/algorithm.
