@@ -464,7 +464,6 @@ def reverse_complement(seq):
     Build DB part starts
     Returns the reverse complement of the sequence
     """
-    seq_uppercase = seq.upper()
     seq_dict = {'A': 'T', 'T': 'A',
                 'G': 'C', 'C': 'G', 'Y': 'R',
                 'R': 'Y', 'S': 'S', 'W': 'W',
@@ -489,7 +488,7 @@ def get_fasta_dict(full_locus_file):
     fasta_dict = {}
     for entry in entries:
         key = [x for x in entry.split('\n')[0].split() if len(x) != 0][0]
-        sequence = ''.join(entry.split('\n')[1:]).rstrip()
+        sequence = ''.join(entry.split('\n')[1:]).strip().upper()
         fasta_dict[key] = {'sequence': sequence}
     return fasta_dict
 
@@ -508,7 +507,7 @@ def form_kmer_db(config_dict, k, output_filename):
         total_kmer_length = 0
         seq_location = 0
         for allele in list(fasta_dict.keys()):
-            seq = fasta_dict[allele]['sequence'].strip()
+            seq = fasta_dict[allele]['sequence']
             total_kmer_length += len(seq)
             seq_location += 1
             allele_id = allele.replace('-', '_').rsplit('_', 1)
