@@ -469,9 +469,9 @@ def reverse_complement(seq):
                 'R': 'Y', 'S': 'S', 'W': 'W',
                 'K': 'M', 'M': 'K', 'N': 'N', 'V':'V', 'H':'H'}
     try:
-        return "".join([seq_dict[base] for base in reversed(seq_uppercase)])
+        return "".join([seq_dict[base] for base in reversed(seq)])
     except ValueError:
-        logging.debug(f"Reverse Complement Error: {seq_uppercase}")
+        logging.debug(f"Reverse Complement Error: {seq}")
 
 
 def get_fasta_dict(full_locus_file):

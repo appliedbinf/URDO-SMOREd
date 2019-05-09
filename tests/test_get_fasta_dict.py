@@ -14,5 +14,5 @@ def test_get_fasta_dict_multiline():
 
 def test_get_fasta_dict_bad_fasta(): 
 	assert get_fasta_dict("tests/test_get_fasta_dict_bad.fasta") != {'seq1': {'sequence': 'ATGC'}, 'multilineseq': {'sequence': 'ATCGTGCA'}}
-	assert get_fasta_dict("tests/test_get_fasta_dict_bad.fasta") == {'seq1': {'sequence': 'ATGCmultilineseqATCGTGCA'}}
+	assert get_fasta_dict("tests/test_get_fasta_dict_bad.fasta") == {'seq1': {'sequence': 'ATGCMULTILINESEQATCGTGCA'}}
 
