@@ -651,16 +651,16 @@ def check_params(params):
             if not os.path.isfile(fastq1) or not os.path.isfile(fastq2):
                 print(f"Error: Please check FASTQ file paths")
                 sys.exit(0)
-    if build_db:
-        try:
-            if not os.path.isfile(config):
-                print(urdohelper.HELP_TEXT_SMALL)
-                print(f"Error: Configuration file ({config}) does not exist!")
-                sys.exit(0)
-        except RuntimeError:
-            print(urdohelper.HELP_TEXT_SMALL)
-            print("Error: Specify Configuration file")
-            sys.exit(0)
+    # if build_db:
+    #     try:
+    #         if not os.path.isfile(config):
+    #             print(urdohelper.HELP_TEXT_SMALL)
+    #             print(f"Error: Configuration file ({config}) does not exist!")
+    #             sys.exit(0)
+    #     except RuntimeError:
+    #         print(urdohelper.HELP_TEXT_SMALL)
+    #         print("Error: Specify Configuration file")
+    #         sys.exit(0)
 
 ################################################################################
 # The Program Starts Execution Here
