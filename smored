@@ -436,7 +436,7 @@ def select_markers(result_dict, samples):
         output["sample"].append(sample)
         sample_id = samples.index(sample)
         for loc in result_dict[sample_id]:
-            if loc == "amplicon":
+            if loc == "amplicon" or loc == "genericmarkers":
                 for marker_id in result_dict[sample_id][loc]:
                     if __st_profile__[loc][marker_id] not in output:
                         output[__st_profile__[loc][marker_id]] = {}
