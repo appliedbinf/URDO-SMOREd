@@ -211,7 +211,7 @@ def read_processor(fasta_dir, k, sample_name, sample_id, read_fh):
                 if __reads__:
                     lines[0] = f"{lines[0].rstrip()};{k_cov:.3f};{assignment}\n"
                     lines[1] = f"{lines[1]}\n"
-                    print(''.join('{}'.format(l) for l in lines))
+                    #print(''.join('{}'.format(l) for l in lines))
                     read_fh.write(''.join('{}'.format(l) for l in lines))
         return count_dict
     else:
