@@ -150,7 +150,7 @@ def single_sample_tool(*args, **kwargs):
         sys.exit(f"Could not merge read files for {sample_name}!")
     vsearch_cmd = "vsearch  --derep_fulllength  {0}/{1}.fa  --output {0}/{1}_centroids.fa ".format(
         TMPDIR, sample_name)
-    vsearch_cmd += "--relabel Amplicon_ --sizeout --fasta_width 0"
+    vsearch_cmd += " --sizeout --fasta_width 0"
     try:
         vsearch_pipes = subprocess.Popen(vsearch_cmd,
                                          shell=True,
