@@ -16,7 +16,7 @@ import shutil
 from itertools import islice
 import operator
 import urdohelper
-VERSION = """SMORE'D 0.4.5 (updated : June 14, 2019)"""
+VERSION = """SMORE'D 0.5.pre (updated : August 19, 2019)"""
 LICENSE = """
 SMORE'D is free for academic users and requires permission before any
 commercial or government usage of any version of this code/algorithm.
@@ -46,6 +46,7 @@ else:
     __config__ = None
 __timeDisp__ = False
 __db_prefix__ = 'kmer'
+__classificationDB__ = f"{os.path.dirname(__file__)}/smored.db"
 __log__ = ''
 __k__ = 35
 __directory__ = None
@@ -634,15 +635,15 @@ def check_params(params):
     if predict:
         if not os.path.isfile(db_prefix+'_'+str(k)+'.txt'):
             print(urdohelper.HELP_TEXT_SMALL)
-            print(f"DB file does not exist : {db_prefix}_{k}.txt or change DB prefix.")
+            print(f"DB file does not exist: {db_prefix}_{k}.txt or change DB prefix.")
             sys.exit(0)
         if not os.path.isfile(db_prefix+'_weight.txt'):
             print(urdohelper.HELP_TEXT_SMALL)
-            print(f"DB file does not exist : {db_prefix}_weight.txt or change DB prefix.")
+            print(f"DB file does not exist: {db_prefix}_weight.txt or change DB prefix.")
             sys.exit(0)
         if not os.path.isfile(db_prefix+'_profile.txt'):
             print(urdohelper.HELP_TEXT_SMALL)
-            print(f"DB file does not exist : {db_prefix}_profile.txt or change DB prefix.")
+            print(f"DB file does not exist: {db_prefix}_profile.txt or change DB prefix.")
             sys.exit(0)
         elif batch:
             if not os.path.isdir(directory):
@@ -691,6 +692,7 @@ __options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rR:v
     'fastq2=',
     'dir=',
     'directory=',
+    'db='
     'help',
     'readsdir=',
     'threads='])
@@ -755,6 +757,13 @@ for opt, arg in __options__:
         except ValueError:
             print("Please provide an integer number of threads")
             sys.exit()
+    elif opt == 'db':
+        if os.access(os.path.dirname(opt), os.W_OK | os.X_OK):
+            __classificationDB__ = opt
+        else:
+            print(f"You do not have execute and write permissions on {opt}")
+            print("Please check your path and permissions")
+            sys.exit()
 
 if __name__ == "__main__":
     if __predict__ and __buildDB__:
@@ -802,6 +811,7 @@ if __name__ == "__main__":
         logging.debug("Starting Marker Prediction")
         logging.debug(f"Temporary directory: {TMPDIR}")
         load_module(__k__, __db_prefix__)
+        conn = urdohelper.init_db(__classificationDB__)
         RAW_COUNTS = []
         SAMPLES = []
         if __batch__:

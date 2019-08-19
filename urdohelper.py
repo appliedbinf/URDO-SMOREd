@@ -2,6 +2,8 @@ import sys
 import logging
 import os
 import subprocess
+import sqlite3
+import hashlib
 def link_reads(sample_freq, read_ones):
     """Link files into temp directory"""
     for sample_name, value in sample_freq.items():
@@ -87,6 +89,34 @@ def weight_profile(allele_count, weight_dict):
                     weighted_dict[sample][loc][a_num] = allele_count[sample][loc][a_num]
 
     return weighted_dict
+
+def add_to_db(sql, table, data):
+    header = data[0].rstrip().split(';')
+    sha = hashlib.sha256(bytes(data[1].rstrip(), 'utf-8')).hexdigest()
+    query = c.execute("SELECT * FROM classified WHERE hash = '{}'".format(sha))
+    response = query.fetchone()
+    print("response\t",response)
+    if response is None:
+        sql.execute("INSERT INTO %s VALUES (?,?,?,?)" % table,
+                 (sha, data[1].rstrip(),header[4],
+                  int(header[1].split("=")[1])))
+    else:
+        sql.execute("UPDATE classified SET cnt = cnt + ? WHERE hash = ?", (int(header[1].split("=")[1]), sha))
+
+def init_db(db_path):
+    tables = ['classified', 'unclassified']
+    conn = sqlite3.connect(db_path)
+    c = conn.cursor()
+    for table in tables:
+        c.execute("CREATE TABLE IF NOT EXISTS %s (hash VARCHAR PRIMARY KEY, seq VARCHAR, classification VARCHAR, count INTEGER);" % table)
+    conn.commit()
+    return(conn)
+
+
+
+
+
+
 HELP_TEXT_SMALL = """
 To build a database:
 abil_URDOcaller.py --buildDB -c <config file> [-k <int>] [-P|--prefix <database prefix>] [-a <log file path>]

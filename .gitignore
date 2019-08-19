@@ -4,6 +4,7 @@ __pycache__/
 *$py.class
 *.fq
 *.tsv
+*.db
 # C extensions
 *.so
 
