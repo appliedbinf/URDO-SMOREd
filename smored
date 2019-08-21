@@ -378,6 +378,9 @@ def load_config(config):
             elif line.rstrip() == '[profile]':
                 head = 'profile'
                 config_dict[head] = {}
+            elif line.rstrip() == '[resistance]':
+                head = 'resistance'
+                config_dict[head] = {}
             else:
                 arr = line.strip().split()
                 config_dict[head][arr[0]] = arr[1]
@@ -609,6 +612,9 @@ def make_custom_db(config, k, output_filename):
                 config_dict[head] = {}
             elif line.rstrip() == '[profile]':
                 head = 'profile'
+                config_dict[head] = {}
+            elif line.rstrip() == '[resistance]':
+                head = 'resistance'
                 config_dict[head] = {}
             else:
                 arr = line.strip().split()
