@@ -16,7 +16,7 @@ import shutil
 from itertools import islice
 import operator
 import urdohelper
-VERSION = """SMORE'D 0.4.5 (updated : June 14, 2019)"""
+VERSION = """SMORE'D 0.4.6pre (updated : October 03, 2019)"""
 LICENSE = """
 SMORE'D is free for academic users and requires permission before any
 commercial or government usage of any version of this code/algorithm.
@@ -50,7 +50,7 @@ __log__ = ''
 __k__ = 35
 __directory__ = None
 __reads__ = False
-#__allele_count__ = {}
+__unclassified__ = False
 __kmer_dict__ = {}
 __weight_dict_global__ = {}
 __st_profile__ = {}
@@ -58,6 +58,7 @@ __config_dict__ = {}
 WORKERS = 1
 WEIGHT = False
 READ_PATH = ''
+UREAD_PATH = ''
 SUMMARY_STATS = {}
 TMPDIR = tempfile.mkdtemp()
 
@@ -130,6 +131,16 @@ def single_sample_tool(*args, **kwargs):
             read_file = open(read_file_name, 'w+')
         except OSError as error:
             print(f"Count not open {read_file}\n{error}")
+    else:
+        read_file = None
+    if __unclassified__:
+        uread_file_name = UREAD_PATH + sample_name + '_unclassified.fasta'
+        try:
+            uread_file = open(uread_file_name, 'w+')
+        except OSError as error:
+            print(f"Count not open {uread_file}\n{error}")
+    else:
+        uread_file = None
     logging.debug(f"Preprocessing: working with {fastq1} and {fastq2}")
     logging.debug(f"Preprocessing: [Merging reads] Merging {fastq1} and {fastq2}")
     vsearch_cmd = "vsearch --fastq_mergepairs {} --reverse {} --fastaout {}/{}.fa".format(
@@ -163,10 +174,10 @@ def single_sample_tool(*args, **kwargs):
         logging.error(f"Preprocessing: [Merging reads] Could not merge {sample_name}")
         logging.error(f"ERROR: {subprocess_error}")
         sys.exit(f"Could not merge read files for {sample_name}!")
-    if __reads__:
-        kmer_data = read_processor(TMPDIR, k, sample_name, sample_id, read_file)
-    else:
-        kmer_data = read_processor(TMPDIR, k, sample_name, sample_id, None)
+    # if __reads__:
+    #     kmer_data = read_processor(TMPDIR, k, sample_name, sample_id, read_file)
+    # else:
+    kmer_data = read_processor(TMPDIR, k, sample_name, sample_id, read_file, uread_file)
     if kmer_data == {}:
         string = f"No k-mer matches were found for the sample {fastq1} and {fastq2}"
         string += f"\n\tProbable cause of the error:  low quality data/too many N's in the data"
@@ -175,11 +186,13 @@ def single_sample_tool(*args, **kwargs):
             sys.exit()
     if __reads__:
         read_file.close()
+    if __unclassified__:
+        uread_file.close()
 
     return (kmer_data, SAMPLES.index(sample_name))
 
 
-def read_processor(fasta_dir, k, sample_name, sample_id, read_fh):
+def read_processor(fasta_dir, k, sample_name, sample_id, read_fh, uread_fh):
     """
     Function   : read_processor
     Input      : fastq file, k value
@@ -211,8 +224,13 @@ def read_processor(fasta_dir, k, sample_name, sample_id, read_fh):
                 if __reads__:
                     lines[0] = f"{lines[0].rstrip()};{k_cov:.3f};{assignment}\n"
                     lines[1] = f"{lines[1]}\n"
-                    #print(''.join('{}'.format(l) for l in lines))
                     read_fh.write(''.join('{}'.format(l) for l in lines))
+            else:
+                if __unclassified__:
+                    lines[0] = f"{lines[0].rstrip()};unclassified\n"
+                    lines[1] = f"{lines[1]}\n"
+                    uread_fh.write(''.join('{}'.format(l) for l in lines))
+                # count_dict["unclassified"] 
         return count_dict
     else:
         logging.error(f"ERROR: File does not exist: {fasta_dir}/{sample_name}_centroids.fa")
@@ -679,7 +697,7 @@ else:
     __db_prefix__ = "kmer"
 
 # Input arguments
-__options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rR:va:wt:', [
+__options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rR:uU:va:wt:', [
     'buildDB',
     'predict',
     'output=',
@@ -739,6 +757,17 @@ for opt, arg in __options__:
                 os.makedirs(READ_PATH)
             except OSError as error:
                 print(f"Count not make {READ_PATH}\n{error}")
+                sys.exit(1)
+    elif opt in '-u':
+        __unclassified__ = True
+    elif opt in '-U':
+        __unclassified__ = True
+        UREAD_PATH = os.path.abspath(arg) + "/"
+        if not os.path.isdir(UREAD_PATH):
+            try:
+                os.makedirs(UREAD_PATH)
+            except OSError as error:
+                print(f"Count not make {UREAD_PATH}\n{error}")
                 sys.exit(1)
     elif opt in '-v':
         print(VERSION)
