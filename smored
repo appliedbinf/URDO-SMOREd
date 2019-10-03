@@ -201,6 +201,7 @@ def read_processor(fasta_dir, k, sample_name, sample_id, read_fh, uread_fh):
     """
     # fasta_dir = f"{fasta_dir}/{sample_name}_centroids.fa"
     count_dict = {}
+    count_dict["unclassified"] = 0
     msg = f"Analysis: Begin processing merged reads ({fasta_dir}/{sample_name}_centroids.fa)"
     logging.debug(msg)
     if os.path.isfile(f"{fasta_dir}/{sample_name}_centroids.fa"):
@@ -227,10 +228,10 @@ def read_processor(fasta_dir, k, sample_name, sample_id, read_fh, uread_fh):
                     read_fh.write(''.join('{}'.format(l) for l in lines))
             else:
                 if __unclassified__:
-                    lines[0] = f"{lines[0].rstrip()};unclassified\n"
+                    lines[0] = f"{lines[0].rstrip()}unclassified\n"
                     lines[1] = f"{lines[1]}\n"
                     uread_fh.write(''.join('{}'.format(l) for l in lines))
-                # count_dict["unclassified"] 
+                count_dict["unclassified"] += int(lines[0].split(';')[1].split("=")[1])
         return count_dict
     else:
         logging.error(f"ERROR: File does not exist: {fasta_dir}/{sample_name}_centroids.fa")
@@ -452,6 +453,7 @@ def select_markers(result_dict, samples):
     """Reformat results dict for printing"""
     output = {}
     output["sample"] = []
+    output["Unclassified"] = {}
     for sample in samples:
         output["sample"].append(sample)
         sample_id = samples.index(sample)
@@ -466,6 +468,8 @@ def select_markers(result_dict, samples):
                     else:
                         output[__st_profile__[loc][marker_id]
                               ][sample] += result_dict[sample_id][loc][marker_id]
+            elif loc == "unclassified":
+                output['Unclassified'][sample] = result_dict[sample_id][loc]
             else:
                 max_marker_id = max(
                     result_dict[sample_id][loc].items(), key=operator.itemgetter(1))[0]
