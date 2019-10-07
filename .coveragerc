@@ -1,6 +1,7 @@
 [run]
 branch = True
 source = smored
+concurrency = multiprocessing
 
 [report]
 exclude_lines =
