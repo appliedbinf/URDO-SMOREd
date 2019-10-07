@@ -5,7 +5,7 @@ from os import getcwd, path, pardir
 #sys.path.append(path.abspath("~/repo"))
 sys.path.append(path.abspath(path.join(getcwd())))
 print(sys.path)
-from abil_urdocaller import get_fasta_dict
+from smored import get_fasta_dict
 def test_get_fasta_dict_singleline():
 	assert get_fasta_dict("tests//test_get_fasta_dict.fasta") == {'seq1': {'sequence': 'ATGC'}}
 

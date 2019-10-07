@@ -3,7 +3,7 @@ import pytest
 import sys
 from os import getcwd, path, pardir
 sys.path.append(path.abspath(path.join(getcwd())))
-from abil_urdocaller import reverse_complement
+from smored import reverse_complement
 def test_reverse_complement_01():
     assert reverse_complement('ATCG') == 'CGAT'
 def test_reverse_complement_02():
