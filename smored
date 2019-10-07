@@ -16,7 +16,7 @@ import shutil
 from itertools import islice
 import operator
 import urdohelper
-VERSION = """SMORE'D 0.4.6pre (updated : October 03, 2019)"""
+VERSION = """SMORE'D 0.4.6pre.2 (updated : October 07, 2019)"""
 LICENSE = """
 SMORE'D is free for academic users and requires permission before any
 commercial or government usage of any version of this code/algorithm.
@@ -715,6 +715,7 @@ __options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rR:u
     'directory=',
     'help',
     'readsdir=',
+    'unclassified=',
     'threads='])
 for opt, arg in __options__:
     if opt in ('-o', '--output'):

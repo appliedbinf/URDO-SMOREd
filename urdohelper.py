@@ -89,19 +89,19 @@ def weight_profile(allele_count, weight_dict):
     return weighted_dict
 HELP_TEXT_SMALL = """
 To build a database:
-abil_URDOcaller.py --buildDB -c <config file> [-k <int>] [-P|--prefix <database prefix>] [-a <log file path>]
+smored --buildDB -c <config file> [-k <int>] [-P|--prefix <database prefix>] [-a <log file path>]
 
 To predict and call markers:
-abil_URDOcaller.py --predict -c <config file> -1 <fwd read FASTQ> -2 <rev read FASTQ> [-d <input directory>] [-o <output file>] [-P | --prefix <database prefix>] [-r] -[x]
+smored -c <config file> -1 <fwd read FASTQ> -2 <rev read FASTQ> [-d <input directory>] [-o <output file>] [-P <database prefix>] [-r] [-u] [-x]
 
-abil_URDOcaller.py --help for more detailed instructions
+smored --help for more detailed instructions
 """
 
 HELP_TEXT = """
-Readme for abil_URDOcaller
+Readme for smored
 =============================================================================================
 Usage
-./abil_URDOcaller.py
+./smored
 [--buildDB]
 [--predict]
 [-1 filename_fastq1][--fastq1 filename_fastq1]
@@ -113,20 +113,23 @@ Usage
 [-k]
 [-o output_filename][--output output_filename]
 [-x][--overwrite]
+[-R read/output/path]
 [-r]
+[-U unclassified/read/path]
+[-u]
 [-t][--threads]
 [-v]
 [-h][--help]
 ==============================================================================================
 
-There are two steps to predicting ST using abil_URDOcaller.
-1. Create DB : abil_URDOcaller.py --buildDB
-2. Predict : abil_URDOcaller --predict
+There are two steps to predicting ST using smored.
+1. Create DB : smored --buildDB
+2. Predict : smored --predict
 
-1. abil_URDOcaller.py --buildDB
+1. smored --buildDB
 
 Synopsis:
-abil_URDOcaller.py --buildDB -c <config file> -k <kmer length(optional)> -P <DB prefix(optional)>
+smored --buildDB -c <config file> -k <kmer length(optional)> -P <DB prefix(optional)>
   config file : is a tab delimited file which has the information for typing scheme ie loci, its multifasta file and profile definition file.
     Format :
       [loci]
@@ -159,14 +162,14 @@ Optional arguments
 
  --------------------------------------------------------------------------------------------
 
-2. abil_URDOcaller.py --predict
+2. smored --predict
 
-abil_URDOcaller --predict : can run in two modes
+smored --predict : can run in two modes
   1) single sample (default mode)
-  2) multi-sample : run abil_URDOcaller for all the samples in a folder (for a particular specie)
+  2) multi-sample : run smored for all the samples in a folder (for a particular specie)
 
 Synopsis
-abil_URDOcaller.py --predict -1 <fastq file> -2 <fastq file> -d <directory location> - -P <DB prefix(optional)> -k <kmer length(optional)> -o <output file> -x
+smored --predict -1 <fastq file> -2 <fastq file> -d <directory location> - -P <DB prefix(optional)> -k <kmer length(optional)> -o <output file> -x
 
 Required arguments
 --predict
@@ -194,12 +197,16 @@ takes one line. For paired end samples the 2 files should be tab separated on si
   A FASTQ file is generated in the current directory for each sample containing reads with kmer matches.
 -R, --readsdir = < output directory >
   A FASTQ file is generated in the specified directory for each sample containing reads with kmer matches.
+-u
+  A FASTQ file is generated in the current directory for each sample containing reads with no kmer matches (Unclassified reads).
+-U, --unclassified = < output directory >
+  A FASTQ file is generated in the specified directory for each sample containing reads wwith no kmer matches (Unclassified reads).
 -t
   Integer number of threads to use to process samples
 -v
   Prints the version of the software.
 -x,--overwrite
-  By default abil_URDOcaller appends the results to the output_filename if same name is used.
+  By default smored appends the results to the output_filename if same name is used.
   This argument overwrites the previously specified output file.
 -h,--help
   Prints the help manual for this application
