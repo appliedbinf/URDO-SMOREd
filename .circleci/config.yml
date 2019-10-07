@@ -65,6 +65,10 @@ jobs:
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t a -w
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t 2
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -r -R folder
+                    coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -u
+                    coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -u -U folder
+                    coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/bad_reads
+                    coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -1 tests/bad_reads/bad_S1_L001_R1_001.fastq -2 tests/bad_reads/bad_S1_L001_R2_001.fastq
                     coverage run -a -m smored --predict --buildDB
                     coverage run -a -m smored
                     coverage run -a -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -1 tests/reads/MID-2_S2_L001_R1_001.fastq -2 tests/reads/MID-2_S2_L001_R2_001.fastq -d tests/reads/

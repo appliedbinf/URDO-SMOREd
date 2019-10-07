@@ -173,12 +173,11 @@ def single_sample_tool(*args, **kwargs):
     except subprocess.CalledProcessError as subprocess_error:
         logging.error(f"Preprocessing: [Merging reads] Could not merge {sample_name}")
         logging.error(f"ERROR: {subprocess_error}")
-        sys.exit(f"Could not merge read files for {sample_name}!")
-    # if __reads__:
-    #     kmer_data = read_processor(TMPDIR, k, sample_name, sample_id, read_file)
-    # else:
+        if not __batch__:
+            sys.exit(f"Could not merge read files for {sample_name}!")
     kmer_data = read_processor(TMPDIR, k, sample_name, sample_id, read_file, uread_file)
-    if kmer_data == {}:
+    # This check will never eval with the new unclassifie
+    if kmer_data == {'unclassified': 0}:
         string = f"No k-mer matches were found for the sample {fastq1} and {fastq2}"
         string += f"\n\tProbable cause of the error:  low quality data/too many N's in the data"
         logging.error(f"ERROR: {string}")
