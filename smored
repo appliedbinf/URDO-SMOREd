@@ -16,7 +16,7 @@ import shutil
 from itertools import islice
 import operator
 import urdohelper
-VERSION = """SMORE'D 0.4.6pre.2 (updated : October 07, 2019)"""
+VERSION = """SMORE'D 0.4.6pre.3 (updated : October 21, 2019)"""
 LICENSE = """
 SMORE'D is free for academic users and requires permission before any
 commercial or government usage of any version of this code/algorithm.
@@ -227,7 +227,7 @@ def read_processor(fasta_dir, k, sample_name, sample_id, read_fh, uread_fh):
                     read_fh.write(''.join('{}'.format(l) for l in lines))
             else:
                 if __unclassified__:
-                    lines[0] = f"{lines[0].rstrip()}unclassified\n"
+                    lines[0] = f"{lines[0].rstrip()};unclassified\n"
                     lines[1] = f"{lines[1]}\n"
                     uread_fh.write(''.join('{}'.format(l) for l in lines))
                 count_dict["unclassified"] += int(lines[0].split(';')[1].split("=")[1])
