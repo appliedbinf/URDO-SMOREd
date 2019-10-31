@@ -146,6 +146,7 @@ def single_sample_tool(*args, **kwargs):
     vsearch_cmd = "vsearch --fastq_mergepairs {} --reverse {} --fastaout {}/{}.fa".format(
         fastq1, fastq2, TMPDIR, sample_name)
     vsearch_cmd += " --fastq_minlen 75 --fastq_allowmergestagger --fastq_maxdiffs 20 --fastq_maxns 10"
+    vsearch_cmd += " --threads 1"
     logging.debug(f"Preprocessing: [Merging reads] VSEARCH command\n\t{vsearch_cmd}")
     try:
         vsearch_pipes = subprocess.Popen(vsearch_cmd,
@@ -161,7 +162,7 @@ def single_sample_tool(*args, **kwargs):
         sys.exit(f"Could not merge read files for {sample_name}!")
     vsearch_cmd = "vsearch  --derep_fulllength  {0}/{1}.fa  --output {0}/{1}_centroids.fa ".format(
         TMPDIR, sample_name)
-    vsearch_cmd += " --sizeout --fasta_width 0"
+    vsearch_cmd += " --sizeout --fasta_width 0 --threads 1"
     try:
         vsearch_pipes = subprocess.Popen(vsearch_cmd,
                                          shell=True,
