@@ -16,7 +16,8 @@ import shutil
 from itertools import islice
 import operator
 import urdohelper
-VERSION = """SMORE'D 0.4.6pre.4 (updated : October 21, 2019)"""
+import openpyxl as pyxl
+VERSION = """SMORE'D 0.4.7 (updated : December XX, 2019)"""
 LICENSE = """
 SMORE'D is free for academic users and requires permission before any
 commercial or government usage of any version of this code/algorithm.
@@ -449,6 +450,62 @@ def print_results(results, samples, output_filename, overwrite):
     else:
         print(f"{out_string}\n")
 
+def make_report(results, samples, output_filename, overwrite):
+    """
+    Function   : make_report
+    Input      : results, output file, overwrite?
+    Output     : Takes in Excel template, outputs one report per sample
+    Description: Create Excel reports
+    """
+    from collections import Counter
+    output = select_markers(results, samples)
+    print(output)
+    sampleNames = output.pop("sample")
+    print(sampleNames)
+    for sample in sampleNames:
+        template = pyxl.load_workbook(filename = 'reportTemplate.xlsx')
+        report = template.active
+        report['B2'] = sample
+        report['B3'] = "Today"
+        report['B4'] = "A lot"
+        totalCount = 0
+        data = {}
+        topThreeIdx = 8
+        startRow = 14 # Magic numbers are bad...fix for later
+        for org in output:
+            data[org] = int(output[org][sample])
+            totalCount += int(output[org][sample])
+        unclassifiedCounts = data.pop("Unclassified")
+        report['B5'] = totalCount
+        for org in Counter(data).most_common(3):
+            print(org)
+            genus, species = org[0].split(" ", 2)
+            report[f"A{topThreeIdx}"] = genus
+            report[f"B{topThreeIdx}"] = species
+            report[f"D{topThreeIdx}"] = "{0:.2f}".format(org[1]/totalCount * 100)
+            topThreeIdx += 1
+        if output_filename is not None:
+            filename = f'{output_filename}_{sample}.xlsx'
+        else:
+            filename = f'{sample}.xlsx'
+        for org in data:
+            report.insert_rows(startRow)
+            print(org)
+            try:
+                genus, species = org.split(" ", 2)
+            except ValueError:
+                genus = ""
+                species = org
+            report[f"A{startRow}"] = genus
+            report[f"B{startRow}"] = species
+            report[f"D{startRow}"] = "{0:.2f}".format(data[org]/totalCount * 100)
+            startRow += 1
+        template.save(filename)
+
+
+
+
+
 def select_markers(result_dict, samples):
     """Reformat results dict for printing"""
     output = {}
@@ -850,6 +907,7 @@ if __name__ == "__main__":
             print_results(WEIGHT_COUNTS, SAMPLES, OUTPUT_FILENAME, OVERWRITE)
         else:
             print_results(RAW_COUNTS, SAMPLES, OUTPUT_FILENAME, OVERWRITE)
+            make_report(RAW_COUNTS, SAMPLES, OUTPUT_FILENAME, OVERWRITE)
     else:
         print("Error: Please select the mode")
         print("--buildDB (for database building) or --predict (for marker discovery)")
