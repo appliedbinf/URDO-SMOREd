@@ -35,7 +35,7 @@ jobs:
                 command: |
                     python3 -m venv venv
                     . venv/bin/activate
-                    pip install pytest pytest-cov coverage codecov
+                    pip install pytest pytest-cov coverage codecov openpyxl
 
             - save_cache:
                 paths:

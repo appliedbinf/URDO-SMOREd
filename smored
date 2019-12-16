@@ -125,6 +125,7 @@ def single_sample_tool(*args, **kwargs):
         sample_name = fastq1.split('/')[-1].split('_')[0]
         SAMPLES.append(sample_name)
         RAW_COUNTS.append({})
+        READ_COUNTS.append({})
     sample_id = SAMPLES.index(sample_name)
     if __reads__:
         read_file_name = READ_PATH + sample_name + '_seqs.fasta'
@@ -147,7 +148,7 @@ def single_sample_tool(*args, **kwargs):
     vsearch_cmd = "vsearch --fastq_mergepairs {} --reverse {} --fastaout {}/{}.fa".format(
         fastq1, fastq2, TMPDIR, sample_name)
     vsearch_cmd += " --fastq_minlen 75 --fastq_allowmergestagger --fastq_maxdiffs 20 --fastq_maxns 10"
-    vsearch_cmd += " --threads 1"
+    vsearch_cmd += " --threads 1 --no_progress"
     logging.debug(f"Preprocessing: [Merging reads] VSEARCH command\n\t{vsearch_cmd}")
     try:
         vsearch_pipes = subprocess.Popen(vsearch_cmd,
@@ -161,9 +162,12 @@ def single_sample_tool(*args, **kwargs):
         logging.error(f"Preprocessing: [Merging reads] Could not merge {sample_name}")
         logging.error(f"ERROR: {subprocess_error}")
         sys.exit(f"Could not merge read files for {sample_name}!")
+    vsearch_stats = std_err.decode('utf-8').split("\n")
+    print(vsearch_stats)
+    READ_COUNTS[]
     vsearch_cmd = "vsearch  --derep_fulllength  {0}/{1}.fa  --output {0}/{1}_centroids.fa ".format(
         TMPDIR, sample_name)
-    vsearch_cmd += " --sizeout --fasta_width 0 --threads 1"
+    vsearch_cmd += " --sizeout --fasta_width 0 --threads 1 --no_progress"
     try:
         vsearch_pipes = subprocess.Popen(vsearch_cmd,
                                          shell=True,
@@ -414,7 +418,7 @@ def load_config(config):
     return
 
 
-def print_results(results, samples, output_filename, overwrite):
+def print_results(results, samples, read_count, output_filename, overwrite):
     """
     Function   : print_results
     Input      : results, output file, overwrite?
@@ -450,7 +454,7 @@ def print_results(results, samples, output_filename, overwrite):
     else:
         print(f"{out_string}\n")
 
-def make_report(results, samples, output_filename, overwrite):
+def make_report(results, samples, read_count, output_filename, overwrite):
     """
     Function   : make_report
     Input      : results, output file, overwrite?
@@ -484,10 +488,6 @@ def make_report(results, samples, output_filename, overwrite):
             report[f"B{topThreeIdx}"] = species
             report[f"D{topThreeIdx}"] = "{0:.2f}".format(org[1]/totalCount * 100)
             topThreeIdx += 1
-        if output_filename is not None:
-            filename = f'{output_filename}_{sample}.xlsx'
-        else:
-            filename = f'{sample}.xlsx'
         for org in data:
             report.insert_rows(startRow)
             print(org)
@@ -500,11 +500,11 @@ def make_report(results, samples, output_filename, overwrite):
             report[f"B{startRow}"] = species
             report[f"D{startRow}"] = "{0:.2f}".format(data[org]/totalCount * 100)
             startRow += 1
+        if output_filename is not None:
+            filename = f'{output_filename}_{sample}.xlsx'
+        else:
+            filename = f'{sample}.xlsx'
         template.save(filename)
-
-
-
-
 
 def select_markers(result_dict, samples):
     """Reformat results dict for printing"""
@@ -893,6 +893,7 @@ if __name__ == "__main__":
         logging.debug("Starting Marker Prediction")
         logging.debug(f"Temporary directory: {TMPDIR}")
         load_module(__k__, __db_prefix__)
+        READ_COUNTS = []
         RAW_COUNTS = []
         SAMPLES = []
         if __batch__:
@@ -906,8 +907,8 @@ if __name__ == "__main__":
             WEIGHT_COUNTS = urdohelper.weight_profile(RAW_COUNTS, __weight_dict_global__)
             print_results(WEIGHT_COUNTS, SAMPLES, OUTPUT_FILENAME, OVERWRITE)
         else:
-            print_results(RAW_COUNTS, SAMPLES, OUTPUT_FILENAME, OVERWRITE)
-            make_report(RAW_COUNTS, SAMPLES, OUTPUT_FILENAME, OVERWRITE)
+            print_results(RAW_COUNTS, SAMPLES, READ_COUNTS, OUTPUT_FILENAME, OVERWRITE)
+            make_report(RAW_COUNTS, SAMPLES, READ_COUNTS, OUTPUT_FILENAME, OVERWRITE)
     else:
         print("Error: Please select the mode")
         print("--buildDB (for database building) or --predict (for marker discovery)")
