@@ -65,8 +65,9 @@ TMPDIR = tempfile.mkdtemp()
 
 def results_callback(data):
     """Collate results from singleSampleTool"""
-    count_data, sampleid = data
+    count_data, read_count, sampleid = data
     RAW_COUNTS[sampleid] = count_data
+    READ_COUNTS[sampleid] = read_count
     return
 
 def batch_tool(kmer, directory):
@@ -88,6 +89,7 @@ def batch_tool(kmer, directory):
     file_list = [x for x in os.listdir(TMPDIR) if "_R1_" in x]
     SAMPLES.extend(x.split('/')[-1].split('_')[0] for x in sorted(file_list))
     RAW_COUNTS.extend({} for x in sorted(file_list))
+    READ_COUNTS.extend({} for x in sorted(file_list))
     sample_queue = list()
     def add_jobdata_to_queue(read_one):
         """Make job data for queue"""
@@ -163,8 +165,13 @@ def single_sample_tool(*args, **kwargs):
         logging.error(f"ERROR: {subprocess_error}")
         sys.exit(f"Could not merge read files for {sample_name}!")
     vsearch_stats = std_err.decode('utf-8').split("\n")
-    print(vsearch_stats)
-    READ_COUNTS[]
+    def getReadCount(vsearch):
+        for line in vsearch_stats:
+            if line.strip().endswith("Pairs"):
+                return int(line.split()[0])
+    readCount = getReadCount(vsearch_stats)
+    print(readCount)
+    # READ_COUNTS[]
     vsearch_cmd = "vsearch  --derep_fulllength  {0}/{1}.fa  --output {0}/{1}_centroids.fa ".format(
         TMPDIR, sample_name)
     vsearch_cmd += " --sizeout --fasta_width 0 --threads 1 --no_progress"
@@ -194,7 +201,7 @@ def single_sample_tool(*args, **kwargs):
     if __unclassified__:
         uread_file.close()
 
-    return (kmer_data, SAMPLES.index(sample_name))
+    return (kmer_data, readCount, SAMPLES.index(sample_name))
 
 
 def read_processor(fasta_dir, k, sample_name, sample_id, read_fh, uread_fh):
@@ -470,36 +477,42 @@ def make_report(results, samples, read_count, output_filename, overwrite):
         template = pyxl.load_workbook(filename = 'reportTemplate.xlsx')
         report = template.active
         report['B2'] = sample
-        report['B3'] = "Today"
-        report['B4'] = "A lot"
+        report['B3'] = subprocess.check_output('date "+%Y-%m-%d"',
+                                                  shell=True).decode('utf-8').rstrip()
+        report['B4'] = read_count[samples.index(sample)]
         totalCount = 0
         data = {}
         topThreeIdx = 8
         startRow = 14 # Magic numbers are bad...fix for later
         for org in output:
-            data[org] = int(output[org][sample])
-            totalCount += int(output[org][sample])
+            try:
+                data[org] = int(output[org][sample])
+                totalCount += int(output[org][sample])
+            except KeyError:
+                data[org] = 0
         unclassifiedCounts = data.pop("Unclassified")
         report['B5'] = totalCount
         for org in Counter(data).most_common(3):
-            print(org)
-            genus, species = org[0].split(" ", 2)
+            genus, species = org[0].split(" ", 1)
             report[f"A{topThreeIdx}"] = genus
             report[f"B{topThreeIdx}"] = species
             report[f"D{topThreeIdx}"] = "{0:.2f}".format(org[1]/totalCount * 100)
             topThreeIdx += 1
-        for org in data:
+        for org in sorted(data):
             report.insert_rows(startRow)
             print(org)
             try:
-                genus, species = org.split(" ", 2)
+                genus, species = org.split(" ", 1)
             except ValueError:
                 genus = ""
                 species = org
             report[f"A{startRow}"] = genus
             report[f"B{startRow}"] = species
-            report[f"D{startRow}"] = "{0:.2f}".format(data[org]/totalCount * 100)
+            report[f"D{startRow}"] = data[org]
+            report[f"E{startRow}"] = "{0:.2f}".format(data[org]/totalCount * 100)
             startRow += 1
+        report.merge_cells(f'A{startRow+1}:F{startRow+1}')
+        report[f"A{startRow+1}"].alignment = pyxl.styles.Alignment(horizontal="center", vertical="center")
         if output_filename is not None:
             filename = f'{output_filename}_{sample}.xlsx'
         else:
