@@ -1,31 +1,43 @@
-23S-Mycoplasma amphoriforme Resistant (A2063G)	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Mycoplasma;s:Mycoplasma amphoriforme;d:Resistant (A2063G)
-23S-Mycoplasma amphoriforme Resistant (A2064G)	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Mycoplasma;s:Mycoplasma amphoriforme;d:Resistant (A2064G)
-23S-Mycoplasma amphoriforme Sensitive	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Mycoplasma;s:Mycoplasma amphoriforme;d:Sensitive
-23S-Ureaplasma parvum Resistant (A2063G)	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Ureaplasma;s:Ureaplasma parvum;d:Resistant (A2063G)
-23S-Ureaplasma parvum Resistant (A2064G)	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Ureaplasma;s:Ureaplasma parvum;d:Resistant (A2064G)
-23S-Ureaplasma parvum Sensitive	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Ureaplasma;s:Ureaplasma parvum;d:Sensitive
-23S-Ureaplasma urealyticum Resistant (A2063G)	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Ureaplasma;s:Ureaplasma urealyticum;d:Resistant (A2063G)
-23S-Ureaplasma urealyticum Resistant (A2064G)	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Ureaplasma;s:Ureaplasma urealyticum;d:Resistant (A2064G)
-23S-Ureaplasma urealyticum Sensitive	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Ureaplasma;s:Ureaplasma urealyticum;d:Sensitive
-Acinetobacter baumannii	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Pseudomonadales;f:Moraxellaceae;g:Acinetobacter;s:Acinetobacter baumannii
-Bordetella avium	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella avium
-Bordetella bronchialis	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella bronchialis
-Bordetella bronchiseptica	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella bronchiseptica
-Bordetella flabilis	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella flabilis
-Bordetella genomosp. 13	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella genomosp. 13
-Bordetella genomosp. 6	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella genomosp. 6
-Bordetella genomosp. 8	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella genomosp. 8
-Bordetella genomosp. 9	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella genomosp. 9
-Bordetella hinzii	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella hinzii
-Bordetella holmesii	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella holmesii
-Bordetella parapertussis	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella parapertussis
-Bordetella pertussis	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella pertussis
-Bordetella petrii	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella petrii
-Bordetella pseudohinzii	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella pseudohinzii
-Bordetella sp. H567	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella sp. H567
-Bordetella sp. HZ20	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella sp. HZ20
-Bordetella sp. N	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella sp. N
-Bordetella trematum	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella trematum
+Human RNaseP	sk:Positive control;
+Non-human adenovirus	sk:Positive control;
+Non-human bocavirus	sk:Positive control;
+Non-human enterovirus	sk:Positive control;
+Non-human streptococcus	sk:Positive control;
+Positive control A. baumannii	sk:Positive control;
+Positive control Bordetella-1	sk:Positive control;
+Positive control Bordetella-2	sk:Positive control;
+Positive control Chlamydia	sk:Positive control;
+Positive control FluC	sk:Positive control;
+Positive control GBS	sk:Positive control;
+Positive control H1-275-oseltamivir	sk:Positive control;
+Positive control H3-119-oseltamivir	sk:Positive control;
+Positive control H3-292-oseltamivir	sk:Positive control;
+Positive control H5-275-oseltamivir	sk:Positive control;
+Positive control HBoV	sk:Positive control;
+Positive control HCoV-1	sk:Positive control;
+Positive control HCoV-2	sk:Positive control;
+Positive control HPEV	sk:Positive control;
+Positive control HPIV1	sk:Positive control;
+Positive control HPIV2	sk:Positive control;
+Positive control HPIV3	sk:Positive control;
+Positive control HPIV4	sk:Positive control;
+Positive control Human Metapneumovirus	sk:Positive control;
+Positive control K. pneumoniae	sk:Positive control;
+Positive control L. pneumophila sg1	sk:Positive control;
+Positive control M. catarrhalis	sk:Positive control;
+Positive control M. pneumoniae - macrolide resistance	sk:Positive control;
+Positive control M. pneumoniae - P1 typing	sk:Positive control;
+Positive control P. aeruginosa	sk:Positive control;
+Positive control Pan-ADEV	sk:Positive control;
+Positive control Pan-FluA	sk:Positive control;
+Positive control Pan-FluB-2	sk:Positive control;
+Positive control Pan-H. influenzae	sk:Positive control;
+Positive control Pan-Legionella	sk:Positive control;
+Positive control RHIV/ENTV	sk:Positive control;
+Positive control RNaseP (human)	sk:Positive control;
+Positive control RSV	sk:Positive control;
+Positive control S. aureus	sk:Positive control;
+Positive control Strep	sk:Positive control;
 Chlamydia abortus	sk:Bacteria;p:Chlamydiae;c:Chlamydiia;o:Chlamydiales;f:Chlamydiaceae;g:Chlamydia;s:Chlamydia abortus
 Chlamydia avium	sk:Bacteria;p:Chlamydiae;c:Chlamydiia;o:Chlamydiales;f:Chlamydiaceae;g:Chlamydia;s:Chlamydia avium
 Chlamydia caviae	sk:Bacteria;p:Chlamydiae;c:Chlamydiia;o:Chlamydiales;f:Chlamydiaceae;g:Chlamydia;s:Chlamydia caviae
@@ -40,119 +52,6 @@ Chlamydia sp. H15-1957-10C	sk:Bacteria;p:Chlamydiae;c:Chlamydiia;o:Chlamydiales;
 Chlamydia sp. S15-834C	sk:Bacteria;p:Chlamydiae;c:Chlamydiia;o:Chlamydiales;f:Chlamydiaceae;g:Chlamydia;s:Chlamydia sp. S15-834C
 Chlamydia suis	sk:Bacteria;p:Chlamydiae;c:Chlamydiia;o:Chlamydiales;f:Chlamydiaceae;g:Chlamydia;s:Chlamydia suis
 Chlamydia trachomatis	sk:Bacteria;p:Chlamydiae;c:Chlamydiia;o:Chlamydiales;f:Chlamydiaceae;g:Chlamydia;s:Chlamydia trachomatis
-Enterovirus	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus
-Enterovirus A	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Enterovirus A
-Enterovirus B	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Enterovirus B
-Enterovirus C	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Enterovirus C
-Enterovirus D	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Enterovirus D
-H1-275-oseltamivir Resistant (H275Y)	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H1-275-oseltamivir Resistant (H275Y)
-H1-275-oseltamivir Sensitive	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H1-275-oseltamivir Sensitive
-H3-119-oseltamivir Resistant (E119V)	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H3-119-oseltamivir Resistant (E119V)
-H3-119-oseltamivir Resistant (I122V)	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H3-119-oseltamivir Resistant (I122V)
-H3-119-oseltamivir Sensitive	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H3-119-oseltamivir Sensitive
-H3-292-oseltamivir Resistant (N294S)	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H3-292-oseltamivir Resistant (N294S)
-H3-292-oseltamivir Resistant (R292K)	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H3-292-oseltamivir Resistant (R292K)
-H3-292-oseltamivir Sensitive	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H3-292-oseltamivir Sensitive
-H5-275-oseltamivir Resistant (H275Y)	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H5-275-oseltamivir Resistant (H275Y)
-H5-275-oseltamivir Sensitive	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H5-275-oseltamivir Sensitive
-Haemophilus influenzae	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Pasteurellales;f:Pasteurellaceae;g:Haemophilus;s:Haemophilus influenzae
-HPIV1	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Paramyxoviridae;g:Respirovirus;s:Human respirovirus 1
-HPIV2	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Paramyxoviridae;g:Rubulavirus;s:Human rubulavirus 2
-HPIV3	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Paramyxoviridae;g:Respirovirus;s:Human respirovirus 3
-HPIV4	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Paramyxoviridae;g:Rubulavirus;s:Human rubulavirus 4
-Human adenovirus	sk:Viruses;f:Adenoviridae;g:Mastadenovirus;s:Human adenovirus
-Human bocavirus	sk:Viruses;f:Parvoviridae;g:Bocaparvovirus;s:Human bocavirus
-Human bocavirus 1	sk:Viruses;f:Parvoviridae;g:Bocaparvovirus;s:Primate bocaparvovirus 1;Human bocavirus 1
-Human bocavirus 2	sk:Viruses;f:Parvoviridae;g:Bocaparvovirus;s:Primate bocaparvovirus 2;Human bocavirus 2
-Human bocavirus 3	sk:Viruses;f:Parvoviridae;g:Bocaparvovirus;s:Primate bocaparvovirus 1;Human bocavirus 3
-Human bocavirus 4	sk:Viruses;f:Parvoviridae;g:Bocaparvovirus;s:Human bocavirus 4
-Human coronavirus 229E	sk:Viruses;o:Nidovirales;f:Coronaviridae;g:Alphacoronavirus;s:Human coronavirus 229E
-Human coronavirus HKU1	sk:Viruses;o:Nidovirales;f:Coronaviridae;g:Betacoronavirus;s:Human coronavirus HKU1
-Human coronavirus NL63	sk:Viruses;o:Nidovirales;f:Coronaviridae;g:Alphacoronavirus;s:Human coronavirus NL63
-Human coronavirus OC43	sk:Viruses;o:Nidovirales;f:Coronaviridae;g:Betacoronavirus;s:Betacoronavirus 1;Human coronavirus OC43
-Human echovirus	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Human echovirus
-Human mastadenovirus A	sk:Viruses;f:Adenoviridae;g:Mastadenovirus;s:Human mastadenovirus A
-Human mastadenovirus B	sk:Viruses;f:Adenoviridae;g:Mastadenovirus;s:Human mastadenovirus B
-Human mastadenovirus C	sk:Viruses;f:Adenoviridae;g:Mastadenovirus;s:Human mastadenovirus C
-Human mastadenovirus D	sk:Viruses;f:Adenoviridae;g:Mastadenovirus;s:Human mastadenovirus D
-Human mastadenovirus E	sk:Viruses;f:Adenoviridae;g:Mastadenovirus;s:Human mastadenovirus E
-Human metapneumovirus	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Pneumoviridae;g:Metapneumovirus;s:Human metapneumovirus
-Human respiratory syncytial virus	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Pneumoviridae;g:Orthopneumovirus;s:Human orthopneumovirus;Human respiratory syncytial virus
-Human respiratory syncytial virus A	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Pneumoviridae;g:Orthopneumovirus;s:Human orthopneumovirus;Human respiratory syncytial virus A
-Human respiratory syncytial virus B	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Pneumoviridae;g:Orthopneumovirus;s:Human orthopneumovirus;Human respiratory syncytial virus B
-Human RNaseP	Human RNaseP
-Influenza A virus	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus
-Influenza B virus	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Betainfluenzavirus;s:Influenza B virus
-Influenza B virus - Victoria	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Betainfluenzavirus;s:Influenza B virus;Victoria
-Influenza B virus - Yamagata	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Betainfluenzavirus;s:Influenza B virus;Yamagata
-Influenza C virus	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Gammainfluenzavirus;s:Influenza C virus
-Influenza C virus - Yamagata	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Gammainfluenzavirus;s:Influenza C virus;Yamagata
-Klebsiella pneumoniae	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Enterobacterales;f:Enterobacteriaceae;g:Klebsiella;s:Klebsiella pneumoniae
-Legionella adelaidensis	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella adelaidensis
-Legionella anisa	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella anisa
-Legionella clemsonensis	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella clemsonensis
-Legionella fallonii	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella fallonii
-Legionella jordanis	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella jordanis
-Legionella lansingensis	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella lansingensis
-Legionella longbeachae	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella longbeachae
-Legionella oakridgensis	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella oakridgensis
-Legionella pneumophila	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella pneumophila
-Legionella pneumophila sg1	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella pneumophila;t:sg1
-Legionella spiritensis	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella spiritensis
-Legionella waltersii	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella waltersii
-MERS	sk:Viruses;o:Nidovirales;f:Coronaviridae;g:Betacoronavirus;s:Middle East respiratory syndrome-related coronavirus
-Moraxella catarrhalis	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Pseudomonadales;f:Moraxellaceae;g:Moraxella;s:Moraxella catarrhalis
-Mycoplasma Pneumoniae P-type 1	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Mycoplasma;s:Mycoplasma pneumoniae;t:P1-type 1
-Mycoplasma Pneumoniae P-type 2	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Mycoplasma;s:Mycoplasma pneumoniae;t:P1-type 2
-Mycoplasma pneumoniae macrolide resistant	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Mycoplasma;s:Mycoplasma pneumoniae;d:Macrolide resistant
-Mycoplasma pneumoniae macrolide sensitive	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Mycoplasma;s:Mycoplasma pneumoniae;d:Macrolide sensitive
-Non-human adenovirus	Not found
-Non-human bocavirus	Not found
-Non-human enterovirus	Not found
-Non-human streptococcus	Not found
-Parechovirus A	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Parechovirus;s:Parechovirus A
-Positive control A. baumannii	Not found
-Positive control Bordetella-1	Not found
-Positive control Bordetella-2	Not found
-Positive control Chlamydia	Not found
-Positive control FluC	Not found
-Positive control GBS	Not found
-Positive control H1-275-oseltamivir	Not found
-Positive control H3-119-oseltamivir	Not found
-Positive control H3-292-oseltamivir	Not found
-Positive control H5-275-oseltamivir	Not found
-Positive control HBoV	Not found
-Positive control HCoV-1	Not found
-Positive control HCoV-2	Not found
-Positive control HPEV	Not found
-Positive control HPIV1	Not found
-Positive control HPIV2	Not found
-Positive control HPIV3	Not found
-Positive control HPIV4	Not found
-Positive control Human Metapneumovirus	Not found
-Positive control K. pneumoniae	Not found
-Positive control L. pneumophila sg1	Not found
-Positive control M. catarrhalis	Not found
-Positive control M. pneumoniae - macrolide resistance	Not found
-Positive control M. pneumoniae - P1 typing	Not found
-Positive control P. aeruginosa	Not found
-Positive control Pan-ADEV	Not found
-Positive control Pan-FluA	Not found
-Positive control Pan-FluB-2	Not found
-Positive control Pan-H. influenzae	Not found
-Positive control Pan-Legionella	Not found
-Positive control RHIV/ENTV	Not found
-Positive control RNaseP (human)	Not found
-Positive control RSV	Not found
-Positive control S. aureus	Not found
-Positive control Strep	Not found
-Pseudomonas aeruginosa	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Pseudomonadales;f:Pseudomonadaceae;g:Pseudomonas;s:Pseudomonas aeruginosa
-Respiratory syncytial virus	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Pneumoviridae;s:Respiratory syncytial virus
-Rhinovirus	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Rhinovirus
-Rhinovirus A	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Rhinovirus A
-Rhinovirus B	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Rhinovirus B
-Rhinovirus C	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Rhinovirus C
-SARS	sk:Viruses;o:Nidovirales;f:Coronaviridae;g:Betacoronavirus;s:Severe acute respiratory syndrome-related coronavirus
 Staphylococcus aureus	sk:Bacteria;p:Firmicutes;c:Bacilli;o:Bacillales;f:Staphylococcaceae;g:Staphylococcus;s:Staphylococcus aureus
 Streptococcus acidominimus	sk:Bacteria;p:Firmicutes;c:Bacilli;o:Lactobacillales;f:Streptococcaceae;g:Streptococcus;s:Streptococcus acidominimus
 Streptococcus agalactiae	sk:Bacteria;p:Firmicutes;c:Bacilli;o:Lactobacillales;f:Streptococcaceae;g:Streptococcus;s:Streptococcus agalactiae
@@ -221,3 +120,104 @@ Streptococcus uberis	sk:Bacteria;p:Firmicutes;c:Bacilli;o:Lactobacillales;f:Stre
 Streptococcus urinalis	sk:Bacteria;p:Firmicutes;c:Bacilli;o:Lactobacillales;f:Streptococcaceae;g:Streptococcus;s:Streptococcus urinalis
 Streptococcus vestibularis	sk:Bacteria;p:Firmicutes;c:Bacilli;o:Lactobacillales;f:Streptococcaceae;g:Streptococcus;s:Streptococcus vestibularis
 Streptococcus viridans	sk:Bacteria;p:Firmicutes;c:Bacilli;o:Lactobacillales;f:Streptococcaceae;g:Streptococcus;s:Streptococcus viridans
+Bordetella avium	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella avium
+Bordetella bronchialis	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella bronchialis
+Bordetella bronchiseptica	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella bronchiseptica
+Bordetella flabilis	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella flabilis
+Bordetella genomosp. 13	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella genomosp. 13
+Bordetella genomosp. 6	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella genomosp. 6
+Bordetella genomosp. 8	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella genomosp. 8
+Bordetella genomosp. 9	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella genomosp. 9
+Bordetella hinzii	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella hinzii
+Bordetella holmesii	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella holmesii
+Bordetella parapertussis	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella parapertussis
+Bordetella pertussis	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella pertussis
+Bordetella petrii	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella petrii
+Bordetella pseudohinzii	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella pseudohinzii
+Bordetella sp. H567	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella sp. H567
+Bordetella sp. HZ20	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella sp. HZ20
+Bordetella sp. N	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella sp. N
+Bordetella trematum	sk:Bacteria;p:Proteobacteria;c:Betaproteobacteria;o:Burkholderiales;f:Alcaligenaceae;g:Bordetella;s:Bordetella trematum
+Klebsiella pneumoniae	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Enterobacterales;f:Enterobacteriaceae;g:Klebsiella;s:Klebsiella pneumoniae
+Legionella adelaidensis	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella adelaidensis
+Legionella anisa	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella anisa
+Legionella clemsonensis	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella clemsonensis
+Legionella fallonii	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella fallonii
+Legionella jordanis	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella jordanis
+Legionella lansingensis	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella lansingensis
+Legionella longbeachae	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella longbeachae
+Legionella oakridgensis	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella oakridgensis
+Legionella pneumophila	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella pneumophila
+Legionella pneumophila sg1	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella pneumophila;t:sg1
+Legionella spiritensis	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella spiritensis
+Legionella waltersii	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Legionellales;f:Legionellaceae;g:Legionella;s:Legionella waltersii
+Haemophilus influenzae	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Pasteurellales;f:Pasteurellaceae;g:Haemophilus;s:Haemophilus influenzae
+Acinetobacter baumannii	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Pseudomonadales;f:Moraxellaceae;g:Acinetobacter;s:Acinetobacter baumannii
+Moraxella catarrhalis	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Pseudomonadales;f:Moraxellaceae;g:Moraxella;s:Moraxella catarrhalis
+Pseudomonas aeruginosa	sk:Bacteria;p:Proteobacteria;c:Gammaproteobacteria;o:Pseudomonadales;f:Pseudomonadaceae;g:Pseudomonas;s:Pseudomonas aeruginosa
+23S-Mycoplasma amphoriforme Resistant (A2063G)	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Mycoplasma;s:Mycoplasma amphoriforme;d:Resistant (A2063G)
+23S-Mycoplasma amphoriforme Resistant (A2064G)	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Mycoplasma;s:Mycoplasma amphoriforme;d:Resistant (A2064G)
+23S-Mycoplasma amphoriforme Sensitive	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Mycoplasma;s:Mycoplasma amphoriforme;d:Sensitive
+Mycoplasma pneumoniae macrolide resistant	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Mycoplasma;s:Mycoplasma pneumoniae;d:Macrolide resistant
+Mycoplasma pneumoniae macrolide sensitive	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Mycoplasma;s:Mycoplasma pneumoniae;d:Macrolide sensitive
+Mycoplasma Pneumoniae P-type 1	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Mycoplasma;s:Mycoplasma pneumoniae;t:P1-type 1
+Mycoplasma Pneumoniae P-type 2	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Mycoplasma;s:Mycoplasma pneumoniae;t:P1-type 2
+23S-Ureaplasma parvum Resistant (A2063G)	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Ureaplasma;s:Ureaplasma parvum;d:Resistant (A2063G)
+23S-Ureaplasma parvum Resistant (A2064G)	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Ureaplasma;s:Ureaplasma parvum;d:Resistant (A2064G)
+23S-Ureaplasma parvum Sensitive	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Ureaplasma;s:Ureaplasma parvum;d:Sensitive
+23S-Ureaplasma urealyticum Resistant (A2063G)	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Ureaplasma;s:Ureaplasma urealyticum;d:Resistant (A2063G)
+23S-Ureaplasma urealyticum Resistant (A2064G)	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Ureaplasma;s:Ureaplasma urealyticum;d:Resistant (A2064G)
+23S-Ureaplasma urealyticum Sensitive	sk:Bacteria;p:Tenericutes;c:Mollicutes;o:Mycoplasmatales;f:Mycoplasmataceae;g:Ureaplasma;s:Ureaplasma urealyticum;d:Sensitive
+Human adenovirus	sk:Viruses;f:Adenoviridae;g:Mastadenovirus;s:Human adenovirus
+Human mastadenovirus A	sk:Viruses;f:Adenoviridae;g:Mastadenovirus;s:Human mastadenovirus A
+Human mastadenovirus B	sk:Viruses;f:Adenoviridae;g:Mastadenovirus;s:Human mastadenovirus B
+Human mastadenovirus C	sk:Viruses;f:Adenoviridae;g:Mastadenovirus;s:Human mastadenovirus C
+Human mastadenovirus D	sk:Viruses;f:Adenoviridae;g:Mastadenovirus;s:Human mastadenovirus D
+Human mastadenovirus E	sk:Viruses;f:Adenoviridae;g:Mastadenovirus;s:Human mastadenovirus E
+Human bocavirus	sk:Viruses;f:Parvoviridae;g:Bocaparvovirus;s:Human bocavirus
+Human bocavirus 4	sk:Viruses;f:Parvoviridae;g:Bocaparvovirus;s:Human bocavirus 4
+Human bocavirus 1	sk:Viruses;f:Parvoviridae;g:Bocaparvovirus;s:Primate bocaparvovirus 1;Human bocavirus 1
+Human bocavirus 3	sk:Viruses;f:Parvoviridae;g:Bocaparvovirus;s:Primate bocaparvovirus 1;Human bocavirus 3
+Human bocavirus 2	sk:Viruses;f:Parvoviridae;g:Bocaparvovirus;s:Primate bocaparvovirus 2;Human bocavirus 2
+Human coronavirus 229E	sk:Viruses;o:Nidovirales;f:Coronaviridae;g:Alphacoronavirus;s:Human coronavirus 229E
+Human coronavirus NL63	sk:Viruses;o:Nidovirales;f:Coronaviridae;g:Alphacoronavirus;s:Human coronavirus NL63
+Human coronavirus OC43	sk:Viruses;o:Nidovirales;f:Coronaviridae;g:Betacoronavirus;s:Betacoronavirus 1;Human coronavirus OC43
+Human coronavirus HKU1	sk:Viruses;o:Nidovirales;f:Coronaviridae;g:Betacoronavirus;s:Human coronavirus HKU1
+MERS	sk:Viruses;o:Nidovirales;f:Coronaviridae;g:Betacoronavirus;s:Middle East respiratory syndrome-related coronavirus
+SARS	sk:Viruses;o:Nidovirales;f:Coronaviridae;g:Betacoronavirus;s:Severe acute respiratory syndrome-related coronavirus
+Enterovirus	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus
+Enterovirus A	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Enterovirus A
+Enterovirus B	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Enterovirus B
+Enterovirus C	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Enterovirus C
+Enterovirus D	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Enterovirus D
+Human echovirus	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Human echovirus
+Rhinovirus	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Rhinovirus
+Rhinovirus A	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Rhinovirus A
+Rhinovirus B	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Rhinovirus B
+Rhinovirus C	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Enterovirus;s:Rhinovirus C
+Parechovirus A	sk:Viruses;o:Picornavirales;f:Picornaviridae;g:Parechovirus;s:Parechovirus A
+Influenza A virus	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus
+H1-275-oseltamivir Resistant (H275Y)	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H1-275-oseltamivir Resistant (H275Y)
+H1-275-oseltamivir Sensitive	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H1-275-oseltamivir Sensitive
+H3-119-oseltamivir Resistant (E119V)	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H3-119-oseltamivir Resistant (E119V)
+H3-119-oseltamivir Resistant (I122V)	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H3-119-oseltamivir Resistant (I122V)
+H3-119-oseltamivir Sensitive	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H3-119-oseltamivir Sensitive
+H3-292-oseltamivir Resistant (N294S)	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H3-292-oseltamivir Resistant (N294S)
+H3-292-oseltamivir Resistant (R292K)	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H3-292-oseltamivir Resistant (R292K)
+H3-292-oseltamivir Sensitive	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H3-292-oseltamivir Sensitive
+H5-275-oseltamivir Resistant (H275Y)	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H5-275-oseltamivir Resistant (H275Y)
+H5-275-oseltamivir Sensitive	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Alphainfluenzavirus;s:Influenza A virus;d:H5-275-oseltamivir Sensitive
+Influenza B virus	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Betainfluenzavirus;s:Influenza B virus
+Influenza B virus - Victoria	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Betainfluenzavirus;s:Influenza B virus;Victoria
+Influenza B virus - Yamagata	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Betainfluenzavirus;s:Influenza B virus;Yamagata
+Influenza C virus	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Gammainfluenzavirus;s:Influenza C virus
+Influenza C virus - Yamagata	sk:Viruses;p:Negarnaviricota;c:Insthoviricetes;o:Articulavirales;f:Orthomyxoviridae;g:Gammainfluenzavirus;s:Influenza C virus;Yamagata
+HPIV1	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Paramyxoviridae;g:Respirovirus;s:Human respirovirus 1
+HPIV3	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Paramyxoviridae;g:Respirovirus;s:Human respirovirus 3
+HPIV2	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Paramyxoviridae;g:Rubulavirus;s:Human rubulavirus 2
+HPIV4	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Paramyxoviridae;g:Rubulavirus;s:Human rubulavirus 4
+Human metapneumovirus	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Pneumoviridae;g:Metapneumovirus;s:Human metapneumovirus
+Human respiratory syncytial virus	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Pneumoviridae;g:Orthopneumovirus;s:Human orthopneumovirus;Human respiratory syncytial virus
+Human respiratory syncytial virus A	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Pneumoviridae;g:Orthopneumovirus;s:Human orthopneumovirus;Human respiratory syncytial virus A
+Human respiratory syncytial virus B	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Pneumoviridae;g:Orthopneumovirus;s:Human orthopneumovirus;Human respiratory syncytial virus B
+Respiratory syncytial virus	sk:Viruses;p:Negarnaviricota;c:Monjiviricetes;o:Mononegavirales;f:Pneumoviridae;s:Respiratory syncytial virus
