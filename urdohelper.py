@@ -239,7 +239,8 @@ def make_report(report_data, read_count, output_filename, template_fp, tax_dict)
         report.merge_cells(f'A{startRow + bacteria_count+1}:F{startRow + bacteria_count+1}')
         report[f"A{startRow + bacteria_count+1}"].alignment = pyxl.styles.Alignment(horizontal="center", vertical="center")
         if output_filename is not None:
-            filename = f'{output_filename}_{sample}.xlsx'
+            outputPath = os.path.dirname(os.path.realpath(output_filename))
+            filename = os.path.join(outputPath, f"{sample}.xlsx")
         else:
             filename = f'{sample}.xlsx'
         template.save(filename)
@@ -249,7 +250,7 @@ To build a database:
 smored --buildDB -c <config file> [-k <int>] [-P|--prefix <database prefix>] [-a <log file path>]
 
 To predict and call markers:
-smored -c <config file> -1 <fwd read FASTQ> -2 <rev read FASTQ> [-d <input directory>] [-o <output file>] [-P <database prefix>] [-r] [-u] [-x]
+smored -c <config file> -1 <fwd read FASTQ> -2 <rev read FASTQ> [-d <input directory>] [-o <output file>] [-P <database prefix>] [-r] [--report] [-u] [-x]
 
 smored --help for more detailed instructions
 """
@@ -272,6 +273,7 @@ Usage
 [-x][--overwrite]
 [-R read/output/path]
 [-r]
+[--report]
 [-U unclassified/read/path]
 [-u]
 [-t][--threads]
@@ -345,7 +347,7 @@ Optional arguments
   Directory containing paired end read files for multi-sample prediction
 -k = <kmer_length>
   Kmer length for which the db was created (Default k = 35).
-takes one line. For paired end samples the 2 files should be tab separated on single line.
+  takes one line. For paired end samples the 2 files should be tab separated on single line.
 -o,--output = <output_filename>
   Prints the output to a file instead of stdio.
 -P,--prefix = <prefix>
@@ -354,6 +356,9 @@ takes one line. For paired end samples the 2 files should be tab separated on si
   A FASTQ file is generated in the current directory for each sample containing reads with kmer matches.
 -R, --readsdir = < output directory >
   A FASTQ file is generated in the specified directory for each sample containing reads with kmer matches.
+--report
+  Generate per-sample reports in Excel format.  If an output file path is provided, per sample reports will
+  be deposited in the same folder
 -u
   A FASTQ file is generated in the current directory for each sample containing reads with no kmer matches (Unclassified reads).
 -U, --unclassified = < output directory >
