@@ -72,7 +72,6 @@ def results_callback(data):
     count_data, read_count, sampleid = data
     RAW_COUNTS[sampleid] = count_data
     READ_COUNTS[sampleid] = read_count
-    return
 
 def batch_tool(kmer, directory):
     """
@@ -113,7 +112,6 @@ def batch_tool(kmer, directory):
     pool.close()
     pool.join()
     shutil.rmtree(TMPDIR)
-    return
 
 def single_sample_tool(*args, **kwargs):
     """
@@ -122,7 +120,6 @@ def single_sample_tool(*args, **kwargs):
     Output     : STs and allelic profiles for each FASTQ file
     Description: Processes both FASTQ files passed to the function
     """
-
     if args:
         fastq1, fastq2, k, sample_results, sample_names = args
         sample_name = fastq1.split('/')[-1].split('_')[0]
@@ -153,9 +150,10 @@ def single_sample_tool(*args, **kwargs):
     logging.debug(f"Preprocessing: [Merging reads] Merging {fastq1} and {fastq2}")
     vsearch_cmd = "vsearch --fastq_mergepairs {} --reverse {} --fastaout {}/{}.fa".format(
         fastq1, fastq2, TMPDIR, sample_name)
-    vsearch_cmd += " --fastq_minlen 75 --fastq_allowmergestagger --fastq_maxdiffs 20 --fastq_maxns 10"
+    vsearch_cmd += " --fastq_minlen 75 --fastq_allowmergestagger"
+    vsearch_cmd += " --fastq_maxdiffs 20 --fastq_maxns 10"
     vsearch_cmd += " --threads 1 --no_progress"
-    logging.debug(f"Preprocessing: [Merging reads] VSEARCH command\n\t{vsearch_cmd}")
+    logging.debug(f"Preprocessing: [Merging reads] VSEARCH command\n\t%s", vsearch_cmd)
     try:
         vsearch_pipes = subprocess.Popen(vsearch_cmd,
                                          shell=True,
@@ -169,13 +167,10 @@ def single_sample_tool(*args, **kwargs):
         logging.error(f"ERROR: {subprocess_error}")
         sys.exit(f"Could not merge read files for {sample_name}!")
     vsearch_stats = std_err.decode('utf-8').split("\n")
-    def getReadCount(vsearch):
-        for line in vsearch_stats:
-            if line.strip().endswith("Pairs"):
-                return int(line.split()[0])
-    readCount = getReadCount(vsearch_stats)
-    #print(readCount)
-    # READ_COUNTS[]
+    for line in vsearch_stats:
+        if line.strip().endswith("Pairs"):
+            read_count = int(line.split()[0])
+            break
     vsearch_cmd = "vsearch  --derep_fulllength  {0}/{1}.fa  --output {0}/{1}_centroids.fa ".format(
         TMPDIR, sample_name)
     vsearch_cmd += " --sizeout --fasta_width 0 --threads 1 --no_progress"
@@ -192,7 +187,7 @@ def single_sample_tool(*args, **kwargs):
         logging.error(f"ERROR: {subprocess_error}")
         if not __batch__:
             sys.exit(f"Could not merge read files for {sample_name}!")
-    kmer_data = read_processor(TMPDIR, k, sample_name, sample_id, read_file, uread_file)
+    kmer_data = read_processor(TMPDIR, k, sample_name, read_file, uread_file)
     # This check will never eval with the new unclassifie
     if kmer_data == {'unclassified': 0}:
         string = f"No k-mer matches were found for the sample {fastq1} and {fastq2}"
@@ -205,10 +200,10 @@ def single_sample_tool(*args, **kwargs):
     if __unclassified__:
         uread_file.close()
 
-    return (kmer_data, readCount, SAMPLES.index(sample_name))
+    return (kmer_data, read_count, SAMPLES.index(sample_name))
 
 
-def read_processor(fasta_dir, k, sample_name, sample_id, read_fh, uread_fh):
+def read_processor(fasta_dir, k, sample_name, read_fh, uread_fh):
     """
     Function   : read_processor
     Input      : fastq file, k value
@@ -248,9 +243,9 @@ def read_processor(fasta_dir, k, sample_name, sample_id, read_fh, uread_fh):
                     lines[1] = f"{lines[1]}\n"
                     uread_fh.write(''.join('{}'.format(l) for l in lines))
                 count_dict["unclassified"] += int(lines[0].split(';')[1].split("=")[1])
-        return count_dict
     else:
         logging.error(f"ERROR: File does not exist: {fasta_dir}/{sample_name}_centroids.fa")
+    return count_dict
 
 
 def count_kmers(read, k, count_dict):
@@ -424,12 +419,10 @@ def load_config(config):
     __config_dict__.update(config_dict)
     if "loci" not in __config_dict__ or "profile" not in __config_dict__:
         print("Config file missing [loci] or [profile] block")
-        raise(SystemExit)
-        sys.exit(1)
-    return
+        raise SystemExit
 
 
-def print_results(results, samples, read_count, output_filename, overwrite):
+def print_results(results, samples, output_filename, overwrite):
     """
     Function   : print_results
     Input      : results, output file, overwrite?
@@ -438,7 +431,7 @@ def print_results(results, samples, read_count, output_filename, overwrite):
     """
     # import pprint as pp
     # pp.pprint(results)
-    if output_filename != None:
+    if output_filename is not None:
         if overwrite is False:
             outfile = open(output_filename, "a")
         else:
@@ -460,7 +453,7 @@ def print_results(results, samples, read_count, output_filename, overwrite):
                 else:
                     out_string += f"\t0"
             out_string += "\n"
-    if output_filename != None:
+    if output_filename is not None:
         outfile.write(f"{out_string}\n")
     else:
         print(f"{out_string}\n")
@@ -474,7 +467,7 @@ def select_markers(result_dict, samples):
         output["sample"].append(sample)
         sample_id = samples.index(sample)
         for loc in result_dict[sample_id]:
-            if loc == "amplicon" or loc == "genericmarkers":
+            if loc in ("amplicon", "genericmarkers"):
                 for marker_id in result_dict[sample_id][loc]:
                     if __st_profile__[loc][marker_id] not in output:
                         output[__st_profile__[loc][marker_id]] = {}
@@ -826,9 +819,9 @@ for opt, arg in __options__:
         if not __amplicon2tax__.exists():
             try:
                 __amplicon2tax__ = Path("amplicon2taxonomy.tsv").resolve(strict=True)
-            except :
+            except FileNotFoundError:
                 print(f"Error: Cannot find amplicon2taxonomy.tsv")
-                sys.exit() 
+                sys.exit()
 
 if __name__ == "__main__":
     if __predict__ and __buildDB__:
@@ -890,11 +883,13 @@ if __name__ == "__main__":
             WEIGHT_COUNTS = urdohelper.weight_profile(RAW_COUNTS, __weight_dict_global__)
             print_results(WEIGHT_COUNTS, SAMPLES, OUTPUT_FILENAME, OVERWRITE)
         else:
-            print_results(RAW_COUNTS, SAMPLES, READ_COUNTS, OUTPUT_FILENAME, OVERWRITE)
+            print_results(RAW_COUNTS, SAMPLES, OUTPUT_FILENAME, OVERWRITE)
         if __report__:
             __taxonomy__ = urdohelper.read_mapping_file(__amplicon2tax__)
-            reportData = select_markers(RAW_COUNTS, SAMPLES)
-            urdohelper.make_report(reportData, READ_COUNTS, OUTPUT_FILENAME, __template__, __taxonomy__)
+            REPORTDATA = select_markers(RAW_COUNTS, SAMPLES)
+            urdohelper.make_report(REPORTDATA, READ_COUNTS,
+                                   OUTPUT_FILENAME, __template__,
+                                   __taxonomy__)
     else:
         print("Error: Please select the mode")
         print("--buildDB (for database building) or --predict (for marker discovery)")
