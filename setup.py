@@ -13,15 +13,17 @@ with open(path.join(here, 'README.md')) as fh:
 setup(
   name = "SMOREd",
   scripts = ['urdohelper.py', 'smored'],
-  version = "0.4.6pre.4",
+  version = "0.4.7",
   description = 'Fast k-mer based tool for alignment and assembly-free amplicon classification.',
   long_description=long_description_text,
   long_description_content_type="text/markdown",
   author = 'Aroon Chande',
   author_email = 'achande@ihrc.com',
   url = 'https://github.com/ar0ch/URDO-predictor',
+  python_requires='>=3.6',
   classifiers = [
       'Programming Language :: Python :: 3.6',
   ],
-  install_requires=['lxml'],
+  install_requires=['lxml', 'openpyxl'],
+  data_files = [('lib/smored/', ['amplicon2taxonomy.tsv', 'reportTemplate.xlsx'])]
 )

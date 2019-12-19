@@ -87,6 +87,163 @@ def weight_profile(allele_count, weight_dict):
                     weighted_dict[sample][loc][a_num] = allele_count[sample][loc][a_num]
 
     return weighted_dict
+
+def read_mapping_file(amp2tax):
+    """
+    Function   : make_report
+    Input      : results, output file, overwrite?
+    Output     : Takes in Excel template, outputs one report per sample
+    Description: Create Excel reports
+    """
+    tax_dict = {}
+    amplicons = open(amp2tax, 'r').read()
+    entries = [x for x in amplicons.split('\n') if len(x) != 0]
+    for entry in entries:
+        org, taxonomy = entry.rstrip().split('\t')
+        if org not in tax_dict:
+            tax_dict[org] = {'kingdom' : "", "phylum" : "", "class" : "", "order" : "", "family" : "",
+                             "genus" : "", "species" : "", "drug" : "", "type" : ""}
+        taxonomy = taxonomy.split(';')
+        for tax in taxonomy:  
+            if tax.startswith('sk:'):
+                tax_dict[org]['kingdom'] = tax.split(":", 1)[1]  
+            elif tax.startswith('p:'):
+                tax_dict[org]['phylum'] = tax.split(":", 1)[1]
+            elif tax.startswith('c:'):
+                tax_dict[org]['class'] = tax.split(":", 1)[1]
+            elif tax.startswith('o:'):
+                tax_dict[org]['order'] = tax.split(":", 1)[1]
+            elif tax.startswith('f:'):
+                tax_dict[org]['family'] = tax.split(":", 1)[1]
+            elif tax.startswith('g:'):
+                tax_dict[org]['genus'] = tax.split(":", 1)[1]
+            elif tax.startswith('s:'):
+                tax_dict[org]['species'] = tax.split(":", 1)[1]
+            elif tax.startswith('d:'):
+                tax_dict[org]['drug'] = tax.split(":", 1)[1]
+            elif tax.startswith('t:'):
+                tax_dict[org]['type'] = tax.split(":", 1)[1]
+    return tax_dict
+
+def make_report(report_data, read_count, output_filename, template_fp, tax_dict):
+    """
+    Function   : make_report
+    Input      : results, output file, overwrite?
+    Output     : Takes in Excel template, outputs one report per sample
+    Description: Create Excel reports
+    """
+    from collections import Counter
+    import openpyxl as pyxl
+    sampleNames = report_data.pop("sample")
+    for sample in sampleNames:
+        template = pyxl.load_workbook(filename = template_fp)
+        report = template.active
+        report['B3'] = sample
+        report['B4'] = subprocess.check_output('date "+%Y-%m-%d"',
+                                                  shell=True).decode('utf-8').rstrip()
+        report['B5'] = read_count[sampleNames.index(sample)]
+        totalCount = 0
+        data = {}
+        topThreeIdx = 9
+        startRow = 15 # Magic numbers are bad...fix for later
+        bacteria_count = 0
+        virus_count = 0
+        other_count = 0
+        for org in report_data:
+            try:
+                data[org] = int(report_data[org][sample])
+                totalCount += int(report_data[org][sample])
+            except KeyError:
+                data[org] = 0
+        unclassifiedCounts = data.pop("Unclassified")
+        report['B6'] = totalCount
+        for org in Counter(data).most_common(3):
+            common_name = org[0]
+            try:
+                genus = tax_dict[org[0]]['genus']
+                species = tax_dict[org[0]]['species']
+            except:
+                genus = ""
+                species = ""
+            report[f"A{topThreeIdx}"] = common_name
+            report[f"B{topThreeIdx}"] = genus
+            report[f"C{topThreeIdx}"] = species
+            report[f"E{topThreeIdx}"] = "{0:.2f}".format(org[1]/totalCount * 100)
+            topThreeIdx += 1
+        for org in sorted(data):
+            printRow = 0
+            # print(org)
+            # print(tax_dict[org])
+            common_name = org
+            if tax_dict[org]['kingdom'] == 'Bacteria': 
+                try:
+                    genus = tax_dict[org]['genus']
+                    species = tax_dict[org]['species']
+                    resistance = tax_dict[org]['drug']
+                    typ = tax_dict[org]['type']
+                except:
+                    genus = ""
+                    species = org
+                    resistance = ""
+                    typ = ""
+                
+                printRow = startRow + bacteria_count
+                report.insert_rows(printRow)
+                report[f"A{printRow}"] = common_name
+                report[f"B{printRow}"] = genus
+                try:
+                    species = species.split(" ", 1)[1]
+                except IndexError:
+                    pass    
+                report[f"C{printRow}"] = species
+                for x in ["A", "B", "C"]:
+                    report[f"{x}{printRow}"].font = pyxl.styles.Font(italic=True)
+                report[f"D{printRow}"] = resistance
+                report[f"E{printRow}"] = data[org]
+                report[f"F{printRow}"] = "{0:.2f}".format(data[org]/totalCount * 100)
+                bacteria_count += 1
+                
+            elif tax_dict[org]['kingdom'] == 'Viruses':
+                try:
+                    family = tax_dict[org]['family']
+                    species = tax_dict[org]['species']
+                    resistance = tax_dict[org]['drug']
+                    typ = tax_dict[org]['type']
+                except:
+                    family = ""
+                    species = org
+                    resistance = ""
+                    typ = ""
+                printRow = startRow + bacteria_count + 3 + virus_count
+                report.insert_rows(printRow)
+                report[f"A{printRow}"] = common_name
+                report[f"B{printRow}"] = family
+                report[f"C{printRow}"] = species
+                for x in ["A", "C"]:
+                    report[f"{x}{printRow}"].font = pyxl.styles.Font(italic=True) 
+                report[f"D{printRow}"] = resistance
+                report[f"E{printRow}"] = data[org]
+                report[f"F{printRow}"] = "{0:.2f}".format(data[org]/totalCount * 100)
+                virus_count += 1
+
+            else:
+                printRow = startRow + bacteria_count + 6 + virus_count + other_count
+                report.insert_rows(printRow)
+                report[f"A{printRow}"] = common_name
+                report[f"E{printRow}"] = data[org]
+                report[f"F{printRow}"] = "{0:.2f}".format(data[org]/totalCount * 100)
+                # report.merge_cells(f'A{printRow}:D{printRow}')
+                # report[f"A{printRow}"].alignment = pyxl.styles.Alignment(horizontal="left", vertical="center")
+                other_count += 1
+
+        report.merge_cells(f'A{startRow + bacteria_count+1}:F{startRow + bacteria_count+1}')
+        report[f"A{startRow + bacteria_count+1}"].alignment = pyxl.styles.Alignment(horizontal="center", vertical="center")
+        if output_filename is not None:
+            filename = f'{output_filename}_{sample}.xlsx'
+        else:
+            filename = f'{sample}.xlsx'
+        template.save(filename)
+
 HELP_TEXT_SMALL = """
 To build a database:
 smored --buildDB -c <config file> [-k <int>] [-P|--prefix <database prefix>] [-a <log file path>]
