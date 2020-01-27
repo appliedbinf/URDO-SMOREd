@@ -1,0 +1,3 @@
+[loci]
+alleles	tests/repDB-rename.fasta
+profile	tests/profile.txt

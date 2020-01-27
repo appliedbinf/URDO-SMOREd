@@ -56,14 +56,19 @@ jobs:
                     tar xf vsearch-2.8.4-linux-x86_64.tar.gz
                     export PATH=$PWD/vsearch-2.8.4-linux-x86_64/bin:$PATH 
                     coverage run  -m smored --buildDB -c tests/db/expanded_config.txt -P tests/db/db -k 35
+                    coverage run  -m smored --buildDB -c tests/db/expanded_config.txt
+                    coverage run  -m smored --buildDB -c tests/db/bad_config.txt -P tests/db/db -k 35
+                    export URDO_DEFAULT_CONFIG='~/repo/tests/db/expanded_config.txt'
+                    coverage run  -m smored --buildDB -P tests/db/db -k 35
                     coverage run -a -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -1 tests/reads/MID-2_S2_L001_R1_001.fastq -2 tests/reads/MID-2_S2_L001_R2_001.fastq
                     coverage run -a -m smored -h
                     coverage run -a  -m smored -v
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -a logfile.txt
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t a -o outfile
-                    coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t a -o outfile
-                    coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t a -o outfile -x -r -R readout
-                    coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t a -w
+                    coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t 2 -o outfile
+                    coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t 2 -o outfile -x
+                    coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t 2 -o outfile -x -r -R readout
+                    coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t 1 -w
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t 2
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -r -R folder
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -u

@@ -16,7 +16,7 @@ import shutil
 from itertools import islice
 import operator
 import urdohelper
-VERSION = """SMORE'D 0.5 (updated : December 19, 2019)"""
+VERSION = """SMORE'D 0.5.1 (updated : January 27, 2020)"""
 LICENSE = """
 SMORE'D is free for academic users and requires permission before any
 commercial or government usage of any version of this code/algorithm.
@@ -210,15 +210,14 @@ def read_processor(fasta_dir, k, sample_name, read_fh, uread_fh):
     Output     : Edits a global dictionary - results
     Description: Processes the single fastq file
     """
-    # fasta_dir = f"{fasta_dir}/{sample_name}_centroids.fa"
     count_dict = {}
     count_dict["unclassified"] = 0
     msg = f"Analysis: Begin processing merged reads ({fasta_dir}/{sample_name}_centroids.fa)"
     logging.debug(msg)
     if os.path.isfile(f"{fasta_dir}/{sample_name}_centroids.fa"):
         logging.debug(f"Analysis: Kmer counting using k={k}")
-        fastq_file = open(f"{fasta_dir}/{sample_name}_centroids.fa", 'r')
-        for lines in iter(lambda: list(islice(fastq_file, 2)), ()):
+        fasta_file = open(f"{fasta_dir}/{sample_name}_centroids.fa", 'r')
+        for lines in iter(lambda: list(islice(fasta_file, 2)), ()):
             lines = [l.rstrip() for l in lines]
             if len(lines) < 2:
                 break
@@ -226,7 +225,7 @@ def read_processor(fasta_dir, k, sample_name, read_fh, uread_fh):
                 if len(lines[1]) < k:
                     continue
             except IndexError:
-                logging.debug(f"ERROR: Check fastq file {fasta_dir}/{sample_name}_centroids.fa")
+                logging.debug(f"ERROR: Check fasta file {fasta_dir}/{sample_name}_centroids.fa")
                 return 0
             start = int((len(lines[1])-k)//2)
             kmer_list = [str(lines[1][:k]), str(
@@ -255,7 +254,6 @@ def count_kmers(read, k, count_dict):
     Output     : Edits the count of global variable __allele_count__
     Description: Increment the count for each k-mer match
     """
-    # print(sample_name)
     allele_counts = {}
     start_pos = 0
     read[1].rstrip()
@@ -310,7 +308,6 @@ def load_module(k, db_prefix):
     Output     : Updates the DB dictionary variables
     Description: Used in loading the DB as set of variables by calling other functions
     """
-    # global db_file
     db_file = db_prefix+'_'+str(k)+'.txt'
     weight_file = db_prefix+'_weight.txt'
     profile_file = db_prefix+'_profile.txt'
@@ -418,8 +415,8 @@ def load_config(config):
                               (element, config_dict[head][element]))
     __config_dict__.update(config_dict)
     if "loci" not in __config_dict__ or "profile" not in __config_dict__:
-        print("Config file missing [loci] or [profile] block")
-        raise SystemExit
+        # print("Config file missing [loci] or [profile] block")
+        raise SystemExit("Config file missing [loci] or [profile] block")
 
 
 def print_results(results, samples, output_filename, overwrite):
@@ -429,8 +426,6 @@ def print_results(results, samples, output_filename, overwrite):
     Output     : Prints on the screen or in a file
     Description: Prints the results in the format asked by the user
     """
-    # import pprint as pp
-    # pp.pprint(results)
     if output_filename is not None:
         if overwrite is False:
             outfile = open(output_filename, "a")
@@ -698,132 +693,131 @@ def check_params(params):
 ################################################################################
 # The Program Starts Execution Here
 
-try:
-    sys.argv[1]
-except IndexError:
-    print(urdohelper.HELP_TEXT_SMALL)
-    sys.exit(0)
-
-if "URDO_DEFAULT_DB" in os.environ and __predict__ is True:
-    __db_prefix__ = os.environ['URDO_DEFAULT_DB']
-else:
-    __db_prefix__ = "kmer"
-
-# Input arguments
-__options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rR:uU:va:wt:', [
-    'buildDB',
-    'predict',
-    'output=',
-    'config=',
-    'prefix=',
-    'overwrite',
-    'batch',
-    'fastq1=',
-    'fastq2=',
-    'dir=',
-    'directory=',
-    'help',
-    'readsdir=',
-    'unclassified=',
-    'threads=',
-    'report'])
-for opt, arg in __options__:
-    if opt in ('-o', '--output'):
-        OUTPUT_FILENAME = arg
-    elif opt in ('-x', '--overwrite'):
-        OVERWRITE = True
-    elif opt in '--buildDB':
-        __buildDB__ = True
-        __predict__ = False
-        __config__ = ""
-        __db_prefix__ = "kmer"
-    elif opt in ('-P', '--prefix'):
-        __db_prefix__ = arg
-    elif opt in '--predict':
-        __predict__ = True
-    elif opt in ('-c', '--config'):
-        __config__ = arg
-    elif opt in '-k':
-        __user_k__ = True
-        try:
-            __k__ = int(arg)
-        except ValueError:
-            print("Error: Enter a numerical k value.")
-            sys.exit(0)
-        # Check to make sure the arg is an int.
-    elif opt in ('-1', '--fastq1'):
-        __fastq1__ = arg
-    elif opt in ('-2', '--fastq2'):
-        __fastq2__ = arg
-    elif opt in ('-d', '--dir', '--directory'):
-        __directory__ = os.path.abspath(arg) + "/"
-        urdohelper.__directory__ = __directory__
-        urdohelper.TMPDIR = TMPDIR
-        __batch__ = True
-    elif opt in '-a':
-        __log__ = arg
-    elif opt in '-r':
-        __reads__ = True
-    elif opt in '-R':
-        __reads__ = True
-        READ_PATH = os.path.abspath(arg) + "/"
-        if not os.path.isdir(READ_PATH):
-            try:
-                os.makedirs(READ_PATH)
-            except OSError as error:
-                print(f"Count not make {READ_PATH}\n{error}")
-                sys.exit(1)
-    elif opt in '-u':
-        __unclassified__ = True
-    elif opt in '-U':
-        __unclassified__ = True
-        UREAD_PATH = os.path.abspath(arg) + "/"
-        if not os.path.isdir(UREAD_PATH):
-            try:
-                os.makedirs(UREAD_PATH)
-            except OSError as error:
-                print(f"Count not make {UREAD_PATH}\n{error}")
-                sys.exit(1)
-    elif opt in '-v':
-        print(VERSION)
-        print(LICENSE)
-        sys.exit(0)
-    elif opt in ('-h', '--help'):
-        print(urdohelper.HELP_TEXT)
-        sys.exit(0)
-    elif opt == '-w':
-        WEIGHT = True
-    elif opt in ('-t', '--threads'):
-        try:
-            WORKERS = int(arg)
-        except ValueError:
-            print("Please provide an integer number of threads")
-            sys.exit()
-    elif opt in '--report':
-        __report__ = True
-        try:
-            import openpyxl as pyxl
-        except ImportError:
-            print("The module 'openpyxl' is required for report generation.")
-            print("Please install with:\n\tpip install openpyxl")
-            sys.exit()
-        from pathlib import Path
-        __template__ = Path(__template__)
-        __amplicon2tax__ = Path(__amplicon2tax__)
-        if not __template__.exists():
-            try:
-                __template__ = Path("reportTemplate.xlsx").resolve(strict=True)
-            except FileNotFoundError:
-                print(f"Error: Cannot find reportTemplate,xlsx")
-                sys.exit()
-        if not __amplicon2tax__.exists():
-            try:
-                __amplicon2tax__ = Path("amplicon2taxonomy.tsv").resolve(strict=True)
-            except FileNotFoundError:
-                print(f"Error: Cannot find amplicon2taxonomy.tsv")
-                sys.exit()
 
 if __name__ == "__main__":
+    try:
+        sys.argv[1]
+    except IndexError:
+        print(urdohelper.HELP_TEXT_SMALL)
+        sys.exit(0)
+    if "URDO_DEFAULT_DB" in os.environ and __predict__ is True:
+        __db_prefix__ = os.environ['URDO_DEFAULT_DB']
+    else:
+        __db_prefix__ = "kmer"
+
+    # Input arguments
+    __options__, __remainder__ = getopt.getopt(sys.argv[1:], 'o:x1:2:k:bd:phP:c:rR:uU:va:wt:', [
+        'buildDB',
+        'predict',
+        'output=',
+        'config=',
+        'prefix=',
+        'overwrite',
+        'batch',
+        'fastq1=',
+        'fastq2=',
+        'dir=',
+        'directory=',
+        'help',
+        'readsdir=',
+        'unclassified=',
+        'threads=',
+        'report'])
+    for opt, arg in __options__:
+        if opt in ('-o', '--output'):
+            OUTPUT_FILENAME = arg
+        elif opt in ('-x', '--overwrite'):
+            OVERWRITE = True
+        elif opt in '--buildDB':
+            __buildDB__ = True
+            __predict__ = False
+            __config__ = ""
+            __db_prefix__ = "kmer"
+        elif opt in ('-P', '--prefix'):
+            __db_prefix__ = arg
+        elif opt in '--predict':
+            __predict__ = True
+        elif opt in ('-c', '--config'):
+            __config__ = arg
+        elif opt in '-k':
+            __user_k__ = True
+            try:
+                __k__ = int(arg)
+            except ValueError:
+                print("Error: Enter a numerical k value.")
+                sys.exit(0)
+            # Check to make sure the arg is an int.
+        elif opt in ('-1', '--fastq1'):
+            __fastq1__ = arg
+        elif opt in ('-2', '--fastq2'):
+            __fastq2__ = arg
+        elif opt in ('-d', '--dir', '--directory'):
+            __directory__ = os.path.abspath(arg) + "/"
+            urdohelper.__directory__ = __directory__
+            urdohelper.TMPDIR = TMPDIR
+            __batch__ = True
+        elif opt in '-a':
+            __log__ = arg
+        elif opt in '-r':
+            __reads__ = True
+        elif opt in '-R':
+            __reads__ = True
+            READ_PATH = os.path.abspath(arg) + "/"
+            if not os.path.isdir(READ_PATH):
+                try:
+                    os.makedirs(READ_PATH)
+                except OSError as error:
+                    print(f"Count not make {READ_PATH}\n{error}")
+                    sys.exit(1)
+        elif opt in '-u':
+            __unclassified__ = True
+        elif opt in '-U':
+            __unclassified__ = True
+            UREAD_PATH = os.path.abspath(arg) + "/"
+            if not os.path.isdir(UREAD_PATH):
+                try:
+                    os.makedirs(UREAD_PATH)
+                except OSError as error:
+                    print(f"Count not make {UREAD_PATH}\n{error}")
+                    sys.exit(1)
+        elif opt in '-v':
+            print(VERSION)
+            print(LICENSE)
+            sys.exit(0)
+        elif opt in ('-h', '--help'):
+            print(urdohelper.HELP_TEXT)
+            sys.exit(0)
+        elif opt == '-w':
+            WEIGHT = True
+        elif opt in ('-t', '--threads'):
+            try:
+                WORKERS = int(arg)
+            except ValueError:
+                print("Please provide an integer number of threads")
+                sys.exit()
+        elif opt in '--report':
+            __report__ = True
+            try:
+                import openpyxl as pyxl
+            except ImportError:
+                print("The module 'openpyxl' is required for report generation.")
+                print("Please install with:\n\tpip install openpyxl")
+                sys.exit()
+            from pathlib import Path
+            __template__ = Path(__template__)
+            __amplicon2tax__ = Path(__amplicon2tax__)
+            if not __template__.exists():
+                try:
+                    __template__ = Path("reportTemplate.xlsx").resolve(strict=True)
+                except FileNotFoundError:
+                    print(f"Error: Cannot find reportTemplate,xlsx")
+                    sys.exit()
+            if not __amplicon2tax__.exists():
+                try:
+                    __amplicon2tax__ = Path("amplicon2taxonomy.tsv").resolve(strict=True)
+                except FileNotFoundError:
+                    print(f"Error: Cannot find amplicon2taxonomy.tsv")
+                    sys.exit()
     if __predict__ and __buildDB__:
         print(urdohelper.HELP_TEXT_SMALL)
         print("Select either predict or buildDB module")
@@ -875,7 +869,6 @@ if __name__ == "__main__":
         if __batch__:
             batch_tool(__k__, __directory__)
         else:
-            # fastq1, fastq2, k, sample_results
             results_callback(single_sample_tool(fastq1=__fastq1__,
                                                 fastq2=__fastq2__,
                                                 k=__k__))

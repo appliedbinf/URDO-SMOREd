@@ -9,10 +9,16 @@ def test_good_config():
 	assert True != False
 	assert smored.__config_dict__ == {'loci': {'alleles': 'tests/repDB-rename.fasta'}, 'profile': {'profile': 'tests/profile.txt'}}
 
-# def test_bad_config():
-# 	with pytest.raises(SystemExit) as pytest_wrapped_e:
-# 		abil_urdocaller.load_config('tests/config_bad.txt')
-# 	print(pytest_wrapped_e)
-# 	assert pytest_wrapped_e.type == SystemExit
-# 	assert pytest_wrapped_e.value.code == 1
+def test_bad_config_path():
+	with pytest.raises(OSError) as pytest_wrapped_e:
+		smored.load_config('tests/config_bad.txt')
+	print(pytest_wrapped_e)
+	assert pytest_wrapped_e.type == OSError
+
+def se():
+	raise SystemExit(1)
+
+# @pytest.mark.skip
+def test_bad_config_noprofile():
+	smored.load_config('tests/config_noprofile.txt')
 

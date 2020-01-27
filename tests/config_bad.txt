@@ -1,2 +1,2 @@
 [loci]
-alleles	tests/repDB-rename.fasta
+alleles	not/a/real.path
