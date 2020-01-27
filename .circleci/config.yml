@@ -11,7 +11,7 @@ jobs:
         docker:
       # specify the version you desire here
       # use `-browsers` prefix for selenium tests, e.g. `3.6.1-browsers`
-        - image: circleci/python:3.6.1
+        - image: circleci/python:3.7.3
       
       # Specify service dependencies here if necessary
       # CircleCI maintains a library of pre-built images
@@ -35,7 +35,8 @@ jobs:
                 command: |
                     python3 -m venv venv
                     . venv/bin/activate
-                    pip install pytest pytest-cov coverage codecov openpyxl
+                    pip install pytest pytest-cov coverage codecov openpyxl pathlib
+                    python setup.py install
 
             - save_cache:
                 paths:
@@ -64,6 +65,7 @@ jobs:
                     coverage run -a -m smored -h
                     coverage run -a  -m smored -v
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -a logfile.txt
+                    coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads --report 
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t a -o outfile
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t 2 -o outfile
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t 2 -o outfile -x

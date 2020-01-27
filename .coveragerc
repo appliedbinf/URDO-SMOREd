@@ -8,8 +8,6 @@ exclude_lines =
     if self.debug:
     pragma: no cover
     raise NotImplementedError
-    if __name__ == .__main__.:
-    if __name__ == "__main__":
     except OSError
     def check_params
     raise OSError
