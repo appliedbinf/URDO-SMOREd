@@ -68,7 +68,6 @@ jobs:
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t 2 -o outfile
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t 2 -o outfile -x
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t 2 -o outfile -x -r -R readout
-                    coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t 1 -w
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -t 2
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -r -R folder
                     coverage run -a  -m smored --predict -c tests/db/expanded_config.txt -P tests/db/db -d tests/reads -u
