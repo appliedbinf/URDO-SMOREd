@@ -1,0 +1,28 @@
+name: SMOREd
+version: 1.0
+company: Applied Bioinformatics Laboratory
+
+install_in_dependency_order: True
+initialize_by_default: True
+ignore_duplicate_files: True
+
+channels:
+  - https://repo.anaconda.com/pkgs/main/
+  - https://conda.anaconda.org/bioconda/
+
+specs:
+  - python 3.7*
+  - pip
+  - lxml
+  - jdcal
+  - openpyxl
+  - pathlib
+  - vsearch 2.13.4
+  - blast 2.9*
+  - taxonkit
+
+
+license_file: ../LICENSE
+
+pre_install: pre_install.sh
+post_install: post_install.sh

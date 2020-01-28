@@ -7,19 +7,12 @@ version: 2
 #  override:
 #    - py.test tests
 jobs:
-    build:
+    test:
         docker:
       # specify the version you desire here
       # use `-browsers` prefix for selenium tests, e.g. `3.6.1-browsers`
-        - image: circleci/python:3.7.3
-      
-      # Specify service dependencies here if necessary
-      # CircleCI maintains a library of pre-built images
-      # documented at https://circleci.com/docs/2.0/circleci-images/
-      # - image: circleci/postgres:9.4
-
+        - image: continuumio/miniconda3
         working_directory: ~/repo
-
         steps:
             - checkout
 
@@ -33,29 +26,19 @@ jobs:
             - run:
                 name: install dependencies
                 command: |
-                    python3 -m venv venv
-                    . venv/bin/activate
-                    pip install pytest pytest-cov coverage codecov openpyxl pathlib
-                    python setup.py install
-
-            - save_cache:
-                paths:
-                    - ./venv
-                key: v1-dependencies-{{ checksum "requirements.txt" }}
+                    conda config --add channels defaults
+                    conda config --add channels bioconda
+                    conda config --add channels conda-forge
+                    conda install pytest pytest-cov coverage codecov pathlib lxml openpyxl vsearch
             
             - run:
                 name: run tests
                 command: |
-                    . venv/bin/activate
                     pytest tests -v
 
             - run:
                 name: Coverage tests
                 command: |
-                    . venv/bin/activate
-                    wget https://github.com/torognes/vsearch/releases/download/v2.8.4/vsearch-2.8.4-linux-x86_64.tar.gz
-                    tar xf vsearch-2.8.4-linux-x86_64.tar.gz
-                    export PATH=$PWD/vsearch-2.8.4-linux-x86_64/bin:$PATH 
                     coverage run  -m smored --buildDB -c tests/db/expanded_config.txt -P tests/db/db -k 35
                     coverage run  -m smored --buildDB -c tests/db/expanded_config.txt
                     coverage run  -m smored --buildDB -c tests/db/bad_config.txt -P tests/db/db -k 35
@@ -85,7 +68,62 @@ jobs:
                     coverage report 
                     codecov
 
+    build:
+        docker:
+      # specify the version you desire here
+      # use `-browsers` prefix for selenium tests, e.g. `3.6.1-browsers`
+        - image: continuumio/miniconda3
+        working_directory: ~/repo
+        steps:
+            - checkout
+            - run:
+                name: install dependencies
+                command: |
+                    conda config --add channels defaults
+                    conda config --add channels bioconda
+                    conda config --add channels conda-forge
+                    conda install constructor -y
+            - run:
+                name: create installer
+                command: |
+                    cd installer
+                    constructor .
+                    mkdir ~/installer
+                    cp SMOREd*.sh ~/installer
             - store_artifacts:
-                path: test-reports
-                destination: test-reports
-              
+                path: ~/installer
+            - persist_to_workspace:
+                root: ~/installer
+                paths: SMOREd*.sh
+
+
+    publish:
+            docker:
+              - image: cibuilds/github:0.10
+            steps:
+              - attach_workspace:
+                  at: ./installer
+              - run:
+                  name: "Publish Release on GitHub"
+                  command: |
+                    if [ -z ${CIRCLE_TAG} ]; then VERSION=$(echo $CIRCLE_SHA1 | cut -c -7); else VERSION=${CIRCLE_TAG}; fi
+                    ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./installer
+                  
+workflows:
+  version: 2
+  test_only:
+    jobs:
+      - test
+  test_and_upload:
+    jobs:
+      - build
+      - publish:
+            requires:
+                - build
+            filters:
+                tags:
+                  only: /^v.*/
+
+
+
+
