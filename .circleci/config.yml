@@ -101,13 +101,15 @@ jobs:
             docker:
               - image: cibuilds/github:0.10
             steps:
+              - checkout
               - attach_workspace:
-                  at: ./installer
+                  at: ./install_script
               - run:
                   name: "Publish Release on GitHub"
                   command: |
-                    if [ -z ${CIRCLE_TAG} ]; then VERSION=$(echo $CIRCLE_SHA1 | cut -c -7); else VERSION=${CIRCLE_TAG}; fi
-                    ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./installer
+                    VERSION=$(grep -m1 VERSION smored | sed 's/VERSION = """SMORE.D //; s/ (.*//')
+                    echo "The version is: ${VERSION}"
+                    ghr -t ${GITHUB_TOKEN} -u ${CIRCLE_PROJECT_USERNAME} -r ${CIRCLE_PROJECT_REPONAME} -c ${CIRCLE_SHA1} -delete ${VERSION} ./install_script
                   
 workflows:
   version: 2
@@ -123,6 +125,8 @@ workflows:
             filters:
                 tags:
                   only: /^v.*/
+                branches:
+                    only: master
 
 
 
