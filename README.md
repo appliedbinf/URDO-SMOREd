@@ -1,10 +1,10 @@
 [![CircleCI](https://circleci.com/gh/ar0ch/URDO-SMOREd.svg?style=svg&circle-token=e5cfa9a42dfa40c1a26051677c8ee81d58bfbc01)](https://circleci.com/gh/ar0ch/URDO-SMOREd) [![codecov](https://codecov.io/gh/ar0ch/URDO-SMOREd/branch/master/graph/badge.svg?token=7GMwrJkKA8)](https://codecov.io/gh/ar0ch/URDO-SMOREd) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/Django.svg) 
 
-# Readme for abil\_URDOcaller
+# Readme for SMORE'D
 =============================================================================================
 ### Usage
 ```
-./abil_URDOcaller.py 
+smored
 [--buildDB]
 [--predict]
 [-1 filename_fastq1][--fastq1 filename_fastq1]
@@ -22,22 +22,21 @@
 ```
 ==============================================================================================
 
-### There are two steps to predicting ST using abil\_URDOcaller.
-1. Create DB : `abil_URDOcaller.py --buildDB`
-2. Predict : `abil_URDOcaller --predict`
+### There are two steps to sequence matching using smored.
+1. Create DB : `smored --buildDB`
+2. Predict : `smored --predict`
 
-#### 1. `abil_URDOcaller.py --buildDB`
+#### 1. `smored --buildDB`
 
 **Synopsis:**
-`abil_URDOcaller.py --buildDB -c <config file> -k <kmer length(optional)> -P <DB prefix(optional)>`  
-config file : is a tab delimited file which has the information for typing scheme ie loci, its multifasta file and profile definition file.
+`smored --buildDB -c <config file> -k <kmer length(optional)> -P <DB prefix(optional)>`  
+config file : is a tab delimited file which has the information for reference sequences, their multifasta files and profile definition file.
     Format : 
 ```
 [loci]  
-locus1    locusFile1
-locus2    locusFile2
+amplicon    ampliconFile
 [profile]
-profile   profile_file
+profile   profileFile
 ```
 kmer length : is the kmer length for the db. Note, while processing this should be smaller than the read length.  
     - We suggest kmer lengths of 35, 66 depending on the read length.  
@@ -52,9 +51,7 @@ DB prefix(optional) : holds the information for DB files to be created and their
 
 **Optional arguments**  
 `-k = <kmer length>`
-    Kmer size for which the db has to be formed(Default k = 35). Note the tool works best with kmer length in between 35 and 66
-  for read lengths of 55 to 150 bp. Kmer size can be increased accordingly. It is advised to keep lower kmer sizes 
-  if the quality of reads is not very good.  
+    Kmer size for which the db has to be formed(Default k = 35).   
 `-P,--prefix = <prefix>`  
   Prefix for db and log files to be created(Default = kmer). Also you can specify folder where you want the dbb to be created.  
 `-a`
@@ -64,24 +61,34 @@ DB prefix(optional) : holds the information for DB files to be created and their
 
  --------------------------------------------------------------------------------------------
  
-#### 2. `abil_URDOcaller.py --predict`
+#### 2. `smored --predict`
   
-`abil_URDOcaller --predict` : can run in two modes
+`smored --predict` : can run in two modes
   1) single sample (default mode)
-  2) multi-sample: run abil\_URDOcaller for all the samples in a folder (for a particular species)
+  2) multi-sample: run abil\smored for all the samples in a folder 
 
 **Synopsis**
-`abil_URDOcaller.py --predict -1 <fastq file> -2 <fastq file> -d <directory location> - -P <DB prefix(optional)> -k <kmer length(optional)> -o <output file> -x`
+`smored --predict -1 <fastq file> -2 <fastq file> -d <directory location>  -P <DB prefix(optional)> -k <kmer length(optional)> -o <output file> -x`
 
 **Required arguments** 
-`--predict`
-  Identifier for predict module
 `-c,--config = <configuration file>`
   Config file in the format described above. 
   
+ `-1,--fastq1 = <fastq1_filename>`  
+  Path to first fastq file for paired end sample.
+    - Should have extension fastq or fq.
+`-2,--fastq2 = <fastq2_filename>`  
+  Path to second fastq file for paired end sample.
+    - Should have extension fastq or fq.
+    ------or--------
+`-d,--dir,--directory = <directory>`  
+  Directory containing paired end read files for multi-sample prediction 
+  
 **Optional arguments**
+`--predict`
+  Identifier for predict module - this is the default function of SMORE'D
 `-1,--fastq1 = <fastq1_filename>`  
-Path to first fastq file for paired end sample and path to the fastq file for single end file.
+  Path to first fastq file for paired end sample.
     - Should have extension fastq or fq.
 `-2,--fastq2 = <fastq2_filename>`  
   Path to second fastq file for paired end sample.
@@ -95,9 +102,17 @@ Path to first fastq file for paired end sample and path to the fastq file for si
 `-P,--prefix = <prefix>`  
   Prefix using which the db was created (Defaults = kmer). The location of the db could also be provided.  
 `-r`  
-  A FASTQ file is generated in the current directory for each sample containing reads with kmer matches.  
+  A FASTA file is generated in the current directory for each sample containing reads with kmer matches.  
 `-R, --readsdir = < output directory >`  
-  A FASTQ file is generated in the specified directory for each sample containing reads with kmer matches. 
+  A FASTQ file is generated in the specified directory for each sample containing reads with kmer matches.
+`-u`
+  FASTA file is generated in the current directory that contains unclassified reads.
+`-U, --unclassifed = < output directory >`
+  A directory is created for the FASTA files of unclassified reads
+`--report`
+ Generate pre-sampel reports in Excel format. If an output path is given, per-sample reports will be deposited in teh same folder.
+`-t`
+ Integer number of thread to use to process samples.
 `-v`  
   Prints the version of the software.  
 `-x,--overwrite`  
