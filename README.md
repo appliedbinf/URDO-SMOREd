@@ -1,4 +1,4 @@
-[![CircleCI](https://circleci.com/gh/ar0ch/URDO-SMOREd.svg?style=svg&circle-token=e5cfa9a42dfa40c1a26051677c8ee81d58bfbc01)](https://circleci.com/gh/ar0ch/URDO-SMOREd) [![codecov](https://codecov.io/gh/ar0ch/URDO-SMOREd/branch/master/graph/badge.svg?token=7GMwrJkKA8)](https://codecov.io/gh/ar0ch/URDO-SMOREd) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/Django.svg) 
+[![CircleCI](https://circleci.com/gh/appliedbinf/URDO-SMOREd.svg?style=svg&circle-token=3bb907d8bdfe27332d68c56fc6cafc849a3e80a0)](https://circleci.com/gh/appliedbinf/URDO-SMOREd) [![codecov](https://codecov.io/gh/appliedbinf/URDO-SMOREd/branch/master/graph/badge.svg)](https://codecov.io/gh/appliedbinf/URDO-SMOREd) ![PyPI - Python Version](https://img.shields.io/pypi/pyversions/Django.svg) 
 
 # Readme for SMORE'D
 =============================================================================================
