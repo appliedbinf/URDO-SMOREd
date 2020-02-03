@@ -65,7 +65,7 @@ DB prefix(optional) : holds the information for DB files to be created and their
   
 `smored --predict` : can run in two modes
   1) single sample (default mode)
-  2) multi-sample: run abil\smored for all the samples in a folder 
+  2) multi-sample: run smored for all the samples in a folder 
 
 **Synopsis**
 `smored --predict -1 <fastq file> -2 <fastq file> -d <directory location>  -P <DB prefix(optional)> -k <kmer length(optional)> -o <output file> -x`
@@ -116,7 +116,7 @@ DB prefix(optional) : holds the information for DB files to be created and their
 `-v`  
   Prints the version of the software.  
 `-x,--overwrite`  
-  By default abil\_URDOcaller appends the results to the output\_filename if same name is used.
+  By default smored appends the results to the output\_filename if same name is used.
   This argument overwrites the previously specified output file.
 `-h,--help`
   Prints the help manual for this application  
