@@ -113,6 +113,8 @@ DB prefix(optional) : holds the information for DB files to be created and their
  Generate pre-sampel reports in Excel format. If an output path is given, per-sample reports will be deposited in teh same folder.
 `-t`
  Integer number of thread to use to process samples.
+`--vthreads`
+ Integer number of threads for VSEARCH to use
 `-v`  
   Prints the version of the software.  
 `-x,--overwrite`  

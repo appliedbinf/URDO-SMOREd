@@ -372,6 +372,8 @@ Optional arguments
   A FASTQ file is generated in the specified directory for each sample containing reads wwith no kmer matches (Unclassified reads).
 -t
   Integer number of threads to use to process samples
+--vthreads
+  Integer number of threads for VSEARCH to use
 -v
   Prints the version of the software.
 -x,--overwrite
