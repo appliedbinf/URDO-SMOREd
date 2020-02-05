@@ -16,7 +16,7 @@ import shutil
 from itertools import islice
 import operator
 import urdohelper
-VERSION = """SMORE'D 1.0rc1 (updated : January 28, 2020)"""
+VERSION = """SMORE'D 1.0rc2 (updated : February 3, 2020)"""
 LICENSE = """
 SMORE'D is free for academic users and requires permission before any
 commercial or government usage of any version of this code/algorithm.
@@ -94,6 +94,7 @@ def batch_tool(kmer, directory):
     RAW_COUNTS.extend({} for x in sorted(file_list))
     READ_COUNTS.extend({} for x in sorted(file_list))
     sample_queue = list()
+
     def add_jobdata_to_queue(read_one):
         """Make job data for queue"""
         fastq1_processed = f"{TMPDIR}/{read_one}"
@@ -299,8 +300,6 @@ def count_kmers(read, k, count_dict):
             read[0].split(";")[1].split("=")[1])
     return (max_allele_count/(len(read[1]) - k + 1)), __st_profile__[max_allele][max_allele_number]
 
-
-
 def load_module(k, db_prefix):
     """
     Function   : load_module
@@ -323,8 +322,6 @@ def load_module(k, db_prefix):
         print(error)
         logging.debug(error)
         sys.exit(1)
-
-
 
 def load_st_from_file(profile_file):
     """
@@ -495,7 +492,7 @@ def reverse_complement(seq):
     seq_dict = {'A': 'T', 'T': 'A',
                 'G': 'C', 'C': 'G', 'Y': 'R',
                 'R': 'Y', 'S': 'S', 'W': 'W',
-                'K': 'M', 'M': 'K', 'N': 'N', 'V':'V', 'H':'H'}
+                'K': 'M', 'M': 'K', 'N': 'N', 'V': 'V', 'H': 'H'}
     try:
         return "".join([seq_dict[base] for base in reversed(seq)])
     except ValueError:
@@ -818,6 +815,7 @@ if __name__ == "__main__":
                 except FileNotFoundError:
                     print(f"Error: Cannot find amplicon2taxonomy.tsv")
                     sys.exit()
+
     if __predict__ and __buildDB__:
         print(urdohelper.HELP_TEXT_SMALL)
         print("Select either predict or buildDB module")
@@ -834,7 +832,7 @@ if __name__ == "__main__":
         try:
             if not __log__:
                 __log__ = subprocess.check_output('date "+%Y%m%d_%H%M"',
-                                                  shell=True).decode('utf-8').rstrip() +'.log'
+                                                  shell=True).decode('utf-8').rstrip() + '.log'
                 sys.stderr.write(f"Writing log file to: {__log__}\n")
         except TypeError:
             __log__ = 'kmer.log'
@@ -851,7 +849,7 @@ if __name__ == "__main__":
         try:
             if not __log__:
                 __log__ = subprocess.check_output('date "+%Y%m%d_%H%M"',
-                                                  shell=True).decode('utf-8').rstrip() +'.log'
+                                                  shell=True).decode('utf-8').rstrip() + '.log'
                 sys.stderr.write(f"Writing log file to: {__log__}\n")
         except TypeError:
             __log__ = 'kmer.log'

@@ -86,8 +86,13 @@ jobs:
             - run:
                 name: create installer
                 command: |
-                    cd installer
-                    constructor .
+                    git clone git@github.com:appliedbinf/constructor.git ~/constructor
+                    cd ~/constructor
+                    python setup.py install
+                    cd ~/repo/installer
+                    wget https://repo.anaconda.com/pkgs/misc/conda-execs/conda-latest-linux-64.exe -O conda.exe
+                    chmod +x conda.exe
+                    constructor . -v --conda-exe conda.exe
                     mkdir ~/installer
                     cp SMOREd*.sh ~/installer
             - store_artifacts:

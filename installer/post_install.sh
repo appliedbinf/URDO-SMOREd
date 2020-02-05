@@ -1,3 +1,10 @@
 #!/bin/bash
 
-python -m pip install --upgrade --extra-index-url https://cdc:smoredInstaller@pip.appliedbinf.com SMOREd
+${1}/bin/python -m pip install --upgrade --trusted-host pip.appliedbinf.com --extra-index-url https://cdc:smoredInstaller@pip.appliedbinf.com SMOREd
+echo "alias smored=${1}/bin/smored" >> ~/.bashrc
+
+echo ""
+echo "================================================="
+echo "Installation complete, please reload your shell or run"
+echo "the below command to add the smored command"
+echo "alias smored=$1/bin/smored"
