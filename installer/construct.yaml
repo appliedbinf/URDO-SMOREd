@@ -1,5 +1,5 @@
 name: SMOREd
-version: 1.0rc2
+version: 1.0rc3
 company: Applied Bioinformatics Laboratory
 
 install_in_dependency_order: True

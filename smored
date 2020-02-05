@@ -16,7 +16,7 @@ import shutil
 from itertools import islice
 import operator
 import urdohelper
-VERSION = """SMORE'D 1.0rc2 (updated : February 3, 2020)"""
+VERSION = """SMORE'D 1.0rc3 (updated : February 5, 2020)"""
 LICENSE = """
 SMORE'D is free for academic users and requires permission before any
 commercial or government usage of any version of this code/algorithm.
@@ -56,6 +56,7 @@ __weight_dict_global__ = {}
 __st_profile__ = {}
 __config_dict__ = {}
 WORKERS = 1
+V_THREADS = 5
 WEIGHT = False
 READ_PATH = ''
 UREAD_PATH = ''
@@ -106,11 +107,26 @@ def batch_tool(kmer, directory):
     for file in file_list:
         sample_queue.append(add_jobdata_to_queue(file))
 
-    from multiprocessing import Pool
+    from multiprocessing import Pool, ProcessError
     pool = Pool(WORKERS)
-    for job_config in sample_queue:
-        pool.apply_async(single_sample_tool, job_config, callback=results_callback)
+    async_res = []
+    for job_conf in sample_queue:
+        async_res.append(pool.apply_async(single_sample_tool, job_conf, callback=results_callback))
     pool.close()
+    for res in async_res:
+        try:
+            res.get()
+        except Exception:
+            err_msg = "VSEARCH did not finish running before it was killed\n"
+            err_msg += "This usually means too many threads were requested for\n"
+            err_msg += f"either SMORE'D ({WORKERS} threads) or SMORE'D + "
+            err_msg += f"vsearch ({WORKERS + WORKERS*V_THREADS} threads)\n"
+            err_msg += f"Try running SMORE'D again with fewer main or vsearch threads\n"
+            err_msg += f"--threads {WORKERS} was used for this run\n"
+            err_msg += f"--vthreads {V_THREADS} was used for this run\n"
+            logging.error(err_msg)
+            print(err_msg)
+            sys.exit()
     pool.join()
     shutil.rmtree(TMPDIR)
 
@@ -153,7 +169,7 @@ def single_sample_tool(*args, **kwargs):
         fastq1, fastq2, TMPDIR, sample_name)
     vsearch_cmd += " --fastq_minlen 75 --fastq_allowmergestagger"
     vsearch_cmd += " --fastq_maxdiffs 20 --fastq_maxns 10"
-    vsearch_cmd += " --threads 1 --no_progress"
+    vsearch_cmd += f" --threads {V_THREADS} --no_progress"
     logging.debug(f"Preprocessing: [Merging reads] VSEARCH command\n\t%s", vsearch_cmd)
     try:
         vsearch_pipes = subprocess.Popen(vsearch_cmd,
@@ -168,10 +184,13 @@ def single_sample_tool(*args, **kwargs):
         logging.error(f"ERROR: {subprocess_error}")
         sys.exit(f"Could not merge read files for {sample_name}!")
     vsearch_stats = std_err.decode('utf-8').split("\n")
+    read_count = 0
     for line in vsearch_stats:
         if line.strip().endswith("Pairs"):
             read_count = int(line.split()[0])
             break
+    if read_count == 0:
+        raise Exception("VSEARCH did not run")
     vsearch_cmd = "vsearch  --derep_fulllength  {0}/{1}.fa  --output {0}/{1}_centroids.fa ".format(
         TMPDIR, sample_name)
     vsearch_cmd += " --sizeout --fasta_width 0 --threads 1 --no_progress"
@@ -719,10 +738,18 @@ if __name__ == "__main__":
         'readsdir=',
         'unclassified=',
         'threads=',
-        'report'])
+        'report',
+        'vthreads='])
     for opt, arg in __options__:
         if opt in ('-o', '--output'):
             OUTPUT_FILENAME = arg
+            odir = os.path.dirname(os.path.abspath(OUTPUT_FILENAME))
+            if not os.path.isdir(odir):
+                try:
+                    os.makedirs(odir)
+                except OSError as error:
+                    print(f"Count not make {odir}\n{error}")
+                    sys.exit(1)
         elif opt in ('-x', '--overwrite'):
             OVERWRITE = True
         elif opt in '--buildDB':
@@ -789,6 +816,12 @@ if __name__ == "__main__":
         elif opt in ('-t', '--threads'):
             try:
                 WORKERS = int(arg)
+            except ValueError:
+                print("Please provide an integer number of threads")
+                sys.exit()
+        elif opt in '--vthreads':
+            try:
+                V_THREADS = int(arg)
             except ValueError:
                 print("Please provide an integer number of threads")
                 sys.exit()
