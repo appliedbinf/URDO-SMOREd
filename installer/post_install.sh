@@ -1,6 +1,6 @@
 #!/bin/bash
 
-${1}/bin/python -m pip install --upgrade --trusted-host pip.appliedbinf.com --extra-index-url https://cdc:smoredInstaller@pip.appliedbinf.com SMOREd
+${1}/bin/pip install --upgrade --trusted-host pip.appliedbinf.com --extra-index-url https://cdc:smoredInstaller@pip.appliedbinf.com SMOREd
 echo "alias smored=${1}/bin/smored" >> ~/.bashrc
 
 echo ""
