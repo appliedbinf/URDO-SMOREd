@@ -13,7 +13,7 @@ with open(path.join(here, 'README.md')) as fh:
 setup(
   name = "SMOREd",
   scripts = ['urdohelper.py', 'smored'],
-  version = "1.0rc3",
+  version = "1.0",
   description = 'Fast k-mer based tool for alignment and assembly-free amplicon classification.',
   long_description=long_description_text,
   long_description_content_type="text/markdown",
